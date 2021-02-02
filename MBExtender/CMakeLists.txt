@@ -174,6 +174,12 @@ else()
   message(FATAL_ERROR "Unsupported target platform: ${CMAKE_SYSTEM_NAME}")
 endif()
 
+option(MBPBUILD "MBP Rewind Features" ON)
+
+if (MBPBUILD)
+	add_definitions(-DMBP)
+endif()
+
 if(TOOLS_ONLY)
   if(WIN32)
     add_subdirectory(src/MBGPatcher)

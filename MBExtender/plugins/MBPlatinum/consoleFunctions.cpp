@@ -657,16 +657,16 @@ MBX_CONSOLE_FUNCTION(getTypeName, const char *, 2, 2, "getTypeName(U32 type)") {
 
 MBX_CONSOLE_METHOD(SimObject, getParentClasses, const char *, 2, 2, "") {
 	TGE::Namespace *ns = object->mNamespace;
-	TGE::Namespace *parent = ns->getParent();
+	TGE::Namespace* parent = ns->mParent;
 
 	std::stringstream ss;
 	if (parent)
-		ss << parent->getName();
+		ss << parent->mName;
 
 	while (parent) {
 		ss << '\t';
-		ss << parent->getName();
-		parent = parent->getParent();
+		ss << parent->mName;
+		parent = parent->mParent;
 	}
 
 	std::string str = ss.str();
@@ -679,9 +679,9 @@ MBX_CONSOLE_METHOD(SimObject, isKindOfClass, bool, 3, 3, "(className)") {
 	TGE::Namespace *parent = object->mNamespace;
 
 	while (parent) {
-		if (strcasecmp(parent->getName(), argv[2]) == 0)
+		if (strcasecmp(parent->mName, argv[2]) == 0)
 			return true;
-		parent = parent->getParent();
+		parent = parent->mParent;
 	}
 	return false;
 }
@@ -847,7 +847,7 @@ MBX_CONSOLE_METHOD(SimSet, isMember, bool, 3, 3, "SimSet.isMember(%obj)") {
 MBX_CONSOLE_METHOD(SimObject, addNamespace, void, 3, 3, "ScriptObject.addNamespace(child)") {
 	TGE::Namespace *ns = object->mNamespace;
 
-	const char *parent = ns->getName();
+	const char* parent = ns->mName;
 	const char *child = argv[2];
 
 	TGE::Con::linkNamespaces(parent, child);

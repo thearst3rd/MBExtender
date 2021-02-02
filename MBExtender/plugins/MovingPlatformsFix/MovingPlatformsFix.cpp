@@ -60,7 +60,7 @@ void advancePathedInteriors(U32 delta) {
 }
 
 // Hook for Marble::advancePhysics that sets gLocalUpdate to true if a local update is occurring
-MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::advancePhysics, (TGE::Marble *thisObj, const TGE::Move *move, U32 delta), originalAdvancePhysics)
+MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::advancePhysics, (TGE::Marble *thisObj, TGE::Move *move, U32 delta), originalAdvancePhysics)
 {
 	gAdvancingMarble = thisObj;
 	if (TGE::NetConnection::getConnectionToServer() == thisObj->getControllingClient()) {

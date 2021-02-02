@@ -27,6 +27,7 @@
 #include <TorqueLib/platform/platform.h>
 
 #include <TorqueLib/console/console.h>
+#include <TorqueLib/console/consoleObject.h>
 #include <TorqueLib/core/tVector.h>
 
 namespace TGE
@@ -34,15 +35,41 @@ namespace TGE
 	class CodeBlock;
 	class ExprEvalState;
 	class SimObject;
+	class NamespaceEntry;
 
 	class Namespace
 	{
 		BRIDGE_CLASS(Namespace);
 	public:
+		const char* mName;
+		const char* mPackage;
+
+		Namespace* mParent;
+		Namespace* mNext;
+		AbstractClassRep* mClassRep;
+		U32 mRefCountToParent;
+		NamespaceEntry* mEntryList;
+
 		STATICFN(void, init, (), 0x407CE3_win, 0x348D0_mac);
+		STATICFN(Namespace *, find, (const char* name, const char* package), 0x403B93_win, 0x33710_mac);
 		STATICFN(void, shutdown, (), 0x4026E9_win, 0x33960_mac);
-		GETTERFN(const char *, getName, 0x0);
-		GETTERFN(Namespace *, getParent, 0x8);
+		MEMBERFN(NamespaceEntry*, lookup, (const char* name), 0x408008_win, 0x335A0_mac);
+	};
+
+	class NamespaceEntry
+	{
+		BRIDGE_CLASS(NamespaceEntry);
+	public:
+		Namespace* mNamespace;
+		NamespaceEntry* mNext;
+		const char* mFunctionName;
+		S32 mType;
+		S32 mMinArgs;
+		S32 mMaxArgs;
+		const char* mUsage;
+		const char* mPackage;
+
+		MEMBERFN(const char*, execute, (S32 argc, const char** argv, void* state), 0x4073AB_win, 0x32BF0_mac);
 	};
 
 	class Dictionary

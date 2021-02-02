@@ -27,10 +27,26 @@
 
 #include <TorqueLib/game/gameBase.h>
 #include <TorqueLib/sceneGraph/sceneState.h>
+#include <TorqueLib/ts/tsShapeInstance.h>
 
 namespace TGE
 {
 	class BitStream;
+
+	struct Thread {
+		enum State {
+			Play, Stop, Pause, FromMiddle
+		};
+		TSShapeInstance::TSThread* thread;
+		U32 state;
+
+
+		S32 sequence;
+		U32 sound;
+		bool atEnd;
+		bool forward;
+	};
+
 	class ShapeBase : public GameBase
 	{
 		BRIDGE_CLASS(ShapeBase);
@@ -107,6 +123,29 @@ namespace TGE
 		MEMBERFN(void, unpackUpdate, (NetConnection *connection, BitStream *stream), 0x4041A1_win, 0xA46C0_mac);
 
 		MEMBERFN(void, setHidden, (bool hidden), 0x40104B_win, 0x95BD0_mac);
+
+		GETTERFN(bool, getHiddenGetter, 0x764_win, 0x764_mac);
+		SETTERFN(bool, setHiddenSetter, 0x764_win, 0x764_mac);
+
+		GETTERFN(Thread::State, getThread1State, 0x2C4_win, 0x2C4_mac);
+		SETTERFN(Thread::State, setThread1State, 0x2C4_win, 0x2C4_mac);
+
+		GETTERFN(bool, getThread1Forward, 0x2D1_win, 0x2D1_mac);
+		SETTERFN(bool, setThread1Forward, 0x2D1_win, 0x2D1_mac);
+
+		GETTERFN(bool, getThread1AtEnd, 0x2D0_win, 0x2D0_mac);
+		SETTERFN(bool, setThread1AtEnd, 0x2D0_win, 0x2D0_mac);
+
+
+		GETTERFN(TSShapeInstance::TSThread*, getThread1, 0x2C0_win, 0x2C0_mac);
+		SETTERFN(TSShapeInstance::TSThread*, setThread1, 0x2C0_win, 0x2C0_mac);
+
+		GETTERFN(TSShapeInstance*, getTSShapeInstance, 0x6AC_win, 0x6AC_mac);
+
+		MEMBERFN(void, updateThread, (Thread& st), 0x406A69_win, 0x9B2C0_mac);
+
+		MEMBERFN(bool, onAdd, (), 0x40234C_win, 0x0A2AF0_mac);
+		MEMBERFN(void, onRemove, (), 0x408607_win, 0x9FB70_mac);
 	};
 
 	class ShapeBaseData : public GameBaseData

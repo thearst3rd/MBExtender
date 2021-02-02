@@ -32,5 +32,8 @@ namespace TGE
 	class Item : public ShapeBase
 	{
 		BRIDGE_CLASS(Item);
+
+		public:
+			MEMBERFN(void, advanceTime, (F32 dt), 0x0406AB9_win, 0x0D8590_mac);
 	};
 }

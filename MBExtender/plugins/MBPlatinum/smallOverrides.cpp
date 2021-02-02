@@ -441,9 +441,9 @@ MBX_OVERRIDE_MEMBERFN(const char*, TGE::CodeBlock::exec, (TGE::CodeBlock *thisPt
 	auto thisArgc = std::min(argc - 1, thisPtr->code[ip + 5]);
 	auto thisFunctionName = reinterpret_cast<StringTableEntry>(thisPtr->code[ip]);
 	gTraceString += "Entering ";
-	if (thisNamespace && thisNamespace->getName())
+	if (thisNamespace && thisNamespace->mName)
 	{
-		gTraceString += thisNamespace->getName();
+		gTraceString += thisNamespace->mName;
 		gTraceString += "::";
 	}
 	gTraceString += thisFunctionName;
@@ -462,9 +462,9 @@ MBX_OVERRIDE_MEMBERFN(const char*, TGE::CodeBlock::exec, (TGE::CodeBlock *thisPt
 
 	gTraceString.clear();
 	gTraceString += "Leaving ";
-	if (thisNamespace && thisNamespace->getName())
+	if (thisNamespace && thisNamespace->mName)
 	{
-		gTraceString += thisNamespace->getName();
+		gTraceString += thisNamespace->mName;
 		gTraceString += "::";
 	}
 	gTraceString += thisFunctionName;

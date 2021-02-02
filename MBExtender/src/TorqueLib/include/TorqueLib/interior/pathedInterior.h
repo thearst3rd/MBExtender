@@ -40,6 +40,12 @@ namespace TGE
 
 		MEMBERFN(Point3F, getVelocity, (), 0x566580_win, 0x24B690_mac);
 
+		GETTERFN(MatrixF, getBaseTransform, 0x328);
+		SETTERFN(MatrixF, setBaseTransform, 0x328);
+
+		GETTERFN(Point3F, getBaseScale, 0x368);
+		SETTERFN(Point3F, setBaseScale, 0x368);
+
 		GETTERFN(Point3F, getVelocity2, 0x384);
 		SETTERFN(Point3F, setVelocity, 0x384);
 
@@ -49,7 +55,11 @@ namespace TGE
 		GETTERFN(S32, getTargetPosition, 0x380);
 		SETTERFN(S32, setTargetPosition, 0x380);
 
+		GETTERFN(Point3F, getOffset, 0x284);
+		SETTERFN(Point3F, setOffset, 0x284);
+
 		GETTERFN(U32, getPathKey, 0x374);
+		SETTERFN(U32, setPathKey, 0x374);
 		MEMBERFN(U32, getPathKey2, (), 0x4045A7_win, 0x24B6C0_mac);
 
 		GETTERFN(const char *, getInteriorResource, 0x2FC);
@@ -59,6 +69,11 @@ namespace TGE
 		MEMBERFN(void, renderObject, (SceneState *state, SceneRenderImage *renderImage), 0x5654C0_win, 0x24D320_mac);
 
 		GETTERFN(PathedInterior *, getNext, 0x390);
+
+		MEMBERFN(U32, packUpdate, (TGE::NetConnection* con, U32 mask, TGE::BitStream* stream), 0x40229D_win, 0x024D4A0_mac);
+		MEMBERFN(void, unpackUpdate, (TGE::NetConnection* con, TGE::BitStream* stream), 0x4093E0_win, 0x24D740_mac);
+		MEMBERFN(bool, onAdd, (), 0x401D34_win, 0x24C3B0_mac);
+		MEMBERFN(void, onRemove, (), 0x4010E6_win, 0x24BA30_mac);
 	};
 
 	//PathedInterior::mClientPathedInteriors (start of a linked list)

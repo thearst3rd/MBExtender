@@ -220,7 +220,10 @@ namespace TGE
 	namespace Sim
 	{
 		FN(SimObject*, findObject, (const char *name), 0x405308_win, 0x257D0_mac);
+		FN(SimObject*, findObject_int, (SimObjectId id), 0x408FCB_win, 0x025480_mac);
 		GLOBALVAR(U32, gCurrentTime, 0x69DF80_win, 0x2FD870_mac);
+
+		FN(void, cancelEvent, (U32 eventSequence), 0x4018F2_win, 0x025360_mac);
 	}
 
 	FN(bool, cSimObjectSave, (TGE::SimObject *obj, int argc, const char **argv), 0x43A070_win, 0x2A940_mac);

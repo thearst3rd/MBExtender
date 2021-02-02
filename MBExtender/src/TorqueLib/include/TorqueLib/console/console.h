@@ -130,6 +130,9 @@ namespace TGE
 
 		// Variables
 		FN(const char *, getVariable, (const char *name), 0x42DAA0_win, 0x3BA20_mac);
+		FN(bool, getBoolVariable, (const char *name), 0x042DCB0_win, 0x03BD50_mac);
+		FN(S32, getIntVariable, (const char *name), 0x42DCF0, 0x3BD10_mac);
+		FN(F32, getFloatVariable, (const char *name), 0x042DD30, 0x3BCD0_mac);
 		FN(void, setVariable, (const char *name, const char *value), 0x408684_win, 0x3B9A0_mac);
 		FN(void, setLocalVariable, (const char *name, const char *value), 0x402AC2_win, 0x3B5C0_mac);
 		FN(void, setBoolVariable, (const char *name, bool value), 0x405A38_win, 0x3BDA0_mac);

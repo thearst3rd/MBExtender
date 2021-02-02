@@ -59,5 +59,6 @@ MBExtender/external/asio/src/examples/
 MBExtender/external/asio/src/tests/
 MBExtender/external/asio/doc/
 MBExtender/external/curl/docs/
+MBExtender/plugins/Rewind
 *.pch
 .vs

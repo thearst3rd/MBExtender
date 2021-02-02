@@ -34,13 +34,29 @@
 namespace TGE
 {
 	class BitStream;
-	struct Move;
+	struct Move
+	{
+		// packed storage rep, set in clamp
+		S32 px, py, pz;
+		U32 pyaw, ppitch, proll;
+		F32 x, y, z;          // float -1 to 1
+		F32 yaw, pitch, roll; // 0-2PI
+		U32 id;               // sync'd between server & client - debugging tool.
+		U32 sendCount;
+
+		bool freeLook;
+		bool trigger[4];
+
+	};
 	class NetConnection;
 
 	class Marble : public ShapeBase
 	{
 		BRIDGE_CLASS(Marble);
 	public:
+		GETTERFN(bool, getOOB, 0xA59_win, 0xA45_mac);
+		SETTERFN(bool, setOOB, 0xA59_win, 0xA45_mac);
+
 		GETTERFN(Point3D, getVelocity, 0xA00_win, 0x9EC_mac);
 		SETTERFN(Point3D, setVelocity, 0xA00_win, 0x9EC_mac);
 		GETTERFN(Point3D, getAngularVelocity, 0xA30_win, 0xA1C_mac);
@@ -66,7 +82,7 @@ namespace TGE
 		MEMBERFN(void, doPowerUp, (S32 powerUpId), 0x405F51_win, 0x2576B0_mac);
 
 		MEMBERFN(void, getCameraTransform, (F32 *pos, MatrixF *mat), 0x4982D0_win, 0x25B0A0_mac);
-		MEMBERFN(void, advancePhysics, (const Move *move, U32 delta), 0x40252C_win, 0x25B990_mac);
+		MEMBERFN(void, advancePhysics, (Move *move, U32 delta), 0x40252C_win, 0x25B990_mac);
 
 		MEMBERFN(void, renderImage, (SceneState *state, SceneRenderImage *image), 0x408305_win, 0x253600_mac);
 	};

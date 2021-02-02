@@ -29,9 +29,12 @@
 #include <TorqueLib/core/resManager.h>
 #include <TorqueLib/core/tVector.h>
 #include <TorqueLib/dgl/materialList.h>
+#include <TorqueLib/dgl/gTexManager.h>
 #include <TorqueLib/math/mPoint3.h>
 #include <TorqueLib/ts/tsMesh.h>
 #include <TorqueLib/ts/tsIntegerSet.h>
+#include <TorqueLib/ts/tsShape.h>
+#include <TorqueLib/interior/interior.h>
 
 namespace TGE
 {
@@ -49,7 +52,17 @@ namespace TGE
 		friend class TSLastDetail;
 		friend class TSPartInstance;
 		class TSDecalMesh;
-		class TSThread;
+		class TSThread
+		{
+			public:
+				GETTERFN(float, getPos, 0xC_win, 0xC_mac);
+				SETTERFN(float, setPos, 0xC_win, 0xC_mac);
+		};
+
+		MEMBERFN(void, setPos, (TSShapeInstance::TSThread* thread, F32 pos), 0x40924B_win, 0x1B27F0_mac);
+		MEMBERFN(void, setTimeScale, (TSShapeInstance::TSThread* thread, F32 t), 0x402991_win, 0x1B0AE0_mac);
+
+		MEMBERFN(void, advanceTime, (F32 delta), 0x4045FC_win, 0x1B2910_mac)
 
 		/// Base class for all renderable objects, including mesh objects and decal objects.
 		///
