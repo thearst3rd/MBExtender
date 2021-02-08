@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include "miniz.c"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -385,6 +386,40 @@ MBX_CONSOLE_FUNCTION(createSymlink, bool, 3, 3, "createSymlink(from, to) - Creat
 	//Create the link!
 	return symlink(from, to) == 0;
 }
+
+/**
+ * Create a zip file
+ * @arg path The path to the file to turned to zip
+ * @return whether the operation was successful or not
+ **/
+MBX_CONSOLE_FUNCTION(zip, int, 2, 2, "zip(string path)") {
+
+	TGE::ResourceObject* obj = TGE::ResourceManager->find(argv[1]);
+
+	if (obj != NULL) {
+
+		char path[256];
+		TGE::Con::expandScriptFilename(path, 256, argv[1]);
+
+		std::string outname = std::string(path) + ".zip";
+		FILE* f;
+		f = fopen(path, "rb");
+		fseek(f, 0, SEEK_END);
+		size_t len = ftell(f);
+		fseek(f, 0, SEEK_SET);
+		char* buffer = new char[len];
+		fread(buffer, 1, len, f);
+		fclose(f);
+
+		std::string fname = std::string(obj->name);
+
+		char comment[] = "compressed-rrec";
+		int status = mz_zip_add_mem_to_archive_file_in_place(outname.c_str(), fname.c_str(), buffer, len, comment, strlen(comment), MZ_BEST_COMPRESSION);
+		return status;
+	}
+	return 0;
+}
+
 
 //------------------------------------------------------------------------------
 
