@@ -6,4 +6,5 @@ add_plugin(FileExtension
 
 target_link_libraries(FileExtension
   PRIVATE
-    MathLib)
+    MathLib
+	cryptopp-static)

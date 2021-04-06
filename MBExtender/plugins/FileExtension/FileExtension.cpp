@@ -29,6 +29,8 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include "miniz.c"
+#include "../../external/cryptopp/sha.h"
+#include "../../external/cryptopp/hex.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -420,6 +422,75 @@ MBX_CONSOLE_FUNCTION(zip, int, 2, 2, "zip(string path)") {
 	return 0;
 }
 
+MBX_CONSOLE_FUNCTION(getFileSHA256, const char*, 2, 2, "getFileSHA256(path)") {
+	TGE::ResourceObject* obj = TGE::ResourceManager->find(argv[1]);
+
+	if (obj != NULL) {
+
+		char path[256];
+		TGE::Con::expandScriptFilename(path, 256, argv[1]);
+
+		CryptoPP::SHA256 hash;
+		byte digest[CryptoPP::SHA256::DIGESTSIZE];
+
+		std::string outname = std::string(path) + ".zip";
+		FILE* f;
+		f = fopen(path, "rb");
+		fseek(f, 0, SEEK_END);
+		size_t len = ftell(f);
+		fseek(f, 0, SEEK_SET);
+		char* buffer = new char[len];
+		fread(buffer, 1, len, f);
+		fclose(f);
+
+		hash.CalculateDigest(digest, (byte*)buffer, len);
+
+		CryptoPP::HexEncoder encoder;
+		std::string output;
+		encoder.Attach(new CryptoPP::StringSink(output));
+		encoder.Put(digest, sizeof(digest));
+		encoder.MessageEnd();
+
+		char* retbuf = TGE::Con::getReturnBuffer(output.size() + 1);
+		strcpy(retbuf, output.c_str());
+		return retbuf;
+	}
+}
+
+MBX_CONSOLE_FUNCTION(getMissionSHA256, const char*, 2, 2, "getMissionSHA256(path)") {
+	TGE::ResourceObject* obj = TGE::ResourceManager->find(argv[1]);
+
+	if (obj != NULL) {
+
+		char path[256];
+		TGE::Con::expandScriptFilename(path, 256, argv[1]);
+
+		CryptoPP::SHA256 hash;
+		byte digest[CryptoPP::SHA256::DIGESTSIZE];
+
+		std::string outname = std::string(path) + ".zip";
+		FILE* f;
+		f = fopen(path, "rb");
+		fseek(f, 0, SEEK_END);
+		size_t len = ftell(f);
+		fseek(f, 0, SEEK_SET);
+		char* buffer = new char[len];
+		fread(buffer, 1, len, f);
+		fclose(f);
+
+		hash.CalculateDigest(digest, (byte*)buffer, len);
+
+		CryptoPP::HexEncoder encoder;
+		std::string output;
+		encoder.Attach(new CryptoPP::StringSink(output));
+		encoder.Put(digest, sizeof(digest));
+		encoder.MessageEnd();
+
+		char* retbuf = TGE::Con::getReturnBuffer(output.size() + 1);
+		strcpy(retbuf, output.c_str());
+		return retbuf;
+	}
+}
 
 //------------------------------------------------------------------------------
 

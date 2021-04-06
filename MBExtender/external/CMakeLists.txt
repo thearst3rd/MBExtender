@@ -86,3 +86,8 @@ add_subdirectory(udis86)
 if(WIN32)
   add_subdirectory(mimalloc)
 endif()
+
+# crytopp
+set(BUILD_SHARED OFF)
+set(BUILD_STATIC ON)
+add_subdirectory(cryptopp)
