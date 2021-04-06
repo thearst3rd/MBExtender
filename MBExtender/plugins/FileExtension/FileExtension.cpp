@@ -433,7 +433,6 @@ MBX_CONSOLE_FUNCTION(getFileSHA256, const char*, 2, 2, "getFileSHA256(path)") {
 		CryptoPP::SHA256 hash;
 		byte digest[CryptoPP::SHA256::DIGESTSIZE];
 
-		std::string outname = std::string(path) + ".zip";
 		FILE* f;
 		f = fopen(path, "rb");
 		fseek(f, 0, SEEK_END);
@@ -467,8 +466,7 @@ MBX_CONSOLE_FUNCTION(getMissionSHA256, const char*, 2, 2, "getMissionSHA256(path
 
 		CryptoPP::SHA256 hash;
 		byte digest[CryptoPP::SHA256::DIGESTSIZE];
-
-		std::string outname = std::string(path) + ".zip";
+		 
 		FILE* f;
 		f = fopen(path, "rb");
 		fseek(f, 0, SEEK_END);
@@ -477,6 +475,9 @@ MBX_CONSOLE_FUNCTION(getMissionSHA256, const char*, 2, 2, "getMissionSHA256(path
 		char* buffer = new char[len];
 		fread(buffer, 1, len, f);
 		fclose(f);
+
+		std::string fp = std::string(argv[1]);
+		hash.Update((byte*)fp.c_str(), fp.size());
 
 		hash.CalculateDigest(digest, (byte*)buffer, len);
 
