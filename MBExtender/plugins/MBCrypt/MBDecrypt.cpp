@@ -178,10 +178,8 @@ MBX_OVERRIDE_MEMBERFN(TGE::File::FileStatus, TGE::File::read, (TGE::File* thispt
 		{
 			if (str->tell() == str->length())
 			{
-				char* newBuf = new char[bytesR];
-				memcpy(newBuf, buf, bytesR);
+				memcpy(dst, buf, bytesR);
 				delete[] buf;
-				memcpy(dst, newBuf, bytesR);
 				*bytesRead = bytesR;
 				thisptr->currentStatus = TGE::File::FileStatus::EOS;
 				return TGE::File::FileStatus::EOS;
@@ -336,8 +334,16 @@ MBX_OVERRIDE_FN(bool, TGE::Platform::getFileTimes, (const char* path, TGE::FileT
 		{
 			if (file.filepath == relativeDir)
 			{
-				createTime = new TGE::FileTime();
-				modifyTime = new TGE::FileTime();
+				if (createTime)
+				{
+					createTime->low = 0;
+					createTime->high = 0;
+				}
+				if (modifyTime)
+				{
+					modifyTime->low = 0;
+					modifyTime->high = 0;
+				}
 				return true;
 			}
 		}

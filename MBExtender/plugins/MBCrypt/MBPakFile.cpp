@@ -79,8 +79,10 @@ void MBPakFile::ReadHeader(std::ifstream& stream)
 
 	if (!this->VerifySignature(buffer, sz, this->keys->rsaPublicKey, this->key, this->keyLength))
 	{
+		delete[] buffer;
 		throw std::exception("Data integrity failed!");
 	}
+	delete[] buffer;
 }
 
 bool MBPakFile::VerifySignature(char* databuffer, size_t datalen, CryptoPP::RSA::PublicKey publickey, char* sign, size_t signlen)
@@ -191,6 +193,7 @@ char* MBPakFile::ReadFile(std::string filepath, std::string keyStr, int64_t* siz
 			uncompress((Bytef*)uncompressBuffer, &uSize, (Bytef*)buffer, zipSize);
 
 			*size = uSize;
+			delete[] buffer;
 			return uncompressBuffer;
 		}
 		else
