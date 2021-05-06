@@ -29,6 +29,14 @@ void MemoryStream::createFromBuffer(uint8_t* buffer, size_t count)
 	memcpy(this->buffer, buffer, count);
 }
 
+void MemoryStream::useBuffer(uint8_t* buffer, size_t count)
+{
+	this->buffer = buffer;
+	this->bufferSize = count;
+	this->properSize = count;
+	this->position = 0;
+}
+
 char MemoryStream::readChar()
 {
 	unsigned char chr = readUChar();

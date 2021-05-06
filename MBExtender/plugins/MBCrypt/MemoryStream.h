@@ -21,6 +21,7 @@ public:
 	MemoryStream();
 	~MemoryStream();
 	void createFromBuffer(uint8_t* buffer, size_t count);
+	void useBuffer(uint8_t* buffer, size_t count);
 	bool readBool();
 	int64_t readInt64();
 	int32_t readInt32();

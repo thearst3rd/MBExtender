@@ -55,20 +55,6 @@ MBX_CONSOLE_FUNCTION(loadMBPackage, void, 2, 2, "loadMBPackage(package)")
 	std::string zipn = std::string(argv[1]) + ".mbpak";
 	std::string path = std::string("packages/") + zipn;
 
-	FILE* f;
-	f = fopen(path.c_str(), "rb");
-	
-	fseek(f, 0, SEEK_END);
-	long fsize = ftell(f);
-	fseek(f, 0, SEEK_SET);
-
-	char* rawBuf = new char[fsize];
-	fread(rawBuf, 1, fsize, f);
-	fclose(f);
-
-	MemoryStream memstr;
-	memstr.createFromBuffer((uint8_t*)rawBuf, fsize);
-
 	try
 	{
 		MBPakFile pak(path, &keyStore);
@@ -120,7 +106,8 @@ MBX_CONSOLE_FUNCTION(isLoadedMBPackage, bool, 2, 2, "isLoadedMBPackage(package)"
 MBX_OVERRIDE_MEMBERFN(TGE::File::FileStatus, TGE::File::open, (TGE::File* thisptr, const char* filename, const TGE::File::AccessMode openMode), origOpen)
 {
 	if (openPakFiles.find(thisptr) != openPakFiles.end()) {
-		delete openPakFiles[thisptr];
+		MemoryStream* ptr = openPakFiles[thisptr];
+		delete ptr;
 		openPakFiles.erase(thisptr); // Close existing file cause bruh
 	}
 
@@ -137,6 +124,7 @@ MBX_OVERRIDE_MEMBERFN(TGE::File::FileStatus, TGE::File::open, (TGE::File* thispt
 					char* buf = pak.ReadFile(fn, keyStore.aesKey, &bufSize);
 					MemoryStream* str = new MemoryStream();
 					str->createFromBuffer((uint8_t*)buf, bufSize);
+					delete[] buf;
 					openPakFiles.insert(std::make_pair(thisptr, str));
 					thisptr->currentStatus = TGE::File::FileStatus::Ok;
 					thisptr->capability = TGE::File::Capability::FileRead;
@@ -157,7 +145,8 @@ MBX_OVERRIDE_MEMBERFN(TGE::File::FileStatus, TGE::File::open, (TGE::File* thispt
 MBX_OVERRIDE_MEMBERFN(TGE::File::FileStatus, TGE::File::close, (TGE::File* thisptr), origClose)
 {
 	if (openPakFiles.find(thisptr) != openPakFiles.end()) {
-		delete openPakFiles[thisptr];
+		MemoryStream* ptr = openPakFiles[thisptr];
+		delete ptr;
 		openPakFiles.erase(thisptr); // Close existing file cause bruh
 
 		thisptr->currentStatus = TGE::File::FileStatus::Closed;

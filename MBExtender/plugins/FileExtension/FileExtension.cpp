@@ -24,6 +24,8 @@
 #include <TorqueLib/console/console.h>
 #include <TorqueLib/core/resManager.h>
 #include <TorqueLib/core/stringTable.h>
+#include <TorqueLib/core/stream.h>
+#include <TorqueLib/core/fileStream.h>
 #include <MBExtender/MBExtender.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -430,19 +432,18 @@ MBX_CONSOLE_FUNCTION(getFileSHA256, const char*, 2, 2, "getFileSHA256(path)") {
 		char path[256];
 		TGE::Con::expandScriptFilename(path, 256, argv[1]);
 
+		TGE::Stream* stream = TGE::ResourceManager->openStream(obj);
+
+		char* buffer = new char[obj->fileSize];
+
+		stream->_read(obj->fileSize, buffer);
+
 		CryptoPP::SHA256 hash;
 		byte digest[CryptoPP::SHA256::DIGESTSIZE];
 
-		FILE* f;
-		f = fopen(path, "rb");
-		fseek(f, 0, SEEK_END);
-		size_t len = ftell(f);
-		fseek(f, 0, SEEK_SET);
-		char* buffer = new char[len];
-		fread(buffer, 1, len, f);
-		fclose(f);
+		hash.CalculateDigest(digest, (byte*)buffer, obj->fileSize);
 
-		hash.CalculateDigest(digest, (byte*)buffer, len);
+		delete[] buffer;
 
 		CryptoPP::HexEncoder encoder;
 		std::string output;
@@ -464,22 +465,21 @@ MBX_CONSOLE_FUNCTION(getMissionSHA256, const char*, 2, 2, "getMissionSHA256(path
 		char path[256];
 		TGE::Con::expandScriptFilename(path, 256, argv[1]);
 
+		TGE::Stream* stream = TGE::ResourceManager->openStream(obj);
+
+		char* buffer = new char[obj->fileSize];
+
+		stream->_read(obj->fileSize, buffer);
+
 		CryptoPP::SHA256 hash;
 		byte digest[CryptoPP::SHA256::DIGESTSIZE];
-		 
-		FILE* f;
-		f = fopen(path, "rb");
-		fseek(f, 0, SEEK_END);
-		size_t len = ftell(f);
-		fseek(f, 0, SEEK_SET);
-		char* buffer = new char[len];
-		fread(buffer, 1, len, f);
-		fclose(f);
 
 		std::string fp = std::string(argv[1]);
 		hash.Update((byte*)fp.c_str(), fp.size());
 
-		hash.CalculateDigest(digest, (byte*)buffer, len);
+		hash.CalculateDigest(digest, (byte*)buffer, obj->fileSize);
+
+		delete[] buffer;
 
 		CryptoPP::HexEncoder encoder;
 		std::string output;

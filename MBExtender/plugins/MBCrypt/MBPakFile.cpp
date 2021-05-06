@@ -106,8 +106,6 @@ char* MBPakFile::Decrypt(std::string filepath, std::string keyStr, int64_t* size
 	//encoder.Put(digest, sizeof(digest));
 	//encoder.MessageEnd();
 
-	CryptoPP::byte* keyBytes = (CryptoPP::byte*)keyStr.data();
-
 	for (int i = 0; i < entries.size(); i++)
 	{
 		if (entries[i].filepath == filepath)
@@ -125,31 +123,24 @@ char* MBPakFile::Decrypt(std::string filepath, std::string keyStr, int64_t* size
 		f.read(encryptedContents, entry->compressedSize);
 		f.close();
 
-		if (!entry->encrypted)
-			return encryptedContents;
-
-		MemoryStream encryptedData;
-		encryptedData.createFromBuffer((uint8_t*)encryptedContents, entry->compressedSize);
-
-		int ivLen = encryptedData.readInt32();
-		char* ivRaw = new char[ivLen];
-		for (int i = 0; i < ivLen; i++)
+		uint32_t num = 0;
+		for (int i = 0; i < sizeof(uint32_t); i++)
 		{
-			ivRaw[i] = encryptedData.readChar();
+			uint8_t byte = encryptedContents[i];
+			num += (static_cast<uint32_t>(byte) << (8 * i));
 		}
+		int ivLen = num;
+
+		CryptoPP::byte* ivRaw = (CryptoPP::byte*)&encryptedContents[4];
 
 		CryptoPP::CBC_Mode<CryptoPP::AES>::Decryption d;
-		d.SetKeyWithIV(reinterpret_cast<const CryptoPP::byte*>(&keyBytes[0]), 32, reinterpret_cast<const CryptoPP::byte*>(&ivRaw[0]), ivLen);
+		d.SetKeyWithIV(reinterpret_cast<const CryptoPP::byte*>(&keyStr[0]), 32, ivRaw, ivLen);
 
 		CryptoPP::StreamTransformationFilter decryptor(d);
 
-		int maxLen = encryptedData.length() - encryptedData.tell();
+		int maxLen = entry->compressedSize - 4 - ivLen;
 
-		for (int i = 0; i < maxLen; i++)
-		{
-			CryptoPP::byte b = encryptedData.readChar();
-			decryptor.Put(b);
-		}
+		decryptor.Put((CryptoPP::byte*)&encryptedContents[ivLen + 4], maxLen);
 
 		decryptor.MessageEnd();
 
@@ -160,7 +151,7 @@ char* MBPakFile::Decrypt(std::string filepath, std::string keyStr, int64_t* size
 
 		*size = decryptSize;
 
-		delete[] ivRaw;
+		delete[] encryptedContents;
 
 		return decryptedData;
 	}
