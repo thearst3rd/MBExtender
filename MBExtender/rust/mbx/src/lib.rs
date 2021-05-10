@@ -15,6 +15,7 @@ pub mod game;
 pub mod interop;
 pub mod logger;
 pub mod math;
+pub mod platform;
 pub mod prelude;
 pub mod sim;
 pub mod ts;

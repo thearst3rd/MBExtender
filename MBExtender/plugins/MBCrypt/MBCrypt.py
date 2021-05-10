@@ -6,6 +6,7 @@ import zlib
 import random
 import struct
 import base64
+from blake3 import *
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
 from Crypto.Util.Padding import pad
@@ -112,7 +113,9 @@ class MBPakFile:
                 databuffer = datastream.getvalue()
 
         # hash the thing for signing
-        hash = SHA256.new(databuffer)
+        blakehash = blake3(databuffer).digest()
+
+        hash = SHA256.new(blakehash)
 
         publickey, privatekey = rsakey
 
@@ -174,7 +177,8 @@ class MBPakFile:
 
     def verifysign(self, databuffer, publickey, sign):
         verifier = pkcs1_15.new(publickey)
-        hash = SHA256.new(databuffer)
+        blakehash = blake3(databuffer).digest()
+        hash = SHA256.new(blakehash)
 
         try:
             verifier.verify(hash, sign)
