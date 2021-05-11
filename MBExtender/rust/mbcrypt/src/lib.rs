@@ -215,25 +215,30 @@ unsafe fn platform_dumppath(
 ) -> bool {
     let ret = original_platform_dumppath(path, fileVector);
     let pathstr = CStr::from_ptr(path).to_str().unwrap();
-    let search = searchEntry(pathstr);
+
     let workingdir = platform::get_current_directory();
     let relativedir = str::replace(pathstr, workingdir, "");
-    if search.is_some() {
-        let file = search.unwrap();
-        let a = file.file_path.rfind('/').unwrap();
-        let mut dpath = &file.file_path[..a];
-        dpath = &dpath[relativedir.len()..];
-        let thispath = combine(pathstr, dpath);
-        let fpath = std::path::Path::new(file.file_path.as_str());
-        let fname = fpath.file_name().unwrap().to_str().unwrap();
+    for package in loadedPackages.lock().unwrap().iter() {
+        for entry in package.entries.iter() {
+            if entry.file_path.starts_with(&relativedir) {
+                let file = entry;
 
-        let f = platform::FileInfo {
-            filesize: file.uncompressed_size as u32,
-            filename: core::STRING_TABLE.insert_raw(fname, false),
-            fullpath: core::STRING_TABLE.insert_raw(thispath.as_str(), true),
-        };
+                let a = file.file_path.rfind('/').unwrap();
+                let mut dpath = &file.file_path[..a];
+                dpath = &dpath[relativedir.len()..];
+                let thispath = combine(pathstr, dpath);
+                let fpath = std::path::Path::new(file.file_path.as_str());
+                let fname = fpath.file_name().unwrap().to_str().unwrap();
 
-        fileVector.push(f);
+                let f = platform::FileInfo {
+                    filesize: file.uncompressed_size as u32,
+                    filename: core::STRING_TABLE.insert_raw(fname, false),
+                    fullpath: core::STRING_TABLE.insert_raw(thispath.as_str(), true),
+                };
+
+                fileVector.push(f);
+            }
+        }
     }
     return fileVector.len() != 0;
 }
