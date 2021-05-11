@@ -224,7 +224,7 @@ unsafe fn platform_dumppath(
         let mut dpath = &file.file_path[..a];
         dpath = &dpath[relativedir.len()..];
         let thispath = combine(pathstr, dpath);
-        let fpath = std::path::Path::new(pathstr);
+        let fpath = std::path::Path::new(file.file_path.as_str());
         let fname = fpath.file_name().unwrap().to_str().unwrap();
 
         let f = platform::FileInfo {
