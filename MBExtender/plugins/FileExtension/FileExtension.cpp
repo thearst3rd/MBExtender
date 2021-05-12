@@ -439,9 +439,9 @@ MBX_CONSOLE_FUNCTION(getFileSHA256, const char*, 2, 2, "getFileSHA256(path)") {
 		stream->_read(obj->fileSize, buffer);
 
 		CryptoPP::SHA256 hash;
-		byte digest[CryptoPP::SHA256::DIGESTSIZE];
+		CryptoPP::byte digest[CryptoPP::SHA256::DIGESTSIZE];
 
-		hash.CalculateDigest(digest, (byte*)buffer, obj->fileSize);
+		hash.CalculateDigest(digest, (CryptoPP::byte*)buffer, obj->fileSize);
 
 		delete[] buffer;
 
@@ -472,12 +472,12 @@ MBX_CONSOLE_FUNCTION(getMissionSHA256, const char*, 2, 2, "getMissionSHA256(path
 		stream->_read(obj->fileSize, buffer);
 
 		CryptoPP::SHA256 hash;
-		byte digest[CryptoPP::SHA256::DIGESTSIZE];
+		CryptoPP::byte digest[CryptoPP::SHA256::DIGESTSIZE];
 
 		std::string fp = std::string(argv[1]);
 		hash.Update((byte*)fp.c_str(), fp.size());
 
-		hash.CalculateDigest(digest, (byte*)buffer, obj->fileSize);
+		hash.CalculateDigest(digest, (CryptoPP::byte*)buffer, obj->fileSize);
 
 		delete[] buffer;
 

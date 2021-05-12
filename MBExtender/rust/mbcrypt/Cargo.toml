@@ -14,7 +14,7 @@ log = { version = "0.4", features = ["release_max_level_debug", "std"] }
 mbx = { path = "../mbx" }
 mbx-proc = { path = "../mbx-proc" }
 compress = "0.2.1"
-aes = "0.7.0"
+aes = { version = "=0.7.0-pre", features = ["force-soft"] }
 rsa = "0.4.0"
 hex = "0.4.3"
 block-modes = "0.8.1"
