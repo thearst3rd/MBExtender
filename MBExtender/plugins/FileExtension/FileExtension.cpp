@@ -48,15 +48,17 @@
  * Make a directory (windows-specific bridge).
  * @return Zero for success, non-zero for error.
  */
-inline int mkdir(const char *a, int b){
-   return _mkdir(a);
+inline int mkdir(const char *a, int b)
+{
+	return _mkdir(a);
 }
 
 /**
  * Change permissions (windows-specific bridge).
  * @return Zero for success, non-zero for error.
  */
-inline int chmod(const char *a, int b){
+inline int chmod(const char *a, int b)
+{
 	return 0; //Windows is different
 }
 
@@ -64,7 +66,8 @@ inline int chmod(const char *a, int b){
  * Create a symbolic link (windows-specific bridge).
  * @return Zero for success, non-zero for error.
  */
-inline int symlink(const char *a, const char *b) {
+inline int symlink(const char *a, const char *b)
+{
 	int ret = CreateSymbolicLink(a, b, 0);
 	if (!ret)
 		return GetLastError();
@@ -104,7 +107,7 @@ static bool pathComponentsAreEqual(const char *lhs, const char *rhs)
 	}
 }
 
-static const char* nextPathComponent(const char *path)
+static const char *nextPathComponent(const char *path)
 {
 	while (*path && *path != '/' && *path != '\\')
 		path++;
@@ -118,7 +121,8 @@ static const char* nextPathComponent(const char *path)
  * @arg path The path to check
  * @return Whether the path can be accessed
  */
-static bool pathCheck(const char *path) {
+static bool pathCheck(const char *path)
+{
 	// Disallow absolute paths
 	if (path[0] == '/')
 		return false;
@@ -159,7 +163,8 @@ int cp(const char *to, const char *from);
  * @arg file The file whose size to get
  * @return The file's size as a string (because of Torque floats)
  */
-MBX_CONSOLE_FUNCTION(getFileSize, const char *, 2, 2, "getFileSize(file) - Get the file's size, in bytes") {
+MBX_CONSOLE_FUNCTION(getFileSize, const char *, 2, 2, "getFileSize(file) - Get the file's size, in bytes")
+{
 	//HOLY SHIT BATMAN SECURITY HOLE PARTY
 	if (!pathCheck(argv[1]))
 		return "0";
@@ -169,7 +174,8 @@ MBX_CONSOLE_FUNCTION(getFileSize, const char *, 2, 2, "getFileSize(file) - Get t
 
 	//Open the file or return 0 if it does not exist
 	FILE *file = fopen(path, "rb");
-	if (!file) {
+	if (!file)
+	{
 		return "0";
 	}
 
@@ -190,7 +196,8 @@ MBX_CONSOLE_FUNCTION(getFileSize, const char *, 2, 2, "getFileSize(file) - Get t
  * @arg file The file/directory to delete.
  * @return Whether or not the operation was successful.
  */
-MBX_CONSOLE_FUNCTION(deleteFile, bool, 2, 2, "deleteFile(file) - Delete a file from the filesystem.") {
+MBX_CONSOLE_FUNCTION(deleteFile, bool, 2, 2, "deleteFile(file) - Delete a file from the filesystem.")
+{
 	//HOLY SHIT BATMAN SECURITY HOLE PARTY
 	if (!pathCheck(argv[1]))
 		return false;
@@ -199,7 +206,8 @@ MBX_CONSOLE_FUNCTION(deleteFile, bool, 2, 2, "deleteFile(file) - Delete a file f
 	TGE::Con::expandScriptFilename(path, 256, argv[1]);
 
 	//Burp
-	if (remove(path) != 0) {
+	if (remove(path) != 0)
+	{
 		return false;
 	}
 
@@ -216,7 +224,8 @@ MBX_CONSOLE_FUNCTION(deleteFile, bool, 2, 2, "deleteFile(file) - Delete a file f
  * @arg to The destination file/directory.
  * @return Whether or not the operation was successful.
  */
-MBX_CONSOLE_FUNCTION(moveFile, bool, 3, 3, "moveFile(from, to) - Move a file from one place to another.") {
+MBX_CONSOLE_FUNCTION(moveFile, bool, 3, 3, "moveFile(from, to) - Move a file from one place to another.")
+{
 	//HOLY SHIT BATMAN SECURITY HOLE PARTY
 	if (!pathCheck(argv[1]) || !pathCheck(argv[2]))
 		return false;
@@ -228,13 +237,15 @@ MBX_CONSOLE_FUNCTION(moveFile, bool, 3, 3, "moveFile(from, to) - Move a file fro
 	TGE::Con::expandScriptFilename(to, 256, argv[2]);
 
 	//Move
-	if (rename(from, to) != 0) {
+	if (rename(from, to) != 0)
+	{
 		return false;
 	}
 
 	//Tell the FS we've moved it
 	TGE::ResourceObject *res = TGE::ResourceManager->find(from);
-	if (!res) {
+	if (!res)
+	{
 		return true;
 	}
 
@@ -244,10 +255,13 @@ MBX_CONSOLE_FUNCTION(moveFile, bool, 3, 3, "moveFile(from, to) - Move a file fro
 	const char *path;
 	const char *file;
 
-	if (lastSlash == std::string::npos) {
+	if (lastSlash == std::string::npos)
+	{
 		path = ""_ts;
 		file = TGE::StringTable->insert(to, false);
-	} else {
+	}
+	else
+	{
 		path = TGE::StringTable->insert(toStr.substr(0, lastSlash).c_str(), false);
 		file = TGE::StringTable->insert(toStr.substr(lastSlash + 1).c_str(), false);
 	}
@@ -269,7 +283,8 @@ MBX_CONSOLE_FUNCTION(moveFile, bool, 3, 3, "moveFile(from, to) - Move a file fro
  * @arg to The destination file/directory.
  * @return Whether or not the operation was successful.
  */
-MBX_CONSOLE_FUNCTION(copyFile, bool, 3, 3, "copyFile(from, to) - Create a copy of a file.") {
+MBX_CONSOLE_FUNCTION(copyFile, bool, 3, 3, "copyFile(from, to) - Create a copy of a file.")
+{
 	//HOLY SHIT BATMAN SECURITY HOLE PARTY
 	if (!pathCheck(argv[1]) || !pathCheck(argv[2]))
 		return false;
@@ -281,13 +296,15 @@ MBX_CONSOLE_FUNCTION(copyFile, bool, 3, 3, "copyFile(from, to) - Create a copy o
 	TGE::Con::expandScriptFilename(to, 256, argv[2]);
 
 	//Copy file
-	if (cp(to, from) != 0) {
+	if (cp(to, from) != 0)
+	{
 		return false;
 	}
 
 	//Tell the FS we've moved it
 	TGE::ResourceObject *res = TGE::ResourceManager->find(from);
-	if (!res) {
+	if (!res)
+	{
 		return true;
 	}
 
@@ -297,10 +314,13 @@ MBX_CONSOLE_FUNCTION(copyFile, bool, 3, 3, "copyFile(from, to) - Create a copy o
 	const char *path;
 	const char *file;
 
-	if (lastSlash == std::string::npos) {
+	if (lastSlash == std::string::npos)
+	{
 		path = TGE::StringTable->insert("", false);
 		file = TGE::StringTable->insert(to, false);
-	} else {
+	}
+	else
+	{
 		path = TGE::StringTable->insert(toStr.substr(0, lastSlash).c_str(), false);
 		file = TGE::StringTable->insert(toStr.substr(lastSlash + 1).c_str(), false);
 	}
@@ -320,7 +340,8 @@ MBX_CONSOLE_FUNCTION(copyFile, bool, 3, 3, "copyFile(from, to) - Create a copy o
  * @arg mode The unix file mode of the directory. Defaults to 0755.
  * @return Whether or not the operation was successful.
  */
-MBX_CONSOLE_FUNCTION(mkdir, bool, 2, 3, "mkdir(directory, [mode]) - Create an empty directory") {
+MBX_CONSOLE_FUNCTION(mkdir, bool, 2, 3, "mkdir(directory, [mode]) - Create an empty directory")
+{
 	//HOLY SHIT BATMAN SECURITY HOLE PARTY
 	if (!pathCheck(argv[1]))
 		return false;
@@ -339,7 +360,8 @@ MBX_CONSOLE_FUNCTION(mkdir, bool, 2, 3, "mkdir(directory, [mode]) - Create an em
  * @arg mode The unix file mode of the directory. Defaults to 0644.
  * @return Whether or not the operation was successful.
  */
-MBX_CONSOLE_FUNCTION(chmod, bool, 3, 3, "chmod(file, mode) - Change a file's mode") {
+MBX_CONSOLE_FUNCTION(chmod, bool, 3, 3, "chmod(file, mode) - Change a file's mode")
+{
 	//HOLY SHIT BATMAN SECURITY HOLE PARTY
 	if (!pathCheck(argv[1]))
 		return false;
@@ -357,7 +379,8 @@ MBX_CONSOLE_FUNCTION(chmod, bool, 3, 3, "chmod(file, mode) - Change a file's mod
  * @arg mode The unix file mode for the file. Defaults to 0644.
  * @return Whether or not the operation was successful.
  */
-MBX_CONSOLE_FUNCTION(touch, bool, 2, 3, "touch(file, [mode]) - Create a blank file") {
+MBX_CONSOLE_FUNCTION(touch, bool, 2, 3, "touch(file, [mode]) - Create a blank file")
+{
 	//HOLY SHIT BATMAN SECURITY HOLE PARTY
 	if (!pathCheck(argv[1]))
 		return false;
@@ -376,7 +399,8 @@ MBX_CONSOLE_FUNCTION(touch, bool, 2, 3, "touch(file, [mode]) - Create a blank fi
  * @arg to The destination file/directory for the link.
  * @return Whether or not the operation was successful.
  */
-MBX_CONSOLE_FUNCTION(createSymlink, bool, 3, 3, "createSymlink(from, to) - Create symbolic links") {
+MBX_CONSOLE_FUNCTION(createSymlink, bool, 3, 3, "createSymlink(from, to) - Create symbolic links")
+{
 	//HOLY SHIT BATMAN SECURITY HOLE PARTY
 	if (!pathCheck(argv[1]) || !pathCheck(argv[2]))
 		return false;
@@ -396,22 +420,24 @@ MBX_CONSOLE_FUNCTION(createSymlink, bool, 3, 3, "createSymlink(from, to) - Creat
  * @arg path The path to the file to turned to zip
  * @return whether the operation was successful or not
  **/
-MBX_CONSOLE_FUNCTION(zip, int, 2, 2, "zip(string path)") {
+MBX_CONSOLE_FUNCTION(zip, int, 2, 2, "zip(string path)")
+{
 
-	TGE::ResourceObject* obj = TGE::ResourceManager->find(argv[1]);
+	TGE::ResourceObject *obj = TGE::ResourceManager->find(argv[1]);
 
-	if (obj != NULL) {
+	if (obj != NULL)
+	{
 
 		char path[256];
 		TGE::Con::expandScriptFilename(path, 256, argv[1]);
 
 		std::string outname = std::string(path) + ".zip";
-		FILE* f;
+		FILE *f;
 		f = fopen(path, "rb");
 		fseek(f, 0, SEEK_END);
 		size_t len = ftell(f);
 		fseek(f, 0, SEEK_SET);
-		char* buffer = new char[len];
+		char *buffer = new char[len];
 		fread(buffer, 1, len, f);
 		fclose(f);
 
@@ -424,24 +450,26 @@ MBX_CONSOLE_FUNCTION(zip, int, 2, 2, "zip(string path)") {
 	return 0;
 }
 
-MBX_CONSOLE_FUNCTION(getFileSHA256, const char*, 2, 2, "getFileSHA256(path)") {
-	TGE::ResourceObject* obj = TGE::ResourceManager->find(argv[1]);
+MBX_CONSOLE_FUNCTION(getFileSHA256, const char *, 2, 2, "getFileSHA256(path)")
+{
+	TGE::ResourceObject *obj = TGE::ResourceManager->find(argv[1]);
 
-	if (obj != NULL) {
+	if (obj != NULL)
+	{
 
 		char path[256];
 		TGE::Con::expandScriptFilename(path, 256, argv[1]);
 
-		TGE::Stream* stream = TGE::ResourceManager->openStream(obj);
+		TGE::Stream *stream = TGE::ResourceManager->openStream(obj);
 
-		char* buffer = new char[obj->fileSize];
+		char *buffer = new char[obj->fileSize];
 
 		stream->_read(obj->fileSize, buffer);
 
 		CryptoPP::SHA256 hash;
 		CryptoPP::byte digest[CryptoPP::SHA256::DIGESTSIZE];
 
-		hash.CalculateDigest(digest, (CryptoPP::byte*)buffer, obj->fileSize);
+		hash.CalculateDigest(digest, (CryptoPP::byte *)buffer, obj->fileSize);
 
 		delete[] buffer;
 
@@ -451,23 +479,25 @@ MBX_CONSOLE_FUNCTION(getFileSHA256, const char*, 2, 2, "getFileSHA256(path)") {
 		encoder.Put(digest, sizeof(digest));
 		encoder.MessageEnd();
 
-		char* retbuf = TGE::Con::getReturnBuffer(output.size() + 1);
+		char *retbuf = TGE::Con::getReturnBuffer(output.size() + 1);
 		strcpy(retbuf, output.c_str());
 		return retbuf;
 	}
 }
 
-MBX_CONSOLE_FUNCTION(getMissionSHA256, const char*, 2, 2, "getMissionSHA256(path)") {
-	TGE::ResourceObject* obj = TGE::ResourceManager->find(argv[1]);
+MBX_CONSOLE_FUNCTION(getMissionSHA256, const char *, 2, 2, "getMissionSHA256(path)")
+{
+	TGE::ResourceObject *obj = TGE::ResourceManager->find(argv[1]);
 
-	if (obj != NULL) {
+	if (obj != NULL)
+	{
 
 		char path[256];
 		TGE::Con::expandScriptFilename(path, 256, argv[1]);
 
-		TGE::Stream* stream = TGE::ResourceManager->openStream(obj);
+		TGE::Stream *stream = TGE::ResourceManager->openStream(obj);
 
-		char* buffer = new char[obj->fileSize];
+		char *buffer = new char[obj->fileSize];
 
 		stream->_read(obj->fileSize, buffer);
 
@@ -475,9 +505,9 @@ MBX_CONSOLE_FUNCTION(getMissionSHA256, const char*, 2, 2, "getMissionSHA256(path
 		CryptoPP::byte digest[CryptoPP::SHA256::DIGESTSIZE];
 
 		std::string fp = std::string(argv[1]);
-		hash.Update((byte*)fp.c_str(), fp.size());
+		hash.Update((CryptoPP::byte *)fp.c_str(), fp.size());
 
-		hash.CalculateDigest(digest, (CryptoPP::byte*)buffer, obj->fileSize);
+		hash.CalculateDigest(digest, (CryptoPP::byte *)buffer, obj->fileSize);
 
 		delete[] buffer;
 
@@ -487,7 +517,7 @@ MBX_CONSOLE_FUNCTION(getMissionSHA256, const char*, 2, 2, "getMissionSHA256(path
 		encoder.Put(digest, sizeof(digest));
 		encoder.MessageEnd();
 
-		char* retbuf = TGE::Con::getReturnBuffer(output.size() + 1);
+		char *retbuf = TGE::Con::getReturnBuffer(output.size() + 1);
 		strcpy(retbuf, output.c_str());
 		return retbuf;
 	}
@@ -522,7 +552,8 @@ int cp(const char *to, const char *from)
 		char *out_ptr = buf;
 		ssize_t nwritten;
 
-		do {
+		do
+		{
 			nwritten = write(fd_to, out_ptr, nread);
 
 			if (nwritten >= 0)
