@@ -310,6 +310,8 @@ unsafe fn platform_is_subdirectory(parent: *const c_char, child: *const c_char) 
 #[plugin_main]
 fn main(plugin: &Plugin) -> Result<(), &'static str> {
     con::add_command(&loadMBPackage);
+    con::add_command(&unloadMBPackage);
+    con::add_command(&isMBPackageLoaded);
 
     plugin.intercept(
         platform::tge_platform_is_subdirectory,
