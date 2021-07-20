@@ -43,6 +43,30 @@ fn loadMBPackage(_obj: *mut SimObject, argc: i32, argv: con::Argv) {
     }
 }
 
+#[command(args = 2, usage = "unloadMBPackage(package)")]
+fn unloadMBPackage(_obj: *mut SimObject, argc: i32, argv: con::Argv) {
+    let args = con::collect_args(argc, argv);
+    let packagename = String::from(args[1]);
+    let indexToRemove = loadedPackages.lock().unwrap().iter().position(|x| x.name == packagename);
+    match indexToRemove {
+        Some(i) => {
+            loadedPackages.lock().unwrap().remove(i);
+        }
+        None => {}
+    };
+}
+
+#[command(args = 2, usage = "isMBPackageLoaded")]
+fn isMBPackageLoaded(_obj: *mut SimObject, argc: i32, argv: con::Argv) -> *const c_char {
+    let args = con::collect_args(argc, argv);
+    let packagename = String::from(args[1]);
+    let indexToRemove = loadedPackages.lock().unwrap().iter().position(|x| x.name == packagename);
+    match indexToRemove {
+        Some(i) => con::get_return_buffer("1"),
+        None => con::get_return_buffer("0"),
+    }
+}
+
 fn searchEntry(path: &str) -> Option<MBPakFileEntry> {
     let workingdir = platform::get_current_directory();
     let relativedir = str::replace(path, workingdir, "");
