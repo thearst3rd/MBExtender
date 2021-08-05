@@ -86,6 +86,7 @@ bool initPlugin(MBX::Plugin &plugin)
 	MBX_INSTALL(plugin, ReflectiveMarble);
 	MBX_INSTALL(plugin, SkyMaterial);
 	MBX_INSTALL(plugin, TextureSwapping);
+	MBX_INSTALL(plugin, DtsExtension);
 	return true;
 }
 

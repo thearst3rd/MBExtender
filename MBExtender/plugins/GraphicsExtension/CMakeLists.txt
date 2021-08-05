@@ -20,6 +20,9 @@ add_plugin(GraphicsExtension
   TriangleList.h
   TSMeshTriangleList.cpp
   TSMeshTriangleList.h
+  dtsRender.cpp
+  DTSRenderer.cpp
+  DTSRenderer.h
 
   difviewer/io.cpp
   difviewer/material.cpp
