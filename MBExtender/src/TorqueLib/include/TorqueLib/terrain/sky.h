@@ -26,6 +26,7 @@
 #include <TorqueLib/platform/platform.h>
 
 #include <TorqueLib/sim/netObject.h>
+#include <TorqueLib/sceneGraph/sceneState.h>
 
 namespace TGE
 {
@@ -37,6 +38,8 @@ namespace TGE
 		MEMBERFN(U32, packUpdate, (NetConnection *connection, U32 mask, BitStream *stream), 0x405E43_win, 0x1ADEB0_mac);
 		MEMBERFN(void, unpackUpdate, (NetConnection *connection, BitStream *stream), 0x4065E6_win, 0x1AE7B0_mac);
 		MEMBERFN(bool, loadDml, (), 0x404061_win, 0x1AB7F0_mac);
+
+		MEMBERFN(void, renderObject, (SceneState *state, SceneRenderImage *image), 0x4050CE_win, 0x1AD8D0_mac);
 
 		GETTERFN(const char *, getMaterialList, 0xDB0);
 		SETTERFN(const char *, setMaterialList, 0xDB0);
