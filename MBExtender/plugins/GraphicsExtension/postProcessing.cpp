@@ -46,6 +46,11 @@ struct FrameBufferObject {
 	GLuint multisampleDepthTextureHandle = 0;
 	GLuint bufferHandle = 0;
 	GLuint multisampleBufferHandle = 0;
+	GLuint bloomFrameBuffer = 0;
+	GLuint bloomColorTextureHandle = 0;
+	GLuint bloomDepthTextureHandle = 0;
+	GLuint bloomFinalFrameBuffer = 0;
+	GLuint bloomFinalColorTextureHandle = 0;
 	GLuint depthBufferHandle = 0;
 	GLuint finalRenderBufferHandle = 0;
 	GLuint finalRenderColorTextureHandle = 0;
@@ -56,12 +61,18 @@ struct FrameBufferObject {
 	GLuint quadVBO = 0;
 
 	Shader *shader = nullptr;
+	Shader* blurShader = nullptr;
 };
 
 std::string gPostFXVertShader = "platinum/data/shaders/postfxV.glsl";
 std::string gPostFXFragShader = "platinum/data/shaders/postfxF.glsl";
 
+std::string gPostFXBlurVertShader = "platinum/data/shaders/postfxV.glsl";
+std::string gPostFXBlurFragShader = "platinum/data/shaders/postfxBlurF.glsl";
+
 FrameBufferObject *gFBO = NULL;
+
+bool renderingBloom = false;
 
 void setUpPostProcessing();
 bool initNonMultisampleFrameBuffer(Point2I extent);
@@ -146,11 +157,61 @@ MBX_OVERRIDE_FN(void, TGE::GameRenderWorld, (), originalGameRenderWorld) { // DO
 	renderGame(0xFFFFFFFF);
 	GL_CheckErrors("render game");
 
-	glPushMatrix();
-	glLoadIdentity();
+	// draw the shit on the bloom buffer
+	renderingBloom = true;
+	glBindFramebuffer(GL_FRAMEBUFFER, gFBO->bloomFrameBuffer);
+	GL_CheckErrors("activate bloombuffer");
+	glClearColor(0, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	renderGame(0xFFFFFFFF);
+	GL_CheckErrors("render game");
+	renderingBloom = false;
+
 
 	// post processing
 	glViewport(0, 0, extent.x, extent.y);
+	glPushMatrix();
+	glLoadIdentity();
+
+	glPushMatrix();
+	glLoadIdentity();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, gFBO->bloomFinalFrameBuffer);
+	GL_CheckErrors("render bloom");
+	glClearColor(0, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	// bind shader and texture uniform
+	if (!glIsEnabled(GL_TEXTURE_2D))
+		glEnable(GL_TEXTURE_2D);
+
+	gFBO->blurShader->activate();
+	gFBO->blurShader->setUniformLocation("textureSampler", 0);
+	gFBO->blurShader->setUniformLocation("depthSampler", 1);
+	gFBO->blurShader->setUniformLocation("bloomDepthSampler", 2);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, gFBO->bloomColorTextureHandle);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, gFBO->depthTextureHandle);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, gFBO->bloomDepthTextureHandle);
+	glUniform2f(gFBO->blurShader->getUniformLocation("screenSize"), static_cast<F32>(extent.x), static_cast<F32>(extent.y));
+	GL_CheckErrors("activate bloom shader");
+
+	// send verts
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, gFBO->quadVBO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	GL_CheckErrors("send verts");
+	// Draw the quad! Remember, it's 2 triangles!
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	GL_CheckErrors("draw quad");
+	gFBO->blurShader->deactivate();
+	if (glIsEnabled(GL_TEXTURE_2D))
+		glDisable(GL_TEXTURE_2D);
+
+	glPopMatrix();
+
 
 	if (hasMultisampleBuffer()) {
 		// Blit the multisampled frame buffer to the non-multisampled one
@@ -179,13 +240,16 @@ MBX_OVERRIDE_FN(void, TGE::GameRenderWorld, (), originalGameRenderWorld) { // DO
 	gFBO->shader->activate();
 	gFBO->shader->setUniformLocation("textureSampler", 0);
 	gFBO->shader->setUniformLocation("depthSampler", 1);
+	gFBO->shader->setUniformLocation("bloomSampler", 2);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, gFBO->colorTextureHandle);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, gFBO->depthTextureHandle);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, gFBO->bloomFinalColorTextureHandle);
 	glUniform2f(gFBO->screenSizeLocation, static_cast<F32>(extent.x), static_cast<F32>(extent.y));
-	GL_CheckErrors("activate shader");
+	GL_CheckErrors("activate postfx shader");
 
 	// send verts
 	glEnableVertexAttribArray(0);
@@ -203,6 +267,8 @@ MBX_OVERRIDE_FN(void, TGE::GameRenderWorld, (), originalGameRenderWorld) { // DO
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	gFBO->shader->deactivate();
 	if (glIsEnabled(GL_TEXTURE_2D))
@@ -271,7 +337,7 @@ void setUpPostProcessing() {
 	initQuadBuffer();
 	initFBOShader();
 
-	if (gFBO->shader->getProgramId() > 0) {
+	if (gFBO->shader->getProgramId() > 0 && gFBO->blurShader->getProgramId() > 0) {
 		gFBO->setUpProperly = true;
 		TGE::Con::printf("Post processing initialized.");
 	} else {
@@ -321,6 +387,56 @@ bool initNonMultisampleFrameBuffer(Point2I extent) {
 		return false;
 	}
 
+	// create non-multisampled bloom fbo handle
+	glGenFramebuffers(1, &gFBO->bloomFrameBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, gFBO->bloomFrameBuffer);
+
+	// set up non-multisampled texture
+	glGenTextures(1, &gFBO->bloomColorTextureHandle);
+	glBindTexture(GL_TEXTURE_2D, gFBO->bloomColorTextureHandle);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, extent.x, extent.y, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	// set up non-multisampled texture
+	glGenTextures(1, &gFBO->bloomDepthTextureHandle);
+	glBindTexture(GL_TEXTURE_2D, gFBO->bloomDepthTextureHandle);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, extent.x, extent.y, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	// associate the texture with the fbo
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gFBO->bloomColorTextureHandle, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gFBO->bloomDepthTextureHandle, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	result &= (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+	GL_CheckErrors("init bloom non-msaa framebuffer");
+
+	// create non-multisampled bloom final fbo handle
+	glGenFramebuffers(1, &gFBO->bloomFinalFrameBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, gFBO->bloomFinalFrameBuffer);
+
+	// set up non-multisampled texture
+	glGenTextures(1, &gFBO->bloomFinalColorTextureHandle);
+	glBindTexture(GL_TEXTURE_2D, gFBO->bloomFinalColorTextureHandle);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, extent.x, extent.y, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	// associate the texture with the fbo
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gFBO->bloomFinalColorTextureHandle, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	result &= (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+	GL_CheckErrors("init bloom non-msaa framebuffer");
+
 	glGenFramebuffers(1, &gFBO->finalRenderBufferHandle);
 	glBindFramebuffer(GL_FRAMEBUFFER, gFBO->finalRenderBufferHandle);
 
@@ -337,8 +453,8 @@ bool initNonMultisampleFrameBuffer(Point2I extent) {
 	glBindTexture(GL_TEXTURE_2D, 0);
 	result = (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 	GL_CheckErrors("init non-msaa framebuffer");
+
 	return result;
 }
 
@@ -457,20 +573,25 @@ void initQuadBuffer() {
 }
 
 void initFBOShader() {
-	if (!gFBO || gFBO->shader || !gEnableState.global || !gEnableState.postFX)
+	if (!gFBO || gFBO->shader || !gEnableState.global || !gEnableState.postFX /*|| gFBO->blurShader*/)
 		return;
 
-	// create and set up shader
-	gFBO->shader = new Shader(gPostFXVertShader, gPostFXFragShader);
-	gFBO->shader->activate();
+	if (gFBO->shader == NULL) {
+		// create and set up shader
+		gFBO->shader = new Shader(gPostFXVertShader, gPostFXFragShader);
+		gFBO->shader->activate();
 
-	// set up uniforms and attribute locations
-	gFBO->shader->setUniformLocation("textureSampler", 0);
-	gFBO->shader->setUniformLocation("depthSampler", 1);
-	gFBO->screenSizeLocation = gFBO->shader->getUniformLocation("screenSize");
+		// set up uniforms and attribute locations
+		gFBO->shader->setUniformLocation("textureSampler", 0);
+		gFBO->shader->setUniformLocation("depthSampler", 1);
+		gFBO->screenSizeLocation = gFBO->shader->getUniformLocation("screenSize");
 
-	// clear shader and reset buffers
-	gFBO->shader->deactivate();
+		// clear shader and reset buffers
+		gFBO->shader->deactivate();
+	}
+
+	if (gFBO->blurShader == NULL)
+		gFBO->blurShader = new Shader(gPostFXBlurVertShader, gPostFXBlurFragShader);
 }
 
 void unloadTextures() {
@@ -478,10 +599,15 @@ void unloadTextures() {
 		return;
 	glDeleteTextures(1, &gFBO->colorTextureHandle);
 	glDeleteTextures(1, &gFBO->depthTextureHandle);
+	glDeleteTextures(1, &gFBO->bloomColorTextureHandle);
+	glDeleteTextures(1, &gFBO->bloomDepthTextureHandle);
+	glDeleteTextures(1, &gFBO->bloomFinalColorTextureHandle);
 	glDeleteTextures(1, &gFBO->multisampleColorTextureHandle);
 	glDeleteTextures(1, &gFBO->multisampleDepthTextureHandle);
 	glDeleteTextures(1, &gFBO->finalRenderColorTextureHandle);
 	glDeleteFramebuffers(1, &gFBO->bufferHandle);
+	glDeleteFramebuffers(1, &gFBO->bloomFrameBuffer);
+	glDeleteFramebuffers(1, &gFBO->bloomFinalFrameBuffer);
 	glDeleteFramebuffers(1, &gFBO->multisampleBufferHandle);
 	glDeleteFramebuffers(1, &gFBO->finalRenderBufferHandle);
 	glDeleteRenderbuffers(1, &gFBO->depthBufferHandle);
@@ -490,6 +616,11 @@ void unloadTextures() {
 	gFBO->multisampleColorTextureHandle = 0;
 	gFBO->multisampleDepthTextureHandle = 0;
 	gFBO->bufferHandle = 0;
+	gFBO->bloomColorTextureHandle = 0;
+	gFBO->bloomDepthTextureHandle = 0;
+	gFBO->bloomFrameBuffer = 0;
+	gFBO->bloomFinalColorTextureHandle = 0;
+	gFBO->bloomFinalFrameBuffer = 0;
 	gFBO->multisampleBufferHandle = 0;
 	gFBO->depthBufferHandle = 0;
 	gFBO->texturesLoaded = false;
@@ -501,6 +632,8 @@ void unloadPostProcessing() {
 	}
 	if (gFBO->shader != NULL)
 		delete gFBO->shader;
+	if (gFBO->blurShader != NULL)
+		delete gFBO->blurShader;
 	unloadTextures();
 	glDeleteBuffers(1, &gFBO->quadVBO);
 	delete gFBO;

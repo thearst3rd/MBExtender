@@ -22,6 +22,7 @@
 
 #include "DTSRenderer.h"
 #include <MathLib/MathLib.h>
+#include <TorqueLib/core/tVector.h>
 
 #define SHAPE_DEFAULT_VERT "platinum/data/shaders/shapeV.glsl"
 #define SHAPE_DEFAULT_FRAG "platinum/data/shaders/shapeF.glsl"
@@ -153,20 +154,25 @@ void DTSRenderer::renderDTS(TGE::TSShapeInstance *inst, TGE::TSShapeInstance::Me
 			U32 matIndex = data.first;
 			U32 matNum = matIndex & 0xFFFFFFF; // bit for the material index
 
-											   // TODO: see if we can stop using setMaterial.
-			TGE::TSMesh::setMaterial(matIndex, materials);
+			char* matName = materials->mTextureNames[matNum];
 
-			//glActiveTexture(GL_TEXTURE3);
-			//glEnable(GL_TEXTURE_CUBE_MAP);
-			//glBindTexture(GL_TEXTURE_CUBE_MAP, mCubemap->getDisplayBuffer().cubemap);
-			GL_CheckErrors("bind tsmeshrender cubemap");
+			if (strstr(matName, "item_glow") != NULL || strstr(matName, "antigrav_glow") != NULL || strstr(matName, "arrowsign_arrow_glow") != NULL || strstr(matName, "endpad_glow") != NULL || strstr(matName, "blast_glow") != NULL || strstr(matName, "grow_glow") != NULL) {
 
-			// hack: disable lighting as setMaterial enables it
-			glDisable(GL_LIGHTING);
+				// TODO: see if we can stop using setMaterial.
+				TGE::TSMesh::setMaterial(matIndex, materials);
 
-			// perform drawing.
-			const TriangleList::DrawCallList &calls = data.second;
-			glMultiDrawArrays(GL_TRIANGLES, &calls.start[0], &calls.count[0], calls.start.size());
+				//glActiveTexture(GL_TEXTURE3);
+				//glEnable(GL_TEXTURE_CUBE_MAP);
+				//glBindTexture(GL_TEXTURE_CUBE_MAP, mCubemap->getDisplayBuffer().cubemap);
+				GL_CheckErrors("bind tsmeshrender cubemap");
+
+				// hack: disable lighting as setMaterial enables it
+				glDisable(GL_LIGHTING);
+
+				// perform drawing.
+				const TriangleList::DrawCallList& calls = data.second;
+				glMultiDrawArrays(GL_TRIANGLES, &calls.start[0], &calls.count[0], calls.start.size());
+			}
 		}
 		//glActiveTexture(GL_TEXTURE3);
 		//glBindTexture(GL_TEXTURE_CUBE_MAP, 0);

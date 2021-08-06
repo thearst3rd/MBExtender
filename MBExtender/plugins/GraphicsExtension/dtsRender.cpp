@@ -37,6 +37,7 @@
 #include <TorqueLib/ts/tsShapeInstance.h>
 #include <TorqueLib/TypeInfo.h>
 #include <TorqueLib/core/stringTable.h>
+#include <TorqueLib/terrain/sky.h>
 
 #ifdef _WIN32
 #include <Shlwapi.h>
@@ -54,6 +55,8 @@ TGE::TSShapeInstance *gDtsCurrentRenderingShapeInstance = NULL;
 TGE::TSShapeInstance::MeshObjectInstance *gDtsCurrentRenderingObjectInstance = NULL;
 
 bool gNoShaders = false;
+
+extern bool renderingBloom;
 
 class DistanceComparer {
 public:
@@ -87,11 +90,18 @@ DTSRenderer *createDTSRenderer(TGE::ShapeBase *shape, TGE::TSMesh* mesh) {
 	return renderer;
 }
 
+MBX_OVERRIDE_MEMBERFN(void, TGE::Sky::renderObject, (TGE::Sky* thisptr, TGE::SceneState* state, TGE::SceneRenderImage* renderImage), originalSkyRender) {
+	if (!renderingBloom)
+		originalSkyRender(thisptr, state, renderImage);
+}
+
+
 MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderObject, (TGE::ShapeBase* thisptr, TGE::SceneState* state, TGE::SceneRenderImage* image), originalShapeBaseRender) {
 	const char* shapeFile = thisptr->getDataBlock()->getDataField(TGE::StringTable->insert("shapeFile", false), NULL);
-	gNoShaders = true; // strstr(shapeFile, "Marble") != NULL || strstr(shapeFile, "marble") != NULL || strstr(shapeFile, "tornado") != NULL;
-	if (strstr(shapeFile, "shapes_mbu/items/antiGravity.dts") != NULL)
-		gNoShaders = false;
+	if (renderingBloom)
+		gNoShaders = strstr(shapeFile, "Marble") != NULL || strstr(shapeFile, "marble") != NULL || strstr(shapeFile, "tornado") != NULL;
+	else
+		gNoShaders = true;
 	originalShapeBaseRender(thisptr, state, image);
 }
 
@@ -163,7 +173,8 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::TSMesh::render, (TGE::TSMesh *thisptr, S32 fram
 	}
 	//If we're not ready yet, don't start yet
 	if (!renderer->canRender() || gNoShaders) {
-		originalRender(thisptr, frame, matFrame, materials);
+		if (!renderingBloom)
+			originalRender(thisptr, frame, matFrame, materials);
 		return;
 	}
 	//Render it!

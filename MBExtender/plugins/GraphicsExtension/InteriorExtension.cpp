@@ -72,6 +72,8 @@ struct InteriorRenderInfo
 std::unordered_map<std::string, InteriorRenderInfo*> gInteriorRenderData;
 std::unordered_map<TGE::Interior*, InteriorRenderInfo*> gPathedInteriorRenderData;
 
+extern bool renderingBloom;
+
 bool initPlugin(MBX::Plugin &plugin)
 {
 	GLHelper::init(plugin);
@@ -125,6 +127,8 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::Interior::renderSmooth, (TGE::Interior *thisptr
 	//
 	// TODO: make sure we support shaders with GL version being >= 2.1
 	// TODO: $pref::useInteriorShaders = true; must be set in order to use shaders
+	if (renderingBloom)
+		return;
 	if (!gEnableState.interiorRenderBuffers || !gEnableState.shaders || !gEnableState.global) {
 		originalRenderSmooth(thisptr, mat, itr, a, b, c);
 		return;
