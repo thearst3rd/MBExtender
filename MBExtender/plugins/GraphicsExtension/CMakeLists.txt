@@ -23,6 +23,10 @@ add_plugin(GraphicsExtension
   dtsRender.cpp
   DTSRenderer.cpp
   DTSRenderer.h
+  Pass.cpp
+  Pass.h
+  BloomPass.cpp
+  BloomPass.h
 
   difviewer/io.cpp
   difviewer/material.cpp

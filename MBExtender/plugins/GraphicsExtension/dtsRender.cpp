@@ -57,7 +57,7 @@ TGE::TSShapeInstance::MeshObjectInstance *gDtsCurrentRenderingObjectInstance = N
 
 bool gNoShaders = false;
 
-extern bool renderingBloom;
+extern std::string currentPass;
 
 class DistanceComparer {
 public:
@@ -92,12 +92,12 @@ DTSRenderer *createDTSRenderer(TGE::ShapeBase *shape, TGE::TSMesh* mesh) {
 }
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::Sky::renderObject, (TGE::Sky* thisptr, TGE::SceneState* state, TGE::SceneRenderImage* renderImage), originalSkyRender) {
-	if (!renderingBloom)
+	if (currentPass == "fwd")
 		originalSkyRender(thisptr, state, renderImage);
 }
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::TSStatic::renderObject, (TGE::TSStatic* thisptr, TGE::SceneState* state, TGE::SceneRenderImage* renderImage), originalTSStaticRender) {
-	if (!renderingBloom)
+	if (currentPass == "fwd")
 		originalTSStaticRender(thisptr, state, renderImage);
 }
 
@@ -105,7 +105,7 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::TSStatic::renderObject, (TGE::TSStatic* thisptr
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderObject, (TGE::ShapeBase* thisptr, TGE::SceneState* state, TGE::SceneRenderImage* image), originalShapeBaseRender) {
 	const char* shapeFile = thisptr->getDataBlock()->getDataField(TGE::StringTable->insert("shapeFile", false), NULL);
-	if (renderingBloom) {
+	if (currentPass == "bloom") {
 		gNoShaders = strstr(shapeFile, "Marble") != NULL || strstr(shapeFile, "marble") != NULL || strstr(shapeFile, "tornado") != NULL;
 		if (strstr(shapeFile, "images/megamarble.dts") != NULL)
 			gNoShaders = false;
@@ -185,7 +185,7 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::TSMesh::render, (TGE::TSMesh *thisptr, S32 fram
 	}
 	//If we're not ready yet, don't start yet
 	if (!renderer->canRender() || gNoShaders) {
-		if (!renderingBloom)
+		if (currentPass == "fwd")
 			originalRender(thisptr, frame, matFrame, materials);
 		return;
 	}

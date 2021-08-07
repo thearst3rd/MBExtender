@@ -52,7 +52,7 @@ TGE::Marble *gCurrentRenderingMarble = NULL;
 TGE::TSShapeInstance *gCurrentRenderingShapeInstance = NULL;
 TGE::TSShapeInstance::MeshObjectInstance *gCurrentRenderingObjectInstance = NULL;
 
-extern bool renderingBloom;
+extern std::string currentPass;
 
 bool getMarbleIsOurs(TGE::Marble *marble) {
 	return static_cast<TGE::GameConnection *>(TGE::mServerConnection)->getControlObject() == marble;
@@ -273,7 +273,7 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::TSMesh::render, (TGE::TSMesh *thisptr, S32 fram
 
 //Ignore particles when rendering reflection probes
 MBX_OVERRIDE_MEMBERFN(void, TGE::ParticleEmitter::renderObject, (TGE::ParticleEmitter *thisptr, TGE::SceneState* state, TGE::SceneRenderImage* image), originalParticleRenderObject) {
-	if (!gRenderingReflections && !renderingBloom) {
+	if (!gRenderingReflections && currentPass == "fwd") {
 		originalParticleRenderObject(thisptr, state, image);
 	}
 }
