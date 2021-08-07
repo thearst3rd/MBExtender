@@ -36,5 +36,6 @@ namespace TGE
 		GETTERFN(const char *, getShapeName, 0x24C);
 		MEMBERFN(U32, packUpdate, (TGE::NetConnection *conn, U32 mask, TGE::BitStream *stream), 0x40858F_win, 0xFF020_mac);
 		MEMBERFN(void, unpackUpdate, (TGE::NetConnection *conn, TGE::BitStream *stream), 0x4092DC_win, 0xFEF20_mac);
+		MEMBERFN(void, renderObject, (SceneState *state, SceneRenderImage *image), 0x405907_win, 0xFF500_mac);
 	};
 }

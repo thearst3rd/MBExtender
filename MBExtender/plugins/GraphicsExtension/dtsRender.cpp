@@ -38,6 +38,7 @@
 #include <TorqueLib/TypeInfo.h>
 #include <TorqueLib/core/stringTable.h>
 #include <TorqueLib/terrain/sky.h>
+#include <TorqueLib/game/tsStatic.h>
 
 #ifdef _WIN32
 #include <Shlwapi.h>
@@ -95,13 +96,24 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::Sky::renderObject, (TGE::Sky* thisptr, TGE::Sce
 		originalSkyRender(thisptr, state, renderImage);
 }
 
+MBX_OVERRIDE_MEMBERFN(void, TGE::TSStatic::renderObject, (TGE::TSStatic* thisptr, TGE::SceneState* state, TGE::SceneRenderImage* renderImage), originalTSStaticRender) {
+	if (!renderingBloom)
+		originalTSStaticRender(thisptr, state, renderImage);
+}
+
+
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderObject, (TGE::ShapeBase* thisptr, TGE::SceneState* state, TGE::SceneRenderImage* image), originalShapeBaseRender) {
 	const char* shapeFile = thisptr->getDataBlock()->getDataField(TGE::StringTable->insert("shapeFile", false), NULL);
-	if (renderingBloom)
+	if (renderingBloom) {
 		gNoShaders = strstr(shapeFile, "Marble") != NULL || strstr(shapeFile, "marble") != NULL || strstr(shapeFile, "tornado") != NULL;
-	else
+		if (strstr(shapeFile, "images/megamarble.dts") != NULL)
+			gNoShaders = false;
+	}
+	else {
 		gNoShaders = true;
+	}
+	
 	originalShapeBaseRender(thisptr, state, image);
 }
 
