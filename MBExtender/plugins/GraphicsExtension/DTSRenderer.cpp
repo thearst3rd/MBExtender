@@ -27,6 +27,8 @@
 #define SHAPE_DEFAULT_VERT "platinum/data/shaders/shapeV.glsl"
 #define SHAPE_DEFAULT_FRAG "platinum/data/shaders/shapeF.glsl"
 
+std::vector<std::string> glowTextures = {"item_glow", "antigrav_glow", "arrowsign_arrow_glow", "endpad_glow", "blast_glow", "grow_glow", "superSpeed_star", "arrowsign_chain", "blastwave", "sigil", "sigil_glow"};
+
 DTSRenderer::DTSRenderer() {
 	mVertexBuffer = 0;
 	mTriangleList = nullptr;
@@ -156,7 +158,7 @@ void DTSRenderer::renderDTS(TGE::TSShapeInstance *inst, TGE::TSShapeInstance::Me
 
 			char* matName = materials->mTextureNames[matNum];
 
-			if (strstr(matName, "item_glow") != NULL || strstr(matName, "antigrav_glow") != NULL || strstr(matName, "arrowsign_arrow_glow") != NULL || strstr(matName, "endpad_glow") != NULL || strstr(matName, "blast_glow") != NULL || strstr(matName, "grow_glow") != NULL) {
+			if (std::find(glowTextures.begin(), glowTextures.end(), std::string(matName)) != glowTextures.end()) {
 
 				// TODO: see if we can stop using setMaterial.
 				TGE::TSMesh::setMaterial(matIndex, materials);
@@ -171,7 +173,15 @@ void DTSRenderer::renderDTS(TGE::TSShapeInstance *inst, TGE::TSShapeInstance::Me
 
 				// perform drawing.
 				const TriangleList::DrawCallList& calls = data.second;
+				glEnable(GL_CULL_FACE);
+				glCullFace(GL_BACK);
+				glFrontFace(GL_CW);
 				glMultiDrawArrays(GL_TRIANGLES, &calls.start[0], &calls.count[0], calls.start.size());
+
+				glCullFace(GL_FRONT);
+				glFrontFace(GL_CW);
+				glMultiDrawArrays(GL_TRIANGLES, &calls.start[0], &calls.count[0], calls.start.size());
+				glDisable(GL_CULL_FACE);
 			}
 		}
 		//glActiveTexture(GL_TEXTURE3);
