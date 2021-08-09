@@ -29,3 +29,4 @@ void initDepthBuffer(Point2I extent);
 void initQuadBuffer();
 void initFBOShader();
 void renderGame(U32 mask);
+bool hasMultisampleBuffer();

@@ -101,6 +101,11 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::TSStatic::renderObject, (TGE::TSStatic* thisptr
 		originalTSStaticRender(thisptr, state, renderImage);
 }
 
+MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderMountedImage, (TGE::ShapeBase* thisptr, TGE::SceneState* state, TGE::SceneRenderImage* renderImage), originalRenderMImage) {
+	if (currentPass == "fwd")
+		originalRenderMImage(thisptr, state, renderImage);
+}
+
 
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderObject, (TGE::ShapeBase* thisptr, TGE::SceneState* state, TGE::SceneRenderImage* image), originalShapeBaseRender) {

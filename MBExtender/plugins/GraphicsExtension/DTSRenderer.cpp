@@ -173,15 +173,7 @@ void DTSRenderer::renderDTS(TGE::TSShapeInstance *inst, TGE::TSShapeInstance::Me
 
 				// perform drawing.
 				const TriangleList::DrawCallList& calls = data.second;
-				glEnable(GL_CULL_FACE);
-				glCullFace(GL_BACK);
-				glFrontFace(GL_CW);
 				glMultiDrawArrays(GL_TRIANGLES, &calls.start[0], &calls.count[0], calls.start.size());
-
-				glCullFace(GL_FRONT);
-				glFrontFace(GL_CW);
-				glMultiDrawArrays(GL_TRIANGLES, &calls.start[0], &calls.count[0], calls.start.size());
-				glDisable(GL_CULL_FACE);
 			}
 		}
 		//glActiveTexture(GL_TEXTURE3);

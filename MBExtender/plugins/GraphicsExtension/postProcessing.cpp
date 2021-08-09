@@ -131,10 +131,6 @@ MBX_OVERRIDE_FN(void, TGE::GameRenderWorld, (), originalGameRenderWorld) { // DO
 	renderGame(0xFFFFFFFF);
 	GL_CheckErrors("render game");
 
-	for (auto& pass : passes) {
-		pass.second->render(extent);
-	}
-
 	if (hasMultisampleBuffer()) {
 		// Blit the multisampled frame buffer to the non-multisampled one
 		// This resolves the multisampled FBO
@@ -146,6 +142,10 @@ MBX_OVERRIDE_FN(void, TGE::GameRenderWorld, (), originalGameRenderWorld) { // DO
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
 		GL_CheckErrors("blit");
+	}
+
+	for (auto& pass : passes) {
+		pass.second->render(extent);
 	}
 
 	// Bind out front buffer. Backbuffer is now rendered into this shader as a texture on the quad.

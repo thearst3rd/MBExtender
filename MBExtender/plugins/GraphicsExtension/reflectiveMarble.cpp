@@ -187,6 +187,7 @@ MarbleRenderer *createMarbleRenderer(TGE::Marble *marble) {
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::renderImage, (TGE::Marble *thisptr, TGE::SceneState *state, TGE::SceneRenderImage *image), originalRenderImage) {
 	//If they disable, then don't use this
+
 	if (StringMath::scan<U32>(TGE::Con::getVariable("$pref::Video::MarbleReflectionQuality")) == 0) {
 		originalRenderImage(thisptr, state, image);
 		return;
