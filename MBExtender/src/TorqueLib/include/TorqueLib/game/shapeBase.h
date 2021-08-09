@@ -118,6 +118,7 @@ namespace TGE
 
 		MEMBERFN(void, renderObject, (SceneState *state, SceneRenderImage *image), 0x4E5CD0_win, 0xA5F00_mac);
 		MEMBERFN(void, renderImage, (SceneState *state, SceneRenderImage *image), 0x404084_win, 0xa2c80_mac);
+		MEMBERFN(void, renderMountedImage, (SceneState *state, SceneRenderImage *image), 0x404DEF_win, 0xA1B30_mac);
 
 		MEMBERFN(U32, packUpdate, (NetConnection *connection, U32 mask, BitStream *stream), 0x405F8D_win, 0x9E7A0_mac);
 		MEMBERFN(void, unpackUpdate, (NetConnection *connection, BitStream *stream), 0x4041A1_win, 0xA46C0_mac);
