@@ -80,6 +80,7 @@ add_library(TorqueLib STATIC
   include/TorqueLib/game/marble/marble.h
   include/TorqueLib/game/net/httpObject.h
   include/TorqueLib/game/net/tcpObject.h
+  include/TorqueLib/game/net/net.h
   include/TorqueLib/game/shadow.h
   include/TorqueLib/game/shapeBase.h
   include/TorqueLib/game/showTSShape.h
@@ -143,7 +144,7 @@ add_library(TorqueLib STATIC
   include/TorqueLib/terrain/sun.h
   include/TorqueLib/ts/tsMesh.h
   include/TorqueLib/ts/tsShape.h
-  include/TorqueLib/TypeInfo.h)
+  include/TorqueLib/TypeInfo.h "include/TorqueLib/game/net/net.h")
 
 target_include_directories(TorqueLib
   PRIVATE

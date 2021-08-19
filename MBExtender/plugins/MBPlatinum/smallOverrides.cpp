@@ -47,6 +47,8 @@
 #include <TorqueLib/terrain/sky.h>
 #include <TorqueLib/ts/tsShape.h>
 #include <TorqueLib/core/stringTable.h>
+#include <TorqueLib/game/net/net.h>
+#include <TorqueLib/sim/netConnection.h>
 #if defined(_WIN32)
 #include <TorqueLib/platformWin32/platformWin32.h>
 #endif
@@ -140,6 +142,17 @@ MBX_ON_INIT(initSmallOverrides, (MBX::Plugin &plugin)) {
 
 	overridePowerups(plugin);
 }
+
+// This crap
+// https://github.com/TorqueGameEngines/Torque3D/commit/c7b44203ad2fda18ffb0cd2da1d974c2e6a62386
+MBX_OVERRIDE_MEMBERFN(void, TGE::RemoteCommandEvent::process, (TGE::RemoteCommandEvent* thisptr, TGE::NetConnection* conn), originalRemoteCommandProcess) {
+
+	if (thisptr->mArgc() < 1 || thisptr->mArgv()[1][0] != 1)
+		return;
+
+	originalRemoteCommandProcess(thisptr, conn);
+}
+
 
 MBX_OVERRIDE_MEMBERFN(bool, TGE::InteriorResource::read, (TGE::InteriorResource *thisptr, TGE::Stream &stream), originalRead) {
 	bool care = atoi(TGE::Con::getVariable("$HackyReadThing"));
