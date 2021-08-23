@@ -147,7 +147,10 @@ MBX_ON_INIT(initSmallOverrides, (MBX::Plugin &plugin)) {
 // https://github.com/TorqueGameEngines/Torque3D/commit/c7b44203ad2fda18ffb0cd2da1d974c2e6a62386
 MBX_OVERRIDE_MEMBERFN(void, TGE::RemoteCommandEvent::process, (TGE::RemoteCommandEvent* thisptr, TGE::NetConnection* conn), originalRemoteCommandProcess) {
 
-	if (thisptr->mArgc() < 1 || thisptr->mArgv()[1][0] != 1)
+	int mArgc = thisptr->mArgc();
+	char* mArgv1 = thisptr->mArgv1();
+
+	if (mArgc < 1 || mArgv1[0] != 1)
 		return;
 
 	originalRemoteCommandProcess(thisptr, conn);

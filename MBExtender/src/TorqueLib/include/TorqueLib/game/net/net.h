@@ -12,7 +12,8 @@ namespace TGE
 	public:
 		MEMBERFN(void, process, (NetConnection *conn), 0x401947_win, 0x291070_mac);
 
-		FIELD(int, mArgc, 0x24);
-		FIELD(char**, mArgv, 0x28);
+		FIELD(int, mArgc, 0x18);
+		FIELD(char*, mArgv0, 0x1C);
+		FIELD(char*, mArgv1, 0x20);
 	};
 }
