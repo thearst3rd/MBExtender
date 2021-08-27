@@ -133,4 +133,6 @@ namespace TGE
 	};
 
 	GLOBALVAR(ExprEvalState, gEvalState, 0x694A70_win, 0x2FF2C0_mac);
+	GLOBALVAR(StringTableEntry*, mActivePackages, 0x698518_win, 0x2FEA80_mac);
+	GLOBALVAR(U32, mNumActivePackages, 0x6991D4_win, 0x2DA518_mac);
 }

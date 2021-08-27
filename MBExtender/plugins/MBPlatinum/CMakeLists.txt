@@ -10,7 +10,9 @@ add_plugin(MBPlatinum
   saveFieldsFix.cpp
   smallOverrides.cpp
   sync.cpp
+  sync.h
   triggers.cpp
+  interpolation.cpp
 
   WIN_SOURCES
     crashReporter-win32.cpp

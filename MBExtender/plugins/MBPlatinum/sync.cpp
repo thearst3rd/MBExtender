@@ -30,6 +30,7 @@
 #include <vector>
 #include <string>
 #include <EventLib/EventLib.h>
+#include "sync.h"
 
 #include "bimap.h"
 

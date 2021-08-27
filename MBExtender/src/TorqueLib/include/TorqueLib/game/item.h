@@ -35,5 +35,6 @@ namespace TGE
 
 		public:
 			MEMBERFN(void, advanceTime, (F32 dt), 0x0406AB9_win, 0x0D8590_mac);
+			FIELD(bool, mRotate, 0x7BE);
 	};
 }

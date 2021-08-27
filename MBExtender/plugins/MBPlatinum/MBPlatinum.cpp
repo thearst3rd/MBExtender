@@ -40,6 +40,7 @@ bool initPlugin(MBX::Plugin &plugin)
 	MBX_INSTALL(plugin, SaveFieldsFix);
 	MBX_INSTALL(plugin, Sync);
 	MBX_INSTALL(plugin, Triggers);
+	MBX_INSTALL(plugin, Interpolation);
 
 #ifdef _WIN32
 	MBX_INSTALL(plugin, ShutdownLogging);
