@@ -29,6 +29,7 @@
 #include <TorqueLib/collision/collision.h>
 #include <TorqueLib/math/mMatrix.h>
 #include <TorqueLib/sim/netObject.h>
+#include <TorqueLib/core/tVector.h>
 
 namespace TGE
 {
@@ -60,8 +61,10 @@ namespace TGE
 	class Container
 	{
 		BRIDGE_CLASS(Container);
+		 typedef void (*FindCallback)(SceneObject*, void* key);
 	public:
 		MEMBERFN(bool, castRay, (const Point3F &start, const Point3F &end, U32 mask, RayInfo *info), 0x403652_win, 0x192B80_mac);
+		MEMBERFN(void, findObjects, (const Box3F& box, U32 mask, FindCallback, void* key), 0x402DFB_win, 0x18F760_mac);
 	};
 
 	class SceneObject : public NetObject
@@ -79,7 +82,7 @@ namespace TGE
 		UNDEFVIRT(setScale);
 		UNDEFVIRT(setRenderTransform);
 		UNDEFVIRT(buildConvex);
-		UNDEFVIRT(buildPolyList);
+		virtual bool buildPolyList(void*, const Box3F&, const SphereF&);
 		UNDEFVIRT(buildCollisionBSP);
 		virtual bool castRay(const Point3F &start, const Point3F &end, RayInfo* info) = 0;
 		UNDEFVIRT(collideBox);
@@ -118,6 +121,8 @@ namespace TGE
 
 		GETTERFN(Point3F, getScale, 0x11C);
 		MEMBERFN(void, setScale, (const VectorF &scale), 0x4091CE_win, 0x18DD10_mac);
+
+		FIELD(Container*, mContainer, 0x98);
 	};
 
 	FN(void, cSetTransform, (TGE::SimObject *obj, int argc, const char **argv), 0x402CB1_win, 0x18EE70_mac);
