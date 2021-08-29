@@ -39,6 +39,7 @@
 #include <TorqueLib/core/stringTable.h>
 #include <TorqueLib/terrain/sky.h>
 #include <TorqueLib/game/tsStatic.h>
+#include <unordered_set>
 
 #ifdef _WIN32
 #include <Shlwapi.h>
@@ -54,10 +55,13 @@ std::unordered_map<SimObjectId, std::unordered_map<TGE::TSMesh*, DTSRenderer *>>
 TGE::ShapeBase *gCurrentRenderingShape = NULL;
 TGE::TSShapeInstance *gDtsCurrentRenderingShapeInstance = NULL;
 TGE::TSShapeInstance::MeshObjectInstance *gDtsCurrentRenderingObjectInstance = NULL;
+std::unordered_set<TGE::TSMesh*> gMeshesToDraw;
+std::unordered_set<TGE::TSMesh*> gMeshesChecked;
 
 bool gNoShaders = false;
 
 extern std::string currentPass;
+extern std::vector<std::string> glowTextures;
 
 class DistanceComparer {
 public:
@@ -168,6 +172,28 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::TSMesh::render, (TGE::TSMesh *thisptr, S32 fram
 		originalRender(thisptr, frame, matFrame, materials);
 		return;
 	}
+	bool drawDetailCrap = false;
+	if (gMeshesChecked.find(thisptr) == gMeshesChecked.end()) {
+		for (int i = 0; i < materials->mTextureNames.size(); i++)
+		{
+			char* matName = materials->mTextureNames[i];
+			if (std::find(glowTextures.begin(), glowTextures.end(), std::string(matName)) != glowTextures.end()) {
+				drawDetailCrap = true;
+				gMeshesToDraw.insert(thisptr);
+				break;
+			}
+		}
+		gMeshesChecked.insert(thisptr);
+	}
+	if (!drawDetailCrap) {
+		if (gMeshesToDraw.find(thisptr) != gMeshesToDraw.end())
+			drawDetailCrap = true;
+	}
+	if (!drawDetailCrap) {
+		if (currentPass == "fwd")
+			originalRender(thisptr, frame, matFrame, materials);
+		return;
+	}
 	//Get the renderer to use for our marble
 	DTSRenderer *renderer = nullptr;
 	auto found = gDtsRenderers.find(gCurrentRenderingShape->getId());
@@ -222,6 +248,8 @@ MBX_CONSOLE_METHOD(ShapeBase, reloadShader, void, 2, 2, "") {
 		}
 		gDtsRenderers.erase(found);
 	}
+	gMeshesChecked.clear();
+	gMeshesToDraw.clear();
 }
 
 MBX_ON_GL_CONTEXT_DESTROY(dtsRenderContextDestroyed, ()) {
