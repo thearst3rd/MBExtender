@@ -30,6 +30,7 @@
 #include <TorqueLib/math/mBox.h>
 #include <TorqueLib/math/mMatrix.h>
 #include <TorqueLib/math/mPoint3.h>
+#include <TorqueLib/collision/abstractPolyList.h>
 
 namespace TGE
 {
@@ -86,7 +87,7 @@ namespace TGE
 
 		MEMBERFN(void, renderImage, (SceneState *state, SceneRenderImage *image), 0x408305_win, 0x253600_mac);
 
-		GETTERFN(void*, getContactsPolyList, 0xAD4_win, 0xAC0_mac);
+		GETTERFN(ConcretePolyList, getContactsPolyList, 0xAD4_win, 0xAC0_mac);
 	};
 
 	class MarbleData : public ShapeBaseData

@@ -33,6 +33,7 @@
 #include <TorqueLib/interior/pathedInterior.h>
 #include <TorqueLib/sim/pathManager.h>
 #include <MBExtender/InteropMacros.h>
+#include <TorqueLib/collision/abstractPolyList.h>
 
 #ifdef __APPLE__
 #include <mach/vm_map.h>
@@ -43,62 +44,6 @@ MBX_MODULE(MovingPlatformsFix);
 
 struct MarbleCollision {
 	Point3D points[8];
-};
-
-
-class PlaneTransformer
-{
-	MatrixF mTransform;
-	Point3F mScale;
-
-	MatrixF mTransposeInverse;
-};
-class AbstractPolyList
-{
-protected:
-	// User set state
-	TGE::SceneObject* mCurrObject;
-
-	MatrixF  mBaseMatrix;               // Base transform
-	MatrixF  mTransformMatrix;          // Current object transform
-	MatrixF  mMatrix;                   // Base * current transform
-	Point3F  mScale;
-
-	PlaneTransformer mPlaneTransformer;
-
-	bool     mInterestNormalRegistered;
-	Point3F  mInterestNormal;
-
-	virtual ~AbstractPolyList() {}
-};
-
-class ConcretePolyList : public AbstractPolyList
-{
-public:
-	BRIDGE_CLASS(ConcretePolyList);
-
-public:
-	struct Poly {
-		PlaneF plane;
-		TGE::SceneObject* object;
-		U32 material;
-		U32 vertexStart;
-		U32 vertexCount;
-		U32 surfaceKey;
-	};
-
-	typedef TGE::Vector<PlaneF> PlaneList;
-	typedef TGE::Vector<Point3F> VertexList;
-	typedef TGE::Vector<Poly>   PolyList;
-	typedef TGE::Vector<U32>    IndexList;
-
-	PolyList   mPolyList;
-	VertexList mVertexList;
-	IndexList  mIndexList;
-
-	PlaneList  mPolyPlaneList;
-
-	CONSTRUCTOR((), 0x408404_win, 0x24F200_mac);
 };
 
 struct Contact
@@ -128,7 +73,6 @@ public:
 static bool gSimulatePathedInteriors = true;
 static TGE::Marble *gAdvancingMarble = NULL;
 static std::unordered_map<TGE::SceneObject *, Point3F> gVelocityCache;
-static ConcretePolyList* gMarbleContactPolys;
 void clearVelocityCache();
 
 void advancePathedInteriors(U32 delta) {
@@ -143,51 +87,6 @@ void advancePathedInteriors(U32 delta) {
 	}
 
 	gVelocityCache.clear();
-}
-
-void findContacts() {
-	if (gMarbleContactPolys == NULL)
-		gMarbleContactPolys = ConcretePolyList::create();
-
-	gMarbleContactPolys->mPolyList.clear();
-	gMarbleContactPolys->mIndexList.clear();
-	gMarbleContactPolys->mPolyPlaneList.clear();
-	gMarbleContactPolys->mVertexList.clear();
-
-	F32 rad = gAdvancingMarble->getCollisionRadius();
-
-	Point3F marblePos = gAdvancingMarble->getTransform().getPosition();
-
-	Box3F objBox;
-	objBox.minExtents = Point3F(-rad, -rad, -rad);
-	objBox.maxExtents = Point3F(rad, rad, rad);
-
-	Box3F extrudedMarble;
-	extrudedMarble.minExtents = objBox.minExtents + marblePos - Point3F(0.5f);
-	extrudedMarble.maxExtents = objBox.maxExtents + marblePos + Point3F(0.5f);
-
-	Point3F posB = (extrudedMarble.maxExtents + extrudedMarble.minExtents) * 0.5f;
-	Point3F test = extrudedMarble.maxExtents - extrudedMarble.minExtents;
-	SphereF sphere(posB, test.len() * 0.5f);
-
-	U32 contactMask = TGE::TypeMasks::StaticObjectType |
-		TGE::TypeMasks::InteriorObjectType |
-		TGE::TypeMasks::StaticShapeObjectType;
-
-	SimpleQueryList sql;
-	sql.mList.clear();
-	gAdvancingMarble->mContainer()->findObjects(extrudedMarble, contactMask, SimpleQueryList::insertionCallback, &sql);
-
-	ConcretePolyList* polylist = ConcretePolyList::create();
-
-	for (int i = 0; i < sql.mList.size(); i++) {
-		TGE::SceneObject* obj = sql.mList[i];
-
-		if ((sql.mList[i]->mTypeMask & 1 << 14) == 0)
-		{
-			obj->buildPolyList(polylist, extrudedMarble, sphere);
-		}
-	}
 }
 
 // Hook for Marble::advancePhysics that sets gLocalUpdate to true if a local update is occurring
@@ -393,30 +292,10 @@ Point3F getVelocitySceneObject(TGE::SceneObject *thisptr, Point3F collision) {
 
 	std::vector<Contact> possibleContacts;
 
-	Box3F objBox;
-	objBox.minExtents = Point3F(-rad, -rad, -rad);
-	objBox.maxExtents = Point3F(rad, rad, rad);
-
-	Box3F extrudedMarble;
-	extrudedMarble.minExtents = objBox.minExtents + marblePos - Point3F(0.5f);
-	extrudedMarble.maxExtents = objBox.maxExtents + marblePos + Point3F(0.5f);
-
-	Point3F posB = (extrudedMarble.maxExtents + extrudedMarble.minExtents) * 0.5f;
-	Point3F test = extrudedMarble.maxExtents - extrudedMarble.minExtents;
-	SphereF sphere(posB, test.len() * 0.5f);
-
-	if (gMarbleContactPolys == NULL)
-		gMarbleContactPolys = ConcretePolyList::create();
-
-	ConcretePolyList* polylist = gMarbleContactPolys;
-	gMarbleContactPolys->mPolyList.clear();
-	gMarbleContactPolys->mIndexList.clear();
-	gMarbleContactPolys->mPolyPlaneList.clear();
-	gMarbleContactPolys->mVertexList.clear();
-	thisptr->buildPolyList(polylist, extrudedMarble, sphere);
+	const TGE::ConcretePolyList* polylist = &gAdvancingMarble->getContactsPolyList();
 
 	for (int i = 0; i < polylist->mPolyList.size(); i++) {
-		ConcretePolyList::Poly* poly = &polylist->mPolyList[i];
+		const TGE::ConcretePolyList::Poly* poly = &polylist->mPolyList[i];
 
 		if (poly->object != thisptr) {
 			continue;

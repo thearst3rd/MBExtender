@@ -144,7 +144,9 @@ add_library(TorqueLib STATIC
   include/TorqueLib/terrain/sun.h
   include/TorqueLib/ts/tsMesh.h
   include/TorqueLib/ts/tsShape.h
-  include/TorqueLib/TypeInfo.h "include/TorqueLib/game/net/net.h")
+  include/TorqueLib/TypeInfo.h 
+  include/TorqueLib/game/net/net.h 
+  include/TorqueLib/collision/abstractPolyList.h)
 
 target_include_directories(TorqueLib
   PRIVATE
