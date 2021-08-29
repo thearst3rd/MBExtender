@@ -282,8 +282,6 @@ Point3F getVelocitySceneObject(TGE::SceneObject *thisptr, Point3F collision) {
 		return ((TGE::PathedInterior *)thisptr)->getVelocity2();
 	}
 
-	// findObjectsAndPolys(contactMask, extrudedMarble, true);
-
 	Point3F marblePos = gAdvancingMarble->getTransform().getPosition();
 	Point3F marbleVel = gAdvancingMarble->getVelocity().toPoint3F();
 	marbleVel.normalize();
@@ -366,97 +364,12 @@ Point3F getVelocitySceneObject(TGE::SceneObject *thisptr, Point3F collision) {
 		}
 	}
 
-	if (minContact == NULL)
+	if (minContact == NULL) {
+		if (velocityCache.find(thisptr->getId()) != velocityCache.end()) {
+			return velocityCache[thisptr->getId()];
+		}
 		return Point3F(0, 0, 0);
-
-	//Point3F axis1;
-	//if (marbleVel.equal(Point3F(0, 0, 1))) {
-	//	axis1 = mCross(marbleVel, Point3F(0, 1, 0));
-	//} else {
-	//	axis1 = mCross(marbleVel, Point3F(0, 0, 1));
-	//}
-	//Point3F axis2 = mCross(marbleVel, axis1);
-
-	////Try to find a collision
-	//std::vector<TGE::RayInfo> hits;
-	//hits.reserve(36);
-
-	//F32 dist = 1.0f;
-	//Point3F axis0 = marbleVel * dist;
-	//axis1 *= dist;
-	//axis2 *= dist;
-
-	//MatrixF trans = thisptr->getTransform();
-	//trans.inverse();
-
-	//trans.mulP(marblePos);
-	//trans.mulV(axis0);
-	//trans.mulV(axis1);
-	//trans.mulV(axis2);
-
-	//testCollision(thisptr, marblePos, marblePos + axis0, hits);
-	//testCollision(thisptr, marblePos, marblePos + axis1, hits);
-	//testCollision(thisptr, marblePos, marblePos + axis2, hits);
-	//testCollision(thisptr, marblePos, marblePos - axis0, hits);
-	//testCollision(thisptr, marblePos, marblePos - axis1, hits);
-	//testCollision(thisptr, marblePos, marblePos - axis2, hits);
-
-	//testCollision(thisptr, marblePos, marblePos + Point3F(dist, 0, 0), hits);
-	//testCollision(thisptr, marblePos, marblePos + Point3F(0, dist, 0), hits);
-	//testCollision(thisptr, marblePos, marblePos + Point3F(0, 0, dist), hits);
-	//testCollision(thisptr, marblePos, marblePos + Point3F(-dist, 0, 0), hits);
-	//testCollision(thisptr, marblePos, marblePos + Point3F(0, -dist, 0), hits);
-	//testCollision(thisptr, marblePos, marblePos + Point3F(0, 0, -dist), hits);
-
-	//U32 startMax = hits.size();
-
-	//for (std::vector<TGE::RayInfo>::iterator i = hits.begin(); i != hits.end(); i ++) {
-	//	TGE::RayInfo info = *i;
-	//	if (info.object != thisptr)
-	//		continue;
-
-	//	if (info.point.x == INFINITY || info.point.y == INFINITY || info.point.z == INFINITY) {
-	//		TGE::Con::errorf("oh shit");
-	//		continue;
-	//	}
-
-	//	if (static_cast<U32>(i - hits.begin()) >= startMax)
-	//		continue;
-
-	//	testCollision(thisptr, marblePos, marblePos + (info.normal * 3.0f), hits);
-	//	testCollision(thisptr, marblePos, marblePos - (info.normal * 3.0f), hits);
-	//}
-
-	//Point3F collisionPoint = marblePos;
-
-	//F32 maxDist = INFINITY;
-	//Point3F maxNorm(0);
-
-	//for (std::vector<TGE::RayInfo>::iterator i = hits.begin(); i != hits.end(); i ++) {
-	//	TGE::RayInfo info = *i;
-	//	if (info.object != thisptr)
-	//		continue;
-
-	//	if (info.point.x == INFINITY || info.point.y == INFINITY || info.point.z == INFINITY) {
-	//		TGE::Con::errorf("oh shit");
-	//		continue;
-	//	}
-	//	F32 dist = (info.point - marblePos).lenSquared();
-
-	//	if (dist < maxDist) {
-	//		maxDist = dist;
-	//		collisionPoint = info.point;
-	//		if (info.normal != maxNorm) {
-	//			maxNorm = info.normal;
-	//		}
-	//	}
-	//}
-
-	//if (maxDist == INFINITY) {
-	//	maxDist = gAdvancingMarble->getCollisionRadius();
-	//} else {
-	//	thisptr->getTransform().mulP(collisionPoint);
-	//}
+	}
 
 	//Can't call original because thisptr isn't actually always a PathedInterior
 	Point3F velocity(0);
