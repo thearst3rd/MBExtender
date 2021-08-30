@@ -34,6 +34,7 @@
 #include <TorqueLib/sim/pathManager.h>
 #include <MBExtender/InteropMacros.h>
 #include <TorqueLib/collision/abstractPolyList.h>
+#include <TorqueLib/core/stringTable.h>
 
 #ifdef __APPLE__
 #include <mach/vm_map.h>
@@ -87,6 +88,10 @@ void advancePathedInteriors(U32 delta) {
 	}
 
 	gVelocityCache.clear();
+}
+
+MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::computeFirstPlatformIntersect, (TGE::Marble* thisPtr, F64* moveTime), originalComputeFirstPlatformIntersect) {
+	originalComputeFirstPlatformIntersect(thisPtr, moveTime);
 }
 
 // Hook for Marble::advancePhysics that sets gLocalUpdate to true if a local update is occurring
@@ -284,7 +289,6 @@ Point3F getVelocitySceneObject(TGE::SceneObject *thisptr, Point3F collision) {
 
 	Point3F marblePos = gAdvancingMarble->getTransform().getPosition();
 	Point3F marbleVel = gAdvancingMarble->getVelocity().toPoint3F();
-	marbleVel.normalize();
 
 	F32 rad = gAdvancingMarble->getCollisionRadius();
 
@@ -353,6 +357,27 @@ Point3F getVelocitySceneObject(TGE::SceneObject *thisptr, Point3F collision) {
 
 	superbreak:
 		0;
+	}
+
+	if (possibleContacts.size() == 0 && marbleVel.len() > 0.001) {
+		// Do the raycast thing
+		for (int i = 0; i < polylist->mPolyList.size(); i++) {
+			const TGE::ConcretePolyList::Poly* poly = &polylist->mPolyList[i];
+
+			if (poly->object != thisptr) {
+				continue;
+			}
+
+			double t = -(marblePos.x * poly->plane.x + marblePos.y * poly->plane.y + marblePos.z * poly->plane.z + poly->plane.d) / (marbleVel.x * poly->plane.x + marbleVel.y * poly->plane.y + marbleVel.z * poly->plane.z);
+			if (t != INFINITY) {
+				Point3F intersectP = marblePos + marbleVel * t;
+				Contact contact;
+				contact.distance = (marblePos - intersectP).len();
+				contact.position = intersectP;
+				contact.normal = poly->plane;
+				possibleContacts.push_back(contact);
+			}
+		}
 	}
 
 	Contact* minContact = NULL;

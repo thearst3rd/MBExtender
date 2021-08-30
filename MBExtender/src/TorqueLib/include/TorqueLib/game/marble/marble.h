@@ -88,6 +88,7 @@ namespace TGE
 		MEMBERFN(void, renderImage, (SceneState *state, SceneRenderImage *image), 0x408305_win, 0x253600_mac);
 
 		GETTERFN(ConcretePolyList, getContactsPolyList, 0xAD4_win, 0xAC0_mac);
+		MEMBERFN(void, computeFirstPlatformIntersect, (F64* moveTime), 0x401677_win, 0x259890);
 	};
 
 	class MarbleData : public ShapeBaseData
