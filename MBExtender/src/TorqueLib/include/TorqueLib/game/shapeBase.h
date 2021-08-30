@@ -115,6 +115,7 @@ namespace TGE
 		SETTERFN(F32, setFadeVal, 0x768);
 
 		GETTERFN(F32, getCloakLevel, 0x75C);
+		SETTERFN(F32, setCloakLevel, 0x75C);
 
 		MEMBERFN(void, renderObject, (SceneState *state, SceneRenderImage *image), 0x4E5CD0_win, 0xA5F00_mac);
 		MEMBERFN(void, renderImage, (SceneState *state, SceneRenderImage *image), 0x404084_win, 0xa2c80_mac);

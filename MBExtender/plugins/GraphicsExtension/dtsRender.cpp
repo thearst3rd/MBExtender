@@ -129,12 +129,14 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderObject, (TGE::ShapeBase* thisp
 MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderImage, (TGE::ShapeBase *thisptr, TGE::SceneState *state, TGE::SceneRenderImage *image), originalRenderImage) {
 	// If we are cloaked just do an original render.
 	if (thisptr->getCloakLevel() > 0) {
-		originalRenderImage(thisptr, state, image);
+		if (currentPass == "fwd")
+			originalRenderImage(thisptr, state, image);
 		return;
 	}
 
 	gCurrentRenderingShape = static_cast<TGE::ShapeBase *>(thisptr);
-	originalRenderImage(thisptr, state, image);
+	if (currentPass == "fwd")
+		originalRenderImage(thisptr, state, image);
 	gCurrentRenderingShape = NULL;
 }
 
