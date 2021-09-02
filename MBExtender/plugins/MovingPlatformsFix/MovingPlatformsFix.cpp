@@ -40,6 +40,7 @@
 #include <mach/vm_map.h>
 #include <mach/mach_init.h>
 #endif
+#include <TorqueLib/TypeInfo.h>
 
 MBX_MODULE(MovingPlatformsFix);
 
@@ -266,6 +267,153 @@ MBX_CONSOLE_METHOD(PathedInterior, getSurfaceVelocity, const char *, 5, 5, "Path
 
 MBX_CONSOLE_METHOD(PathedInterior, getVelocity, const char *, 2, 2, "PathedInterior.getVelocity() -> gets the interior's current velocity") {
 	return StringMath::print(object->getVelocity2());
+}
+
+MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::findContacts, (TGE::Marble* thisObj, U32 mask), originalFindContacts) {
+	thisObj->mContacts().clear();
+
+	if (mask != 0) {
+		Box3F box(thisObj->mPosition().toPoint3F(), thisObj->mPosition().toPoint3F());
+		box.minExtents += thisObj->mObjBox().minExtents - Point3F(0.0001f);
+		box.maxExtents += thisObj->mObjBox().maxExtents + Point3F(0.0001f);
+
+		SimpleQueryList queryList;
+		thisObj->mContainer()->findObjects(box, mask, SimpleQueryList::insertionCallback, &queryList);
+
+		SphereF sphere(thisObj->mPosition().toPoint3F(), thisObj->mRadius());
+
+		thisObj->mPolyList().clear();
+		for (int i = 0; i < queryList.mList.size(); i++) {
+			queryList.mList[i]->buildPolyList(&thisObj->mPolyList(), box, sphere);
+		}
+	}
+
+	for (int i = 0; i < thisObj->mPolyList().mPolyList.size(); i++) {
+		TGE::ConcretePolyList::Poly* poly = &thisObj->mPolyList().mPolyList[i];
+		PlaneD plane(poly->plane);
+		F64 distance = plane.distToPlane(thisObj->mPosition());
+		if (mFabsD(distance) <= thisObj->mRadius() + 0.0001) {
+			Point3D lastVertex(thisObj->mPolyList().mVertexList[thisObj->mPolyList().mIndexList[poly->vertexStart + poly->vertexCount - 1]]);
+
+			Point3D contactVert = plane.project(thisObj->mPosition());
+			F64 separation = mSqrtD(thisObj->mRadius() * thisObj->mRadius() - distance * distance);
+
+			for (int j = 0; j < poly->vertexCount; j++) {
+				Point3D vertex = thisObj->mPolyList().mVertexList[thisObj->mPolyList().mIndexList[poly->vertexStart + j]];
+				if (vertex != lastVertex) {
+					PlaneD vertPlane(vertex + plane, vertex, lastVertex);
+					F64 vertDistance = vertPlane.distToPlane(contactVert);
+					if (vertDistance < 0.0) {
+						if (vertDistance < -(separation + 0.0001))
+							goto superbreak;
+
+						if (PlaneD(vertPlane + vertex, vertex, vertex + plane).distToPlane(contactVert) >= 0.0) {
+							if (PlaneD(lastVertex - vertPlane, lastVertex, lastVertex + plane).distToPlane(contactVert) >= 0.0) {
+								contactVert = vertPlane.project(contactVert);
+								break;
+							}
+							contactVert = lastVertex;
+						}
+						else {
+							contactVert = vertex;
+						}
+					}
+					lastVertex = vertex;
+				}
+			}
+
+
+			TGE::Material* matProp = poly->object->getMaterialProperty(poly->material);
+
+			U32 materialId = poly->material;
+			Point3D delta = thisObj->mPosition() - contactVert;
+			F64 contactDistance = delta.len();
+			if ((double)(thisObj->mRadius() + 0.0001) < contactDistance) {
+				continue;
+			}
+
+			TGE::PathedInterior* hitPI = TGE::TypeInfo::manual_dynamic_cast<TGE::PathedInterior*>(poly->object, &TGE::TypeInfo::SceneObject, &TGE::TypeInfo::PathedInterior, 0);
+
+			Point3D surfaceVelocity;
+			surfaceVelocity = Point3D(0);
+			if (hitPI != nullptr) {
+				surfaceVelocity = hitPI->getVelocity();
+			}
+			else {
+				const char* point = StringMath::print(contactVert);
+				char* p2 = new char[strlen(point) + 1];
+				strcpy(p2, point);
+
+				const char* scriptVel = TGE::Con::executef(poly->object, 4, "getSurfaceVelocity", thisObj->getIdString(), p2, StringMath::print(contactDistance));
+
+				delete[] p2;
+
+				//Blank means no response
+				if (strlen(scriptVel)) {
+					surfaceVelocity = StringMath::scan<Point3F>(scriptVel);
+				}
+			}
+
+			Point3D normal(plane.x, plane.y, plane.z);
+			if (contactDistance != 0.0) {
+				normal = delta * (1.0 / contactDistance);
+			}
+			F32 force = 0.0;
+			F32 friction = 1.0;
+			F32 restitution = 1.0;
+			if (matProp != nullptr) {
+				friction = matProp->friction;
+				restitution = matProp->restitution;
+				force = matProp->force;
+			}
+
+			TGE::Marble::Contact contact{};
+
+			contact.restitution = restitution;
+			contact.normal = normal;
+			contact.position = contactVert;
+			contact.surfaceVelocity = surfaceVelocity;
+			contact.object = poly->object;
+			contact.contactDistance = contactDistance;
+			contact.friction = friction;
+			contact.force = force;
+			contact.material = materialId;
+
+			thisObj->mContacts().push_back(contact);
+
+			TGE::GameBase* gb = TGE::TypeInfo::manual_dynamic_cast<TGE::GameBase*>(poly->object, &TGE::TypeInfo::SimObject, &TGE::TypeInfo::GameBase, 0);
+			U32 objTypeMask = 0;
+			if (gb != nullptr) {
+				objTypeMask = gb->mTypeMask;
+			}
+
+			// 0x800 is the constant used in code
+			if ((objTypeMask & TGE::ShapeBaseObjectType) != 0) {
+				U32 netIndex = gb->mNetIndex();
+
+				bool found = false;
+				for (int j = 0; j < thisObj->mMaterialCollisions().size(); j++) {
+					if (thisObj->mMaterialCollisions()[j].ghostIndex == netIndex && thisObj->mMaterialCollisions()[j].materialId == materialId) {
+						found = true;
+						break;
+					}
+				}
+
+				if (!found) {
+
+					TGE::Marble::MaterialCollision coll{};
+					coll.ghostIndex = netIndex;
+					coll.materialId = materialId;
+					coll.alsoGhostIndex = netIndex;
+					thisObj->mMaterialCollisions().push_back(coll);
+					Point3F offset(0, 0, 0);
+					thisObj->queueCollision(reinterpret_cast<TGE::ShapeBase*>(gb), offset, materialId);
+				}
+			}
+		}
+	superbreak:
+		(void)0;
+	}
 }
 
 void testCollision(TGE::SceneObject *obj, const Point3F &start, const Point3F &end, std::vector<TGE::RayInfo> &hits) {

@@ -59,5 +59,6 @@ namespace TGE
 		PlaneList  mPolyPlaneList;
 
 		CONSTRUCTOR((), 0x408404_win, 0x24F200_mac);
+		MEMBERFN(void, clear, (), 0x4144c0_win, 0x24E830_mac);
 	};
 }

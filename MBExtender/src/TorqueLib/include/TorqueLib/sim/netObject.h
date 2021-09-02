@@ -62,6 +62,7 @@ namespace TGE
 
 		GETTERFN(U32, getNetFlags, 0x40);
 		SETTERFN(U32, setNetFlags, 0x40);
+		FIELD(U32, mNetIndex, 0x44);
 
 		inline bool isServerObject() { return (getNetFlags() & 2) == 0; }
 		inline bool isClientObject() { return (getNetFlags() & 2) != 0; }

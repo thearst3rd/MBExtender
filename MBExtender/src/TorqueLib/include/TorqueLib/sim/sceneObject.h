@@ -30,6 +30,7 @@
 #include <TorqueLib/math/mMatrix.h>
 #include <TorqueLib/sim/netObject.h>
 #include <TorqueLib/core/tVector.h>
+#include <TorqueLib/dgl/materialList.h>
 
 namespace TGE
 {
@@ -82,7 +83,7 @@ namespace TGE
 		UNDEFVIRT(setScale);
 		UNDEFVIRT(setRenderTransform);
 		UNDEFVIRT(buildConvex);
-		virtual bool buildPolyList(void*, const Box3F&, const SphereF&);
+		virtual bool buildPolyList(void*, const Box3F&, const SphereF&) = 0;
 		UNDEFVIRT(buildCollisionBSP);
 		virtual bool castRay(const Point3F &start, const Point3F &end, RayInfo* info) = 0;
 		UNDEFVIRT(collideBox);
@@ -92,7 +93,7 @@ namespace TGE
 		virtual void renderObject(SceneState *state, SceneRenderImage *renderImage) = 0;
 		UNDEFVIRT(prepRenderImage);
 		UNDEFVIRT(scopeObject);
-		UNDEFVIRT(getMaterialProperty);
+		virtual Material* getMaterialProperty(U32 which) = 0;
 		UNDEFVIRT(onSceneAdd);
 		UNDEFVIRT(onSceneRemove);
 		UNDEFVIRT(transformModelview);
@@ -122,6 +123,7 @@ namespace TGE
 		GETTERFN(Point3F, getScale, 0x11C);
 		MEMBERFN(void, setScale, (const VectorF &scale), 0x4091CE_win, 0x18DD10_mac);
 
+		FIELD(Box3F, mObjBox, 0x128);
 		FIELD(Container*, mContainer, 0x98);
 	};
 

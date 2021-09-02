@@ -117,6 +117,8 @@ namespace TGE
 		GETTERFN(F32, getCloakLevel, 0x75C);
 		SETTERFN(F32, setCloakLevel, 0x75C);
 
+		MEMBERFN(void, queueCollision, (ShapeBase* object, const VectorF& vec, U32 materialId), 0x40389b_win, 0x97980_mac);
+
 		MEMBERFN(void, renderObject, (SceneState *state, SceneRenderImage *image), 0x4E5CD0_win, 0xA5F00_mac);
 		MEMBERFN(void, renderImage, (SceneState *state, SceneRenderImage *image), 0x404084_win, 0xa2c80_mac);
 		MEMBERFN(void, renderMountedImage, (SceneState *state, SceneRenderImage *image), 0x404DEF_win, 0xA1B30_mac);

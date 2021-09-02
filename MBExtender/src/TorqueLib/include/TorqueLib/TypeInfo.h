@@ -34,9 +34,11 @@ namespace TGE {
 		//Type infos
 		GLOBALVAR(ClassTypeInfo, SimObject, 0x656100_win, 0x2de080_mac);
 		GLOBALVAR(ClassTypeInfo, NetObject, 0x65e8d0_win, 0x2e1680_mac);
+		GLOBALVAR(ClassTypeInfo, GameBase, 0x65ffa8_win, 0x2dfce0_mac);
 		GLOBALVAR(ClassTypeInfo, SceneObject, 0x65E8F0_win, 0x2E15A0_mac);
 		GLOBALVAR(ClassTypeInfo, ShapeBase, 0x663840_win, 0x2DEE80_mac);
 		GLOBALVAR(ClassTypeInfo, Marble, 0x663860_win, 0x2E2180_mac);
+		GLOBALVAR(ClassTypeInfo, PathedInterior, 0x663880_win, 0x2e1ec0_mac);
 
 		//Stealing MarbleBlast's dynamic cast right from underneath them
 #ifdef _WIN32

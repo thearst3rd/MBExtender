@@ -26,6 +26,7 @@
 #include <TorqueLib/platform/platform.h>
 
 #include <TorqueLib/core/tVector.h>
+#include <TorqueLib/console/simBase.h>
 
 namespace TGE
 {
@@ -46,5 +47,17 @@ namespace TGE
 
 		CONSTRUCTOR((), 0x643c0_mac, 0x405899_win);
 		MEMBERFN(bool, read, (TGE::Stream &stream), 0x63d50_mac, 0x407662_win);
+	};
+
+	class Material : public SimObject 
+	{
+		BRIDGE_CLASS(Material);
+	public:
+		U32 data_30;
+		U32 data_34;
+		U32 data_38;
+		F32 friction;
+		F32 restitution;
+		F32 force;
 	};
 }
