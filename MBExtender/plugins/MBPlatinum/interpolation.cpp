@@ -213,9 +213,9 @@ float Node_getAdjustedProgress(const char* nodeId, float t) {
 	TGE::SceneObject* obj = static_cast<TGE::SceneObject*>(TGE::Sim::findObject(nodeId));
 	if (obj == NULL)
 		return t;
-	bool smooth = atoi(obj->getDataField("Smooth"_ts, false));
-	bool smoothStart = atoi(obj->getDataField("SmoothStart"_ts, false));
-	bool smoothEnd = atoi(obj->getDataField("SmoothEnd"_ts, false));
+	bool smooth = atoi(obj->getDataField("Smooth"_ts, NULL));
+	bool smoothStart = atoi(obj->getDataField("SmoothStart"_ts, NULL));
+	bool smoothEnd = atoi(obj->getDataField("SmoothEnd"_ts, NULL));
 
 	if (smooth || (t <= 0.5 && smoothStart) || (t > 0.5 && smoothEnd))
 	{
