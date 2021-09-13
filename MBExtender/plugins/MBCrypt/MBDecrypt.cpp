@@ -58,7 +58,15 @@ MBX_CONSOLE_FUNCTION(loadMBPackage, void, 2, 2, "loadMBPackage(package)")
 	try
 	{
 		MBPakFile* pak = new MBPakFile(path, &keyStore);
-		loadedPackages.push_back(pak);
+		if (pak->failed)
+		{
+			TGE::Con::errorf("Could not load package %s", argv[1]);
+			delete pak;
+		}
+		else
+		{
+			loadedPackages.push_back(pak);
+		}
 	}
 	catch (...)
 	{
@@ -329,13 +337,21 @@ MBX_OVERRIDE_FN(bool, TGE::Platform::getFileTimes, (const char* path, TGE::FileT
 			{
 				if (createTime)
 				{
+#ifdef _WIN32
 					createTime->low = 0;
 					createTime->high = 0;
+#else
+					*createTime = 0;
+#endif
 				}
 				if (modifyTime)
 				{
+#ifdef _WIN32
 					modifyTime->low = 0;
 					modifyTime->high = 0;
+#else
+					*modifyTime = 0;
+#endif
 				}
 				return true;
 			}

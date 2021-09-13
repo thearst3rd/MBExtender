@@ -17,6 +17,7 @@ public:
 	char* key;
 	int keyLength;
 	KeyStore* keys;
+	bool failed;
 
 	void ReadHeader(std::ifstream& stream);
 	bool VerifySignature(char* databuffer, size_t datalen, CryptoPP::RSA::PublicKey publickey, char* sign, size_t signlen);

@@ -18,6 +18,7 @@ MBPakFile::MBPakFile(std::string path, KeyStore* keys)
 {
 	this->path = path;
 	this->keys = keys;
+	this->failed = false;
 	std::ifstream f;
 	f.open(path, std::ifstream::binary);
 	this->ReadHeader(f);
@@ -80,7 +81,9 @@ void MBPakFile::ReadHeader(std::ifstream& stream)
 	if (!this->VerifySignature(buffer, sz, this->keys->rsaPublicKey, this->key, this->keyLength))
 	{
 		delete[] buffer;
-		throw std::exception("Data integrity failed!");
+		this->failed = true;
+		return;
+		// throw std::exception("Data integrity failed!");
 	}
 	delete[] buffer;
 }
