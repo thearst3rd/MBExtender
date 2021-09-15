@@ -465,6 +465,7 @@ MBX_CONSOLE_FUNCTION(getFileSHA256, const char *, 2, 2, "getFileSHA256(path)")
 		char *buffer = new char[obj->fileSize];
 
 		stream->_read(obj->fileSize, buffer);
+		TGE::ResourceManager->closeStream(stream);
 
 		CryptoPP::SHA256 hash;
 		CryptoPP::byte digest[CryptoPP::SHA256::DIGESTSIZE];
@@ -500,6 +501,7 @@ MBX_CONSOLE_FUNCTION(getMissionSHA256, const char *, 2, 2, "getMissionSHA256(pat
 		char *buffer = new char[obj->fileSize];
 
 		stream->_read(obj->fileSize, buffer);
+		TGE::ResourceManager->closeStream(stream);
 
 		CryptoPP::SHA256 hash;
 		CryptoPP::byte digest[CryptoPP::SHA256::DIGESTSIZE];

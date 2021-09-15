@@ -92,39 +92,40 @@ void advancePathedInteriors(U32 delta) {
 
 MBX_CONSOLE_METHOD(Marble, testThing, void, 2, 2, "")
 {
+	TGE::Marble* marble = static_cast<TGE::Marble*>(TGE::Sim::findObject(argv[1]));
 	TGE::Con::printf("Best Contact");
-	TGE::Con::printf("Position %s", StringMath::print(gAdvancingMarble->mBestContact().position));
-	TGE::Con::printf("Normal %s", StringMath::print(gAdvancingMarble->mBestContact().normal));
-	TGE::Con::printf("ActualNormal %s", StringMath::print(gAdvancingMarble->mBestContact().actualNormal));
-	TGE::Con::printf("SurfaceVel %s", StringMath::print(gAdvancingMarble->mBestContact().surfaceVelocity));
-	TGE::Con::printf("SurfaceFrictionVel %s", StringMath::print(gAdvancingMarble->mBestContact().surfaceFrictionVelocity));
-	TGE::Con::printf("StaticFriction %s", StringMath::print(gAdvancingMarble->mBestContact().staticFriction));
-	TGE::Con::printf("KineticFriction %s", StringMath::print(gAdvancingMarble->mBestContact().kineticFriction));
-	TGE::Con::printf("vAtC %s", StringMath::print(gAdvancingMarble->mBestContact().vAtC));
-	TGE::Con::printf("vAtCMag %s", StringMath::print(gAdvancingMarble->mBestContact().vAtCMag));
-	TGE::Con::printf("NormalForce %s", StringMath::print(gAdvancingMarble->mBestContact().normalForce));
-	TGE::Con::printf("ContactDistance %s", StringMath::print(gAdvancingMarble->mBestContact().contactDistance));
-	TGE::Con::printf("Friction %s", StringMath::print(gAdvancingMarble->mBestContact().friction));
-	TGE::Con::printf("Restitution %s", StringMath::print(gAdvancingMarble->mBestContact().restitution));
-	TGE::Con::printf("Force %s", StringMath::print(gAdvancingMarble->mBestContact().force));
-	TGE::Con::printf("Material %s", StringMath::print(gAdvancingMarble->mBestContact().material));
+	TGE::Con::printf("Position %s", StringMath::print(marble->mBestContact().position));
+	TGE::Con::printf("Normal %s", StringMath::print(marble->mBestContact().normal));
+	TGE::Con::printf("ActualNormal %s", StringMath::print(marble->mBestContact().actualNormal));
+	TGE::Con::printf("SurfaceVel %s", StringMath::print(marble->mBestContact().surfaceVelocity));
+	TGE::Con::printf("SurfaceFrictionVel %s", StringMath::print(marble->mBestContact().surfaceFrictionVelocity));
+	TGE::Con::printf("StaticFriction %s", StringMath::print(marble->mBestContact().staticFriction));
+	TGE::Con::printf("KineticFriction %s", StringMath::print(marble->mBestContact().kineticFriction));
+	TGE::Con::printf("vAtC %s", StringMath::print(marble->mBestContact().vAtC));
+	TGE::Con::printf("vAtCMag %s", StringMath::print(marble->mBestContact().vAtCMag));
+	TGE::Con::printf("NormalForce %s", StringMath::print(marble->mBestContact().normalForce));
+	TGE::Con::printf("ContactDistance %s", StringMath::print(marble->mBestContact().contactDistance));
+	TGE::Con::printf("Friction %s", StringMath::print(marble->mBestContact().friction));
+	TGE::Con::printf("Restitution %s", StringMath::print(marble->mBestContact().restitution));
+	TGE::Con::printf("Force %s", StringMath::print(marble->mBestContact().force));
+	TGE::Con::printf("Material %s", StringMath::print(marble->mBestContact().material));
 
 	TGE::Con::printf("Last Contact");
-	TGE::Con::printf("Position %s", StringMath::print(gAdvancingMarble->mLastContact().position));
-	TGE::Con::printf("Normal %s", StringMath::print(gAdvancingMarble->mLastContact().normal));
-	TGE::Con::printf("ActualNormal %s", StringMath::print(gAdvancingMarble->mLastContact().actualNormal));
-	TGE::Con::printf("SurfaceVel %s", StringMath::print(gAdvancingMarble->mLastContact().surfaceVelocity));
-	TGE::Con::printf("SurfaceFrictionVel %s", StringMath::print(gAdvancingMarble->mLastContact().surfaceFrictionVelocity));
-	TGE::Con::printf("StaticFriction %s", StringMath::print(gAdvancingMarble->mLastContact().staticFriction));
-	TGE::Con::printf("KineticFriction %s", StringMath::print(gAdvancingMarble->mLastContact().kineticFriction));
-	TGE::Con::printf("vAtC %s", StringMath::print(gAdvancingMarble->mLastContact().vAtC));
-	TGE::Con::printf("vAtCMag %s", StringMath::print(gAdvancingMarble->mLastContact().vAtCMag));
-	TGE::Con::printf("NormalForce %s", StringMath::print(gAdvancingMarble->mLastContact().normalForce));
-	TGE::Con::printf("ContactDistance %s", StringMath::print(gAdvancingMarble->mLastContact().contactDistance));
-	TGE::Con::printf("Friction %s", StringMath::print(gAdvancingMarble->mLastContact().friction));
-	TGE::Con::printf("Restitution %s", StringMath::print(gAdvancingMarble->mLastContact().restitution));
-	TGE::Con::printf("Force %s", StringMath::print(gAdvancingMarble->mLastContact().force));
-	TGE::Con::printf("Material %s", StringMath::print(gAdvancingMarble->mLastContact().material));
+	TGE::Con::printf("Position %s", StringMath::print(marble->mLastContact().position));
+	TGE::Con::printf("Normal %s", StringMath::print(marble->mLastContact().normal));
+	TGE::Con::printf("ActualNormal %s", StringMath::print(marble->mLastContact().actualNormal));
+	TGE::Con::printf("SurfaceVel %s", StringMath::print(marble->mLastContact().surfaceVelocity));
+	TGE::Con::printf("SurfaceFrictionVel %s", StringMath::print(marble->mLastContact().surfaceFrictionVelocity));
+	TGE::Con::printf("StaticFriction %s", StringMath::print(marble->mLastContact().staticFriction));
+	TGE::Con::printf("KineticFriction %s", StringMath::print(marble->mLastContact().kineticFriction));
+	TGE::Con::printf("vAtC %s", StringMath::print(marble->mLastContact().vAtC));
+	TGE::Con::printf("vAtCMag %s", StringMath::print(marble->mLastContact().vAtCMag));
+	TGE::Con::printf("NormalForce %s", StringMath::print(marble->mLastContact().normalForce));
+	TGE::Con::printf("ContactDistance %s", StringMath::print(marble->mLastContact().contactDistance));
+	TGE::Con::printf("Friction %s", StringMath::print(marble->mLastContact().friction));
+	TGE::Con::printf("Restitution %s", StringMath::print(marble->mLastContact().restitution));
+	TGE::Con::printf("Force %s", StringMath::print(marble->mLastContact().force));
+	TGE::Con::printf("Material %s", StringMath::print(marble->mLastContact().material));
 }
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::computeFirstPlatformIntersect, (TGE::Marble* thisPtr, F64* moveTime), originalComputeFirstPlatformIntersect) {
@@ -413,6 +414,17 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::findContacts, (TGE::Marble* thisObj, U3
 			contact.friction = friction;
 			contact.force = force;
 			contact.material = materialId;
+
+			TGE::Con::executef(thisObj, 9, "onCollide", 
+					TGE::StringTable->insert(StringMath::print(contactVert), false),
+					TGE::StringTable->insert(StringMath::print(normal), false),
+					TGE::StringTable->insert(StringMath::print(surfaceVelocity), false),
+					TGE::StringTable->insert(StringMath::print(contactDistance), false),
+					TGE::StringTable->insert(poly->object->getIdString(), false),
+					TGE::StringTable->insert(StringMath::print(friction), false),
+					TGE::StringTable->insert(StringMath::print(force), false),
+					TGE::StringTable->insert(StringMath::print(materialId), false)
+				);
 
 			thisObj->mContacts().push_back(contact);
 
