@@ -50,6 +50,27 @@ bool initPlugin(MBX::Plugin& plugin)
 {
 	MBX_INSTALL(plugin, MBCrypt);
 	keyStore.Load();
+
+	std::string zipn = std::string("boot") + ".mbpak";
+	std::string path = std::string("packages/") + zipn;
+	try
+	{
+		MBPakFile* pak = new MBPakFile(path, &keyStore);
+		if (pak->failed)
+		{
+			TGE::Con::errorf("Could not load package boot");
+			delete pak;
+		}
+		else
+		{
+			loadedPackages.push_back(pak);
+		}
+	}
+	catch (...)
+	{
+		TGE::Con::errorf("Could not load package boot");
+	}
+
 	return true;
 }
 
