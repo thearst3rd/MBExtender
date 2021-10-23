@@ -122,22 +122,40 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderObject, (TGE::ShapeBase* thisp
 	else {
 		gNoShaders = true;
 	}
+
+	F32 fadeVal;
+	if (currentPass != "fwd") {
+		fadeVal = thisptr->getFadeVal();
+		thisptr->setFadeVal(1);
+	}
 	
 	originalShapeBaseRender(thisptr, state, image);
+
+	if (currentPass != "fwd") {
+		thisptr->setFadeVal(fadeVal);
+	}
 }
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderImage, (TGE::ShapeBase *thisptr, TGE::SceneState *state, TGE::SceneRenderImage *image), originalRenderImage) {
 	// If we are cloaked just do an original render.
+	F32 cloakLevel;
+	if (currentPass != "fwd") {
+		cloakLevel = thisptr->getCloakLevel();
+		thisptr->setCloakLevel(0);
+	}
+
 	if (thisptr->getCloakLevel() > 0) {
-		if (currentPass == "fwd")
-			originalRenderImage(thisptr, state, image);
+		originalRenderImage(thisptr, state, image);
 		return;
 	}
 
 	gCurrentRenderingShape = static_cast<TGE::ShapeBase *>(thisptr);
-	if (currentPass == "fwd")
-		originalRenderImage(thisptr, state, image);
+	originalRenderImage(thisptr, state, image);
 	gCurrentRenderingShape = NULL;
+
+	if (currentPass != "fwd") {
+		thisptr->setCloakLevel(cloakLevel);
+	}
 }
 
 //There are so many virtual function calls here I can't bring myself to show this to other people
