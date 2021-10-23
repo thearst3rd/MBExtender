@@ -7,6 +7,7 @@
 #include <TorqueLib/game/gameBase.h>
 #include "sync.h"
 #include <TorqueLib/game/item.h>
+#include <unordered_map>
 
 MBX_MODULE(Interpolation);
 
@@ -80,10 +81,46 @@ TGE::NamespaceEntry *lookup(TGE::Namespace *nmspc, const char *ns, const char *f
 	}
 }
 
+struct NmspaceEntryKey
+{
+	TGE::Namespace* nmspc;
+	const char* ns;
+	const char* fn;
+
+	bool operator==(const NmspaceEntryKey& p) const {
+		return nmspc == p.nmspc && ns == p.ns && fn == p.fn;
+	}
+};
+
+std::unordered_map<const char*, std::unordered_map<const char*, TGE::NamespaceEntry*>> namespaceFuncs;
+
 const char *executeNamespacedFn(const char *ns, const char *fn, int argc, const char *argv[])
 {
-	TGE::Namespace *nmspc = TGE::Namespace::find(ns, 0);
-	TGE::NamespaceEntry *en = lookup(nmspc, ns, fn); // nmspc->lookup(TGE::StringTable->insert(fn, false));
+	const char* nsEntry = TGE::StringTable->insert(ns, false);
+	const char* fnEntry = TGE::StringTable->insert(fn, false);
+
+	TGE::NamespaceEntry* en;
+	TGE::Namespace* nmspc = TGE::Namespace::find(ns, 0);
+
+	if (namespaceFuncs.find(nsEntry) == namespaceFuncs.end())
+	{
+		en = lookup(nmspc, ns, fn);
+		namespaceFuncs[nsEntry] = std::unordered_map<const char*, TGE::NamespaceEntry*>();
+		namespaceFuncs[nsEntry][fnEntry] = en;
+	} 
+	else
+	{
+		auto& fnmap = namespaceFuncs[nsEntry];
+		if (fnmap.find(fnEntry) == fnmap.end())
+		{
+			en = lookup(nmspc, ns, fn);
+			fnmap[fnEntry] = en;
+		}
+		else
+		{
+			en = fnmap[fnEntry];
+		}
+	}
 	return en->execute(argc, argv, &TGE::gEvalState);
 }
 
