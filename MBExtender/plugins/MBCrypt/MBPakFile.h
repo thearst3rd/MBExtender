@@ -4,6 +4,7 @@
 #include "MemoryStream.h"
 #include "../../external/cryptopp/rsa.h"
 #include "KeyStore.h"
+#include <unordered_map>
 
 class MBPakFile
 {
@@ -14,6 +15,7 @@ public:
 	std::string name;
 	std::string path;
 	std::vector<MBPakFileEntry> entries;
+	std::unordered_map<std::string, int> entryMap;
 	char* key;
 	int keyLength;
 	KeyStore* keys;

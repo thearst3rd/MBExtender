@@ -163,28 +163,26 @@ MBX_OVERRIDE_MEMBERFN(TGE::File::FileStatus, TGE::File::open, (TGE::File* thispt
 	std::string fn = std::string(filename);
 	for (auto& pak : loadedPackages)
 	{
-		for (auto& file : pak->entries)
+		if (pak->entryMap.find(fn) != pak->entryMap.end())
 		{
-			if (icompare(file.filepath, fn))
+			MBPakFileEntry* entry = &pak->entries[pak->entryMap[fn]];
+
+			if (openMode == TGE::File::AccessMode::Read)
 			{
-				if (openMode == TGE::File::AccessMode::Read)
-				{
-					int64_t bufSize;
-					char* buf = pak->ReadFile(&file, keyStore.aesKey, &bufSize);
-					MemoryStream* str = new MemoryStream();
-					str->createFromBuffer((uint8_t*)buf, bufSize);
-					delete[] buf;
-					openPakFiles.insert(std::make_pair(thisptr, str));
-					thisptr->currentStatus = TGE::File::FileStatus::Ok;
-					thisptr->capability = TGE::File::Capability::FileRead;
-					return TGE::File::FileStatus::Ok;
-				}
-				else
-				{
-					thisptr->currentStatus = TGE::File::FileStatus::IOError;
-					thisptr->capability = 0;
-					return TGE::File::FileStatus::IOError;
-				}
+				int64_t bufSize;
+				char* buf = pak->ReadFile(entry, keyStore.aesKey, &bufSize);
+				MemoryStream* str = new MemoryStream();
+				str->useBuffer((uint8_t*)buf, bufSize);
+				openPakFiles.insert(std::make_pair(thisptr, str));
+				thisptr->currentStatus = TGE::File::FileStatus::Ok;
+				thisptr->capability = TGE::File::Capability::FileRead;
+				return TGE::File::FileStatus::Ok;
+			}
+			else
+			{
+				thisptr->currentStatus = TGE::File::FileStatus::IOError;
+				thisptr->capability = 0;
+				return TGE::File::FileStatus::IOError;
 			}
 		}
 	}
@@ -210,26 +208,28 @@ MBX_OVERRIDE_MEMBERFN(TGE::File::FileStatus, TGE::File::read, (TGE::File* thispt
 {
 	if (openPakFiles.find(thisptr) != openPakFiles.end()) {
 		MemoryStream* str = openPakFiles[thisptr];
-		char* buf = new char[size];
-		int bytesR = 0;
-		for (int i = 0; i < size; i++)
+
+		if (str->tell() + size > str->length())
 		{
-			if (str->tell() == str->length())
-			{
-				memcpy(dst, buf, bytesR);
-				delete[] buf;
-				*bytesRead = bytesR;
-				thisptr->currentStatus = TGE::File::FileStatus::EOS;
-				return TGE::File::FileStatus::EOS;
-			}
-			buf[i] = str->readChar();
-			bytesR++;
+			*bytesRead = (str->length() - str->tell());
+			thisptr->currentStatus = TGE::File::FileStatus::EOS;
 		}
-		memcpy(dst, buf, bytesR);
-		delete[] buf;
-		*bytesRead = bytesR;
-		thisptr->currentStatus = TGE::File::FileStatus::Ok;
-		return TGE::File::FileStatus::Ok;
+		else
+		{
+			*bytesRead = size;
+			thisptr->currentStatus = TGE::File::FileStatus::Ok;
+		}
+		uint8_t* buffer = str->getBuffer();
+		memcpy(dst, (buffer + str->tell()), *bytesRead);
+		try 
+		{
+			str->seek(str->tell() + *bytesRead);
+		} 
+		catch (...)
+		{
+			thisptr->currentStatus = TGE::File::FileStatus::EOS;
+		}
+		return thisptr->currentStatus;
 	}
 
 	return origRead(thisptr, size, dst, bytesRead);

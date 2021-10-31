@@ -31,6 +31,7 @@ void MemoryStream::createFromBuffer(uint8_t* buffer, size_t count)
 
 void MemoryStream::useBuffer(uint8_t* buffer, size_t count)
 {
+	delete[] this->buffer;
 	this->buffer = buffer;
 	this->bufferSize = count;
 	this->properSize = count;

@@ -13,6 +13,7 @@
 #include "../../external/zlib/zlib.h"
 #include <fstream>
 #include <exception>
+#include <MBExtender/Allocator.h>
 
 MBPakFile::MBPakFile(std::string path, KeyStore* keys)
 {
@@ -35,11 +36,11 @@ std::string readString(std::ifstream& stream)
 {
 	char stringlen;
 	stream.read((char*)&stringlen, sizeof(char));
-	char* str = new char[stringlen + 1];
+	char* str = (char*)MBX_Malloc(stringlen + 1);
 	stream.read(str, stringlen);
 	str[stringlen] = '\0';
 	std::string ret = std::string(str);
-	delete[] str;
+	MBX_Free(str);
 	return ret;
 }
 
@@ -60,6 +61,7 @@ void MBPakFile::ReadHeader(std::ifstream& stream)
 		stream.read((char*)&entry.fileOffset, sizeof(int64_t));
 		stream.read((char*)&entry.uncompressedSize, sizeof(int64_t));
 		stream.read((char*)&entry.compressedSize, sizeof(int));
+		this->entryMap.insert(std::make_pair(entry.filepath, this->entries.size()));
 		this->entries.push_back(entry);
 	}
 
@@ -75,17 +77,17 @@ void MBPakFile::ReadHeader(std::ifstream& stream)
 	int sz = stream.tellg() - thispos;
 	stream.seekg(offset);
 
-	char* buffer = new char[sz];
+	char* buffer = (char*)MBX_Malloc(sz);
 	stream.read(buffer, sz);
 
 	if (!this->VerifySignature(buffer, sz, this->keys->rsaPublicKey, this->key, this->keyLength))
 	{
-		delete[] buffer;
+		MBX_Free(buffer);
 		this->failed = true;
 		return;
 		// throw std::exception("Data integrity failed!");
 	}
-	delete[] buffer;
+	MBX_Free(buffer);
 }
 
 bool MBPakFile::VerifySignature(char* databuffer, size_t datalen, CryptoPP::RSA::PublicKey publickey, char* sign, size_t signlen)
@@ -109,7 +111,7 @@ char* MBPakFile::Decrypt(MBPakFileEntry* entry, std::string keyStr, int64_t* siz
 
 	if (entry != NULL)
 	{
-		char* encryptedContents = new char[entry->compressedSize];
+		char* encryptedContents = (char*)MBX_Malloc(entry->compressedSize);
 
 		std::ifstream f = std::ifstream(this->path, std::ifstream::binary);
 		f.seekg(entry->fileOffset);
@@ -138,13 +140,13 @@ char* MBPakFile::Decrypt(MBPakFileEntry* entry, std::string keyStr, int64_t* siz
 		decryptor.MessageEnd();
 
 		int64_t decryptSize = decryptor.MaxRetrievable();
-		char* decryptedData = new char[decryptSize];
+		char* decryptedData = (char*)MBX_Malloc(decryptSize);
 
 		decryptor.Get((CryptoPP::byte*)decryptedData, decryptSize);
 
 		*size = decryptSize;
 
-		delete[] encryptedContents;
+		MBX_Free(encryptedContents);
 
 		return decryptedData;
 	}
@@ -161,12 +163,12 @@ char* MBPakFile::ReadFile(MBPakFileEntry* entry, std::string keyStr, int64_t* si
 		if (buffer != NULL)
 		{
 			uLongf uSize = entry->uncompressedSize;
-			char* uncompressBuffer = new char[uSize];
+			char* uncompressBuffer = (char*)MBX_Malloc(uSize);
 
 			uncompress((Bytef*)uncompressBuffer, &uSize, (Bytef*)buffer, zipSize);
 
 			*size = uSize;
-			delete[] buffer;
+			MBX_Free(buffer);
 			return uncompressBuffer;
 		}
 		else
