@@ -265,6 +265,7 @@ MBX_OVERRIDE_MEMBERFN(TGE::HTTPObject *, TGE::ConcreteClassRep_HTTPObject::creat
 	curl_easy_setopt(request, CURLOPT_TRANSFERTEXT, true);
 	curl_easy_setopt(request, CURLOPT_USERAGENT, "Torque 1.0");
 	curl_easy_setopt(request, CURLOPT_ENCODING, "ISO 8859-1");
+	curl_easy_setopt(request, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 
 	curlInfo *info = new curlInfo;
 
