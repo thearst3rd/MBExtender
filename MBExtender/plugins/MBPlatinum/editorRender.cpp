@@ -50,12 +50,12 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::EditTSCtrl::EditTSCtrl_renderWorld, (TGE::EditT
 	gEditor = false;
 }
 
-MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderObject, (TGE::ShapeBase *thisptr, TGE::SceneState *state, TGE::SceneRenderImage *image), originalRenderObject) {
+MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderObject, (TGE::ShapeBase* thisptr, TGE::SceneState* state, TGE::SceneRenderImage* image), originalRenderObject) {
 	//Check our datablock and see if it's editor-only
 	TGE::GameBaseData *datablock = thisptr->getDataBlock();
 	if (!datablock) {
 		// Apparently this can happen on Perseverance...
-		originalRenderObject(thisptr, state, image);
+		// originalRenderObject(thisptr, state, image);
 		return;
 	}
 	bool dataRenderEditor = atoi(datablock->getDataField("renderEditor", "")) != 0;

@@ -418,6 +418,8 @@ MBX_CONSOLE_FUNCTION(Node_getPathPosition, const char *, 5, 5, "Node_getPathPosi
 
 float Node_getPathTime(const char* objId, const char* nodeId) {
 	TGE::SceneObject* node = static_cast<TGE::SceneObject*>(TGE::Sim::findObject(nodeId));
+	if (node == NULL)
+		return 0;
 	float speed = atof(node->getDataField("speed"_ts, NULL));
 	float delay = atof(node->getDataField("delay"_ts, NULL));
 
