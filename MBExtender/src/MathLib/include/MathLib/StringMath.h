@@ -414,8 +414,13 @@ inline const char *print<F32>(const F32 &val) {
 	 */
 template <>
 inline const char *print<F64>(const F64 &val) {
-    char *ret = TGE::Con::getReturnBuffer(32);
-    sprintf_s(ret, 32, "%.7f", val);  //Using %f to eliminate scientific notation
+    char *ret = TGE::Con::getReturnBuffer(64);
+    int e;
+    frexp(val, &e);
+    if (e <= 48)
+        sprintf_s(ret, 64, "%.7f", val);  //Using %f to eliminate scientific notation
+    else
+        sprintf_s(ret, 64, "%.7e", val);
     return ret;
 }
 /**
