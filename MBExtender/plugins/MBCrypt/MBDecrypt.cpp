@@ -8,6 +8,7 @@
 #include "KeyStore.h"
 #include <iostream>
 #include <fstream>
+#include <unordered_map>
 #include <map>
 #include <MBExtender/MBExtender.h>
 #include <TorqueLib/core/resManager.h>
@@ -25,9 +26,8 @@
 MBX_MODULE(MBCrypt)
 
 static std::vector<MBPakFile*> loadedPackages;
-
-static std::map<TGE::File*, MemoryStream*> openPakFiles;
-
+static std::unordered_map<TGE::File*, MemoryStream*> openPakFiles;
+static std::unordered_map<const char*, int> loadedFileRefs;
 static KeyStore keyStore;
 
 bool icompare_pred(unsigned char a, unsigned char b)
@@ -86,6 +86,52 @@ std::string getFileName(std::string filePath, bool withExtension = true, char se
 	return "";
 }
 
+std::string getFileDir(std::string filename)
+{
+	std::string directory;
+	const size_t last_slash_idx = filename.rfind('/');
+	if (std::string::npos != last_slash_idx)
+	{
+		directory = filename.substr(0, last_slash_idx);
+	}
+	return directory;
+}
+
+void loadPackageContents(MBPakFile* package)
+{
+	for (auto& entry : package->entries)
+	{
+		std::string fname = getFileName(entry.filepath);
+
+		std::string dpath = getFileDir(entry.filepath);
+
+		const char* fpath = TGE::StringTable->insert(entry.filepath.c_str(), false);
+
+		if (TGE::ResourceManager->find(fpath) == NULL)
+		{
+			TGE::ResourceObject* ro = TGE::ResourceManager->createResource(TGE::StringTable->insert(dpath.c_str(), false), TGE::StringTable->insert(fname.c_str(), false));
+			ro->flags = TGE::ResourceObject::Flags::File;
+			ro->fileOffset = 0;
+			ro->fileSize = entry.uncompressedSize;
+			ro->compressedFileSize = entry.uncompressedSize;
+
+			loadedFileRefs[fpath] = 1;
+		}
+		else
+		{
+			// Reference counting thing so we can properly delete ResourceObjects pointing to same file
+			if (loadedFileRefs.find(fpath) == loadedFileRefs.end())
+			{
+				loadedFileRefs[fpath] = 2;
+			}
+			else
+			{
+				loadedFileRefs[fpath]++;
+			}
+		}
+	}
+}
+
 MBX_CONSOLE_FUNCTION(loadMBPackage, void, 2, 2, "loadMBPackage(package)")
 {
 	TGE::Con::printf("Loading package %s", argv[1]);
@@ -103,6 +149,7 @@ MBX_CONSOLE_FUNCTION(loadMBPackage, void, 2, 2, "loadMBPackage(package)")
 		else
 		{
 			loadedPackages.push_back(pak);
+			loadPackageContents(pak);
 		}
 	}
 	catch (...)
@@ -110,6 +157,33 @@ MBX_CONSOLE_FUNCTION(loadMBPackage, void, 2, 2, "loadMBPackage(package)")
 		TGE::Con::errorf("Could not load package %s", argv[1]);
 	}
 	
+}
+
+void unloadPackageContents(MBPakFile* package)
+{
+	for (auto& entry : package->entries)
+	{
+		std::string fname = getFileName(entry.filepath);
+		std::string dpath = getFileDir(entry.filepath);
+
+		const char* fpath = TGE::StringTable->insert(entry.filepath.c_str(), false);
+
+		if (loadedFileRefs.find(fpath) != loadedFileRefs.end())
+		{
+			loadedFileRefs[fpath]--;
+
+			if (loadedFileRefs[fpath] <= 0)
+			{
+				// Delete the thing then
+
+				TGE::ResourceObject* ro = TGE::ResourceManager->find(fpath);
+				if (ro != NULL)
+					TGE::ResourceManager->freeResource(ro);
+
+				loadedFileRefs.erase(fpath);
+			}
+		}
+	}
 }
 
 MBX_CONSOLE_FUNCTION(unloadMBPackage, void, 2, 2, "unloadMBPackage(package)")
@@ -131,6 +205,7 @@ MBX_CONSOLE_FUNCTION(unloadMBPackage, void, 2, 2, "unloadMBPackage(package)")
 	if (idx != -1)
 	{
 		MBPakFile* pak = loadedPackages[idx];
+		unloadPackageContents(pak);
 		delete pak;
 		loadedPackages.erase(loadedPackages.begin() + idx);
 	}
@@ -138,7 +213,6 @@ MBX_CONSOLE_FUNCTION(unloadMBPackage, void, 2, 2, "unloadMBPackage(package)")
 
 MBX_CONSOLE_FUNCTION(isLoadedMBPackage, bool, 2, 2, "isLoadedMBPackage(package)")
 {
-	TGE::Con::printf("Unloading package %s", argv[1]);
 	std::string zipn = std::string(argv[1]) + ".mbpak";
 	std::string path = std::string("packages/") + zipn;
 
@@ -150,6 +224,20 @@ MBX_CONSOLE_FUNCTION(isLoadedMBPackage, bool, 2, 2, "isLoadedMBPackage(package)"
 		}
 	}
 	return false;
+}
+
+MBX_CONSOLE_FUNCTION(deletePackage, bool, 2, 2, "deletePackage(file)")
+{
+	std::string zipn = std::string(argv[1]) + ".mbpak";
+	std::string path = std::string("packages/") + zipn;
+
+	//Burp
+	if (remove(path.c_str()) != 0)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 MBX_OVERRIDE_MEMBERFN(TGE::File::FileStatus, TGE::File::open, (TGE::File* thisptr, const char* filename, const TGE::File::AccessMode openMode), origOpen)

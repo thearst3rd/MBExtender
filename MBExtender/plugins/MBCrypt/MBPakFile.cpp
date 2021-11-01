@@ -36,11 +36,11 @@ std::string readString(std::ifstream& stream)
 {
 	char stringlen;
 	stream.read((char*)&stringlen, sizeof(char));
-	char* str = (char*)MBX_Malloc(stringlen + 1);
+	char* str = new char[stringlen + 1];
 	stream.read(str, stringlen);
 	str[stringlen] = '\0';
 	std::string ret = std::string(str);
-	MBX_Free(str);
+	delete[] str;
 	return ret;
 }
 
@@ -77,17 +77,17 @@ void MBPakFile::ReadHeader(std::ifstream& stream)
 	int sz = stream.tellg() - thispos;
 	stream.seekg(offset);
 
-	char* buffer = (char*)MBX_Malloc(sz);
+	char* buffer = new char[sz];
 	stream.read(buffer, sz);
 
 	if (!this->VerifySignature(buffer, sz, this->keys->rsaPublicKey, this->key, this->keyLength))
 	{
-		MBX_Free(buffer);
+		delete[] buffer;
 		this->failed = true;
 		return;
 		// throw std::exception("Data integrity failed!");
 	}
-	MBX_Free(buffer);
+	delete[] buffer;
 }
 
 bool MBPakFile::VerifySignature(char* databuffer, size_t datalen, CryptoPP::RSA::PublicKey publickey, char* sign, size_t signlen)
@@ -111,7 +111,7 @@ char* MBPakFile::Decrypt(MBPakFileEntry* entry, std::string keyStr, int64_t* siz
 
 	if (entry != NULL)
 	{
-		char* encryptedContents = (char*)MBX_Malloc(entry->compressedSize);
+		char* encryptedContents = new char[entry->compressedSize];
 
 		std::ifstream f = std::ifstream(this->path, std::ifstream::binary);
 		f.seekg(entry->fileOffset);
@@ -140,13 +140,13 @@ char* MBPakFile::Decrypt(MBPakFileEntry* entry, std::string keyStr, int64_t* siz
 		decryptor.MessageEnd();
 
 		int64_t decryptSize = decryptor.MaxRetrievable();
-		char* decryptedData = (char*)MBX_Malloc(decryptSize);
+		char* decryptedData = new char[decryptSize];
 
 		decryptor.Get((CryptoPP::byte*)decryptedData, decryptSize);
 
 		*size = decryptSize;
 
-		MBX_Free(encryptedContents);
+		delete[] encryptedContents;
 
 		return decryptedData;
 	}
@@ -163,12 +163,12 @@ char* MBPakFile::ReadFile(MBPakFileEntry* entry, std::string keyStr, int64_t* si
 		if (buffer != NULL)
 		{
 			uLongf uSize = entry->uncompressedSize;
-			char* uncompressBuffer = (char*)MBX_Malloc(uSize);
+			char* uncompressBuffer = new char[uSize];
 
 			uncompress((Bytef*)uncompressBuffer, &uSize, (Bytef*)buffer, zipSize);
 
 			*size = uSize;
-			MBX_Free(buffer);
+			delete[] buffer;
 			return uncompressBuffer;
 		}
 		else

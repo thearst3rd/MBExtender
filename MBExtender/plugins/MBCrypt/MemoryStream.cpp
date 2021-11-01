@@ -308,7 +308,7 @@ uint8_t* MemoryStream::getBuffer()
 
 bool MemoryStream::checkEos(bool error)
 {
-	if (this->position >= this->properSize || this->position < 0)
+	if (this->position > this->properSize || this->position < 0)
 		if (error)
 			throw std::runtime_error("End of stream!");
 		else
