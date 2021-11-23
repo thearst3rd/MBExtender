@@ -15,7 +15,7 @@ public:
 	std::string name;
 	std::string path;
 	std::vector<MBPakFileEntry> entries;
-	std::unordered_map<std::string, int> entryMap;
+	std::unordered_map<const char*, int> entryMap;
 	char* key;
 	int keyLength;
 	KeyStore* keys;

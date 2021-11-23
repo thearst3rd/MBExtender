@@ -1,6 +1,7 @@
 #include "MemoryStream.h"
 #include "MBPakFile.h"
 #include "MBPakFileEntry.h"
+#include <TorqueLib/core/stringTable.h>
 #include "../../external/cryptopp/aes.h"
 #include "../../external/cryptopp/cryptlib.h"
 #include "../../external/cryptopp/rijndael.h"
@@ -61,7 +62,8 @@ void MBPakFile::ReadHeader(std::ifstream& stream)
 		stream.read((char*)&entry.fileOffset, sizeof(int64_t));
 		stream.read((char*)&entry.uncompressedSize, sizeof(int64_t));
 		stream.read((char*)&entry.compressedSize, sizeof(int));
-		this->entryMap.insert(std::make_pair(entry.filepath, this->entries.size()));
+		const char* fnSTE = TGE::StringTable->insert(entry.filepath.c_str(), false);
+		this->entryMap.insert(std::make_pair(fnSTE, this->entries.size()));
 		this->entries.push_back(entry);
 	}
 

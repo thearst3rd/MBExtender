@@ -249,11 +249,12 @@ MBX_OVERRIDE_MEMBERFN(TGE::File::FileStatus, TGE::File::open, (TGE::File* thispt
 	}
 
 	std::string fn = std::string(filename);
+	const char* fnSTE = TGE::StringTable->insert(filename, false);
 	for (auto& pak : loadedPackages)
 	{
-		if (pak->entryMap.find(fn) != pak->entryMap.end())
+		if (pak->entryMap.find(fnSTE) != pak->entryMap.end())
 		{
-			MBPakFileEntry* entry = &pak->entries[pak->entryMap[fn]];
+			MBPakFileEntry* entry = &pak->entries[pak->entryMap[fnSTE]];
 
 			if (openMode == TGE::File::AccessMode::Read)
 			{
