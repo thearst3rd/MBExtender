@@ -484,6 +484,8 @@ MBX_CONSOLE_FUNCTION(getFileSHA256, const char *, 2, 2, "getFileSHA256(path)")
 		strcpy(retbuf, output.c_str());
 		return retbuf;
 	}
+
+	return ""_ts;
 }
 
 MBX_CONSOLE_FUNCTION(getMissionSHA256, const char *, 2, 2, "getMissionSHA256(path)")
@@ -523,6 +525,8 @@ MBX_CONSOLE_FUNCTION(getMissionSHA256, const char *, 2, 2, "getMissionSHA256(pat
 		strcpy(retbuf, output.c_str());
 		return retbuf;
 	}
+
+	return ""_ts;
 }
 
 //------------------------------------------------------------------------------
