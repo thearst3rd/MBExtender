@@ -24,7 +24,7 @@
 
 MBX_MODULE(MBCrypt)
 
-static std::vector<MBPakFile> loadedPackages;
+static std::vector<MBPakFile*> loadedPackages;
 
 static std::map<TGE::File*, MemoryStream*> openPakFiles;
 
@@ -57,7 +57,7 @@ MBX_CONSOLE_FUNCTION(loadMBPackage, void, 2, 2, "loadMBPackage(package)")
 
 	try
 	{
-		MBPakFile pak(path, &keyStore);
+		MBPakFile* pak = new MBPakFile(path, &keyStore);
 		loadedPackages.push_back(pak);
 	}
 	catch (...)
@@ -76,7 +76,7 @@ MBX_CONSOLE_FUNCTION(unloadMBPackage, void, 2, 2, "unloadMBPackage(package)")
 	int idx = -1;
 	for (int i = 0; i < loadedPackages.size(); i++)
 	{
-		if (loadedPackages[i].path == path)
+		if (loadedPackages[i]->path == path)
 		{
 			idx = i;
 			break;
@@ -84,7 +84,11 @@ MBX_CONSOLE_FUNCTION(unloadMBPackage, void, 2, 2, "unloadMBPackage(package)")
 	}
 
 	if (idx != -1)
+	{
+		MBPakFile* pak = loadedPackages[idx];
+		delete pak;
 		loadedPackages.erase(loadedPackages.begin() + idx);
+	}
 }
 
 MBX_CONSOLE_FUNCTION(isLoadedMBPackage, bool, 2, 2, "isLoadedMBPackage(package)")
@@ -95,7 +99,7 @@ MBX_CONSOLE_FUNCTION(isLoadedMBPackage, bool, 2, 2, "isLoadedMBPackage(package)"
 
 	for (auto& pak : loadedPackages)
 	{
-		if (pak.path == path)
+		if (pak->path == path)
 		{
 			return true;
 		}
@@ -114,14 +118,14 @@ MBX_OVERRIDE_MEMBERFN(TGE::File::FileStatus, TGE::File::open, (TGE::File* thispt
 	std::string fn = std::string(filename);
 	for (auto& pak : loadedPackages)
 	{
-		for (auto& file : pak.entries)
+		for (auto& file : pak->entries)
 		{
 			if (file.filepath == fn)
 			{
 				if (openMode == TGE::File::AccessMode::Read)
 				{
 					int64_t bufSize;
-					char* buf = pak.ReadFile(fn, keyStore.aesKey, &bufSize);
+					char* buf = pak->ReadFile(fn, keyStore.aesKey, &bufSize);
 					MemoryStream* str = new MemoryStream();
 					str->createFromBuffer((uint8_t*)buf, bufSize);
 					delete[] buf;
@@ -251,7 +255,7 @@ MBX_OVERRIDE_FN(bool, TGE::Platform::isSubDirectory, (const char* parent, const 
 
 	for (auto& pak : loadedPackages)
 	{
-		for (auto& file : pak.entries)
+		for (auto& file : pak->entries)
 		{
 			if (file.filepath.find(dirStr) == 0)
 			{
@@ -288,7 +292,7 @@ MBX_OVERRIDE_FN(bool, TGE::Platform::dumpPath, (const char* path, TGE::Vector<TG
 
 	for (auto& pak : loadedPackages)
 	{
-		for (auto& file : pak.entries)
+		for (auto& file : pak->entries)
 		{
 			if (file.filepath.find(relativeDir) == 0)
 			{
@@ -319,7 +323,7 @@ MBX_OVERRIDE_FN(bool, TGE::Platform::getFileTimes, (const char* path, TGE::FileT
 
 	for (auto& pak : loadedPackages)
 	{
-		for (auto& file : pak.entries)
+		for (auto& file : pak->entries)
 		{
 			if (file.filepath == relativeDir)
 			{

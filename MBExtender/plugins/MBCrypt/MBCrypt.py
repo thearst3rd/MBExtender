@@ -177,8 +177,8 @@ class MBPakFile:
 
     def verifysign(self, databuffer, publickey, sign):
         verifier = pkcs1_15.new(publickey)
-        blakehash = blake3(databuffer).digest()
-        hash = SHA256.new(blakehash)
+        # blakehash = blake3(databuffer).digest()
+        hash = SHA256.new(databuffer)
 
         try:
             verifier.verify(hash, sign)
