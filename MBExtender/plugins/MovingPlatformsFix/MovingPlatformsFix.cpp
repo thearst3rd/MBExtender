@@ -75,7 +75,6 @@ public:
 static bool gSimulatePathedInteriors = true;
 static TGE::Marble *gAdvancingMarble = NULL;
 static std::unordered_map<TGE::SceneObject *, Point3F> gVelocityCache;
-void clearVelocityCache();
 
 void advancePathedInteriors(U32 delta) {
 	if (!gSimulatePathedInteriors)
@@ -89,6 +88,43 @@ void advancePathedInteriors(U32 delta) {
 	}
 
 	gVelocityCache.clear();
+}
+
+MBX_CONSOLE_METHOD(Marble, testThing, void, 2, 2, "")
+{
+	TGE::Con::printf("Best Contact");
+	TGE::Con::printf("Position %s", StringMath::print(gAdvancingMarble->mBestContact().position));
+	TGE::Con::printf("Normal %s", StringMath::print(gAdvancingMarble->mBestContact().normal));
+	TGE::Con::printf("ActualNormal %s", StringMath::print(gAdvancingMarble->mBestContact().actualNormal));
+	TGE::Con::printf("SurfaceVel %s", StringMath::print(gAdvancingMarble->mBestContact().surfaceVelocity));
+	TGE::Con::printf("SurfaceFrictionVel %s", StringMath::print(gAdvancingMarble->mBestContact().surfaceFrictionVelocity));
+	TGE::Con::printf("StaticFriction %s", StringMath::print(gAdvancingMarble->mBestContact().staticFriction));
+	TGE::Con::printf("KineticFriction %s", StringMath::print(gAdvancingMarble->mBestContact().kineticFriction));
+	TGE::Con::printf("vAtC %s", StringMath::print(gAdvancingMarble->mBestContact().vAtC));
+	TGE::Con::printf("vAtCMag %s", StringMath::print(gAdvancingMarble->mBestContact().vAtCMag));
+	TGE::Con::printf("NormalForce %s", StringMath::print(gAdvancingMarble->mBestContact().normalForce));
+	TGE::Con::printf("ContactDistance %s", StringMath::print(gAdvancingMarble->mBestContact().contactDistance));
+	TGE::Con::printf("Friction %s", StringMath::print(gAdvancingMarble->mBestContact().friction));
+	TGE::Con::printf("Restitution %s", StringMath::print(gAdvancingMarble->mBestContact().restitution));
+	TGE::Con::printf("Force %s", StringMath::print(gAdvancingMarble->mBestContact().force));
+	TGE::Con::printf("Material %s", StringMath::print(gAdvancingMarble->mBestContact().material));
+
+	TGE::Con::printf("Last Contact");
+	TGE::Con::printf("Position %s", StringMath::print(gAdvancingMarble->mLastContact().position));
+	TGE::Con::printf("Normal %s", StringMath::print(gAdvancingMarble->mLastContact().normal));
+	TGE::Con::printf("ActualNormal %s", StringMath::print(gAdvancingMarble->mLastContact().actualNormal));
+	TGE::Con::printf("SurfaceVel %s", StringMath::print(gAdvancingMarble->mLastContact().surfaceVelocity));
+	TGE::Con::printf("SurfaceFrictionVel %s", StringMath::print(gAdvancingMarble->mLastContact().surfaceFrictionVelocity));
+	TGE::Con::printf("StaticFriction %s", StringMath::print(gAdvancingMarble->mLastContact().staticFriction));
+	TGE::Con::printf("KineticFriction %s", StringMath::print(gAdvancingMarble->mLastContact().kineticFriction));
+	TGE::Con::printf("vAtC %s", StringMath::print(gAdvancingMarble->mLastContact().vAtC));
+	TGE::Con::printf("vAtCMag %s", StringMath::print(gAdvancingMarble->mLastContact().vAtCMag));
+	TGE::Con::printf("NormalForce %s", StringMath::print(gAdvancingMarble->mLastContact().normalForce));
+	TGE::Con::printf("ContactDistance %s", StringMath::print(gAdvancingMarble->mLastContact().contactDistance));
+	TGE::Con::printf("Friction %s", StringMath::print(gAdvancingMarble->mLastContact().friction));
+	TGE::Con::printf("Restitution %s", StringMath::print(gAdvancingMarble->mLastContact().restitution));
+	TGE::Con::printf("Force %s", StringMath::print(gAdvancingMarble->mLastContact().force));
+	TGE::Con::printf("Material %s", StringMath::print(gAdvancingMarble->mLastContact().material));
 }
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::computeFirstPlatformIntersect, (TGE::Marble* thisPtr, F64* moveTime), originalComputeFirstPlatformIntersect) {
@@ -148,7 +184,6 @@ MBX_ON_CLIENT_PROCESS(onProcess, (uint32_t delta)) {
 	if (atoi(TGE::Con::getVariable("Server::Dedicated")) || atoi(TGE::Con::getVariable("ManualPathedInteriors"))) {
 		advancePathedInteriors(delta);
 	}
-	clearVelocityCache();
 }
 
 MBX_CONSOLE_METHOD(PathedInterior, getTargetPosition, S32, 2, 2, "PathedInterior.getTargetPosition() -> gets the interior's target position on its path") {
@@ -412,268 +447,12 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::findContacts, (TGE::Marble* thisObj, U3
 			}
 		}
 	superbreak:
-		(void)0;
+		int testshit = 0;
 	}
 }
-
-void testCollision(TGE::SceneObject *obj, const Point3F &start, const Point3F &end, std::vector<TGE::RayInfo> &hits) {
-	TGE::RayInfo info;
-
-	if (!obj->castRay(start, end, &info)) {
-		return;
-	}
-
-	hits.push_back(info);
-}
-
-Point3F getVelocitySceneObject(TGE::SceneObject *thisptr, Point3F collision) {
-//	if (gVelocityCache.find(thisptr) != gVelocityCache.end()) {
-//		return gVelocityCache[thisptr];
-//	}
-
-	if (strcmp(thisptr->getClassRep()->getClassName(), "PathedInterior") == 0) {
-		return ((TGE::PathedInterior *)thisptr)->getVelocity2();
-	}
-
-	Point3F marblePos = gAdvancingMarble->getTransform().getPosition();
-	Point3F marbleVel = gAdvancingMarble->getVelocity().toPoint3F();
-
-	F32 rad = gAdvancingMarble->getCollisionRadius();
-
-	std::vector<Contact> possibleContacts;
-
-	const TGE::ConcretePolyList* polylist = &gAdvancingMarble->getContactsPolyList();
-
-	for (int i = 0; i < polylist->mPolyList.size(); i++) {
-		const TGE::ConcretePolyList::Poly* poly = &polylist->mPolyList[i];
-
-		if (poly->object != thisptr) {
-			continue;
-		}
-
-		PlaneF plane(poly->plane);
-		F64 distance = plane.distToPlane(marblePos);
-
-		if (mFabsD(distance) <= (F64)gAdvancingMarble->getCollisionRadius() + 0.0001) {
-			Point3D lastVertex(polylist->mVertexList[polylist->mIndexList[poly->vertexStart + poly->vertexCount - 1]]);
-
-			Point3F contactVert = plane.project(marblePos);
-			F64 separation = mSqrtD(rad * rad - distance * distance);
-
-			for (int j = 0; j < poly->vertexCount; j++) {
-				Point3D vertex = polylist->mVertexList[polylist->mIndexList[poly->vertexStart + j]];
-				if (vertex != lastVertex) {
-					PlaneD vertPlane(vertex + plane, vertex, lastVertex);
-					F64 vertDistance = vertPlane.distToPlane(contactVert);
-					if (vertDistance < 0.0) {
-						if (vertDistance < -(separation + 0.0001))
-							goto superbreak;
-
-						if (PlaneD(vertPlane + vertex, vertex, vertex + plane).distToPlane(contactVert) >= 0.0) {
-							if (PlaneD(lastVertex - vertPlane, lastVertex, lastVertex + plane).distToPlane(contactVert) >= 0.0) {
-								contactVert = vertPlane.project(contactVert);
-								break;
-							}
-							contactVert = lastVertex;
-						}
-						else {
-							contactVert = vertex;
-						}
-					}
-					lastVertex = vertex;
-				}
-			}
-
-			Point3D delta = marblePos - contactVert;
-			F64 contactDistance = delta.len();
-			if ((F64)rad + 0.0001 < contactDistance) {
-				continue;
-			}
-
-			Point3D normal(plane.x, plane.y, plane.z);
-			if (contactDistance != 0.0) {
-				normal = delta * (1.0 / contactDistance);
-			}
-
-			Contact contact;
-			contact.distance = contactDistance;
-			contact.position = contactVert;
-			contact.normal = normal;
-
-			possibleContacts.push_back(contact);
-		}
-
-	superbreak:
-		0;
-	}
-
-	if (possibleContacts.size() == 0 && marbleVel.len() > 0.001) {
-		// Do the raycast thing
-		for (int i = 0; i < polylist->mPolyList.size(); i++) {
-			const TGE::ConcretePolyList::Poly* poly = &polylist->mPolyList[i];
-
-			if (poly->object != thisptr) {
-				continue;
-			}
-
-			double t = -(marblePos.x * poly->plane.x + marblePos.y * poly->plane.y + marblePos.z * poly->plane.z + poly->plane.d) / (marbleVel.x * poly->plane.x + marbleVel.y * poly->plane.y + marbleVel.z * poly->plane.z);
-			if (t != INFINITY) {
-				Point3F intersectP = marblePos + marbleVel * t;
-				Contact contact;
-				contact.distance = (marblePos - intersectP).len();
-				contact.position = intersectP;
-				contact.normal = poly->plane;
-				possibleContacts.push_back(contact);
-			}
-		}
-	}
-
-	Contact* minContact = NULL;
-	float minDist = 1e8;
-	for (auto& contact : possibleContacts) {
-		if (contact.distance < minDist) {
-			minDist = contact.distance;
-			minContact = &contact;
-		}
-	}
-
-	if (minContact == NULL) {
-		if (velocityCache.find(thisptr->getId()) != velocityCache.end()) {
-			return velocityCache[thisptr->getId()];
-		}
-		return Point3F(0, 0, 0);
-	}
-
-	//Can't call original because thisptr isn't actually always a PathedInterior
-	Point3F velocity(0);
-	if (velocityCache.find(thisptr->getId()) != velocityCache.end()) {
-		return velocityCache[thisptr->getId()];
-	}
-	//Marble is whatever is advancing currently
-	const char *marbleId = (gAdvancingMarble == NULL ? "" : gAdvancingMarble->getIdString());
-
-	//Let script decide what our velocity should be
-	const char *point = StringMath::print(minContact->position);
-	char *p2 = new char[strlen(point) + 1];
-	strcpy(p2, point);
-
-	const char *scriptVel = TGE::Con::executef(thisptr, 4, "getSurfaceVelocity", marbleId, p2, StringMath::print(minContact->distance));
-
-	delete [] p2;
-
-	//Blank means no response
-	if (strlen(scriptVel)) {
-		velocity = StringMath::scan<Point3F>(scriptVel);
-		velocityCache[thisptr->getId()] = velocity;
-	}
-
-	gVelocityCache[thisptr] = velocity;
-	return velocity;
-}
-
-void clearVelocityCache() {
-	velocityCache.clear();
-}
-
-Point3F velocityPtr(0.0f, 0.0f, 0.0f);
-
-#ifdef __APPLE__
-
-struct FindContactsEbp {
-	struct Known {
-		//		Box3F marbleBox;
-	} known;
-	const static int size = 0x264;// - sizeof(Known);
-	union {
-		S8  s8[size * 4];
-		S16 s16[size * 2];
-		S32 s32[size];
-		U8  u8[size * 4];
-		U16 u16[size * 2];
-		U32 u32[size];
-		F32 f32[size];
-		F64 f64[size / 2];
-		void *pointer[size];
-	};
-};
-struct FindContactsEbx {
-	struct Known {
-		//		Box3F marbleBox;
-	} known;
-	const static int size = 0x264;// - sizeof(Known);
-	union {
-		S8  s8[size * 4];
-		S16 s16[size * 2];
-		S32 s32[size];
-		U8  u8[size * 4];
-		U16 u16[size * 2];
-		U32 u32[size];
-		F32 f32[size];
-		F64 f64[size / 2];
-		void *pointer[size];
-	};
-};
-
-extern "C" Point3F *getVelocityFn(TGE::SceneObject *obj, FindContactsEbp *ebp, FindContactsEbx *ebx) {
-	Point3F collision;
-	//TODO maybe eventually probably never going to happen:
-	// Try to find the *real* collision point using $ebp and $ebx, it's in that
-	// stack somewhere.
-	velocityPtr = getVelocitySceneObject(obj, collision);
-	return &velocityPtr;
-}
-extern "C" __attribute__((naked)) __attribute__((visibility("default"))) void collisionOverride() {
-	__asm__ __volatile__ (
-			"movl %esi, %edx\n"        //esi / edx now have thisptr
-			"movl %edx, 0x0(%esp)\n"   //push that as arg0 (obj) to getVelocityFn
-			"movl %ebp, %edx\n"        //whatever is in ebp
-			"subl $0x264, %edx\n"      //get to the start of it
-			"movl %edx, 0x4(%esp)\n"   //and push that as arg4 (ebp)
-			"movl %ebx, 0x8(%esp)\n"   //push ebx as arg8 (ebx)
-			"call _getVelocityFn\n"    //call getVelocityFn to find the stuff, stores vel into eax
-			"movl (%eax), %edx\n"
-			"movl %edx, -0x30(%ebp)\n"
-			"movl 0x4(%eax), %edx\n"
-			"movl %edx, -0x2c(%ebp)\n"
-			"movl 0x8(%eax), %edx\n"
-			"movl %edx, -0x28(%ebp)\n"
-			"pushl $0x259ff0\n"        //go here
-			"ret"
-	);
-}
-#else
-extern "C" Point3F* getVelocityFn(TGE::SceneObject *obj) {
-	velocityPtr = getVelocitySceneObject(obj, Point3F(0, 0, 0));
-	return &velocityPtr;
-}
-extern "C" __declspec(dllexport) __declspec(naked) void collisionOverride() {
-	__asm {
-		mov [esp + 0x14], eax;
-		mov eax, ecx;
-		push eax; // the scene object
-		push eax; // made me push it twice. because raisins.
-		call getVelocityFn;
-		add esp, 0x8;
-		push 0x497786;
-		ret;
-	}
-}
-#endif
 
 bool initPlugin(MBX::Plugin &plugin)
 {
 	MBX_INSTALL(plugin, MovingPlatformsFix);
-
-#ifdef _WIN32
-	void *address = (void *)0x0049775a;
-	int length = 29;
-#elif defined(__APPLE__)
-	void *address = (void *)0x00259fb2;
-	int length = 44;
-#endif
-
-	auto &stream = plugin.getCodeStream();
-	stream.seekTo(address);
-	stream.writeRel32Jump((void *)collisionOverride);
 	return true;
 }

@@ -21,6 +21,6 @@ public:
 
 	void ReadHeader(std::ifstream& stream);
 	bool VerifySignature(char* databuffer, size_t datalen, CryptoPP::RSA::PublicKey publickey, char* sign, size_t signlen);
-	char* Decrypt(std::string filepath, std::string keyStr, int64_t* size);
-	char* ReadFile(std::string filepath, std::string keyStr, int64_t* size);
+	char* Decrypt(MBPakFileEntry* entry, std::string keyStr, int64_t* size);
+	char* ReadFile(MBPakFileEntry* entry, std::string keyStr, int64_t* size);
 };

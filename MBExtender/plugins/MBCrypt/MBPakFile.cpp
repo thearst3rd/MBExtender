@@ -95,10 +95,8 @@ bool MBPakFile::VerifySignature(char* databuffer, size_t datalen, CryptoPP::RSA:
 	return result;
 }
 
-char* MBPakFile::Decrypt(std::string filepath, std::string keyStr, int64_t* size)
+char* MBPakFile::Decrypt(MBPakFileEntry* entry, std::string keyStr, int64_t* size)
 {
-	MBPakFileEntry* entry = NULL;
-
 	//CryptoPP::SHA256 sha;
 	//CryptoPP::byte digest[CryptoPP::SHA256::DIGESTSIZE];
 	//sha.CalculateDigest(digest, (CryptoPP::byte*)keyStr.c_str(), keyStr.length());
@@ -109,14 +107,6 @@ char* MBPakFile::Decrypt(std::string filepath, std::string keyStr, int64_t* size
 	//encoder.Put(digest, sizeof(digest));
 	//encoder.MessageEnd();
 
-	for (int i = 0; i < entries.size(); i++)
-	{
-		if (entries[i].filepath == filepath)
-		{
-			entry = &entries[i];
-			break;
-		}
-	}
 	if (entry != NULL)
 	{
 		char* encryptedContents = new char[entry->compressedSize];
@@ -161,24 +151,13 @@ char* MBPakFile::Decrypt(std::string filepath, std::string keyStr, int64_t* size
 	return NULL;
 }
 
-char* MBPakFile::ReadFile(std::string filepath, std::string keyStr, int64_t* size)
+char* MBPakFile::ReadFile(MBPakFileEntry* entry, std::string keyStr, int64_t* size)
 {
-	MBPakFileEntry* entry = NULL;
-
-	for (int i = 0; i < entries.size(); i++)
-	{
-		if (entries[i].filepath == filepath)
-		{
-			entry = &entries[i];
-			break;
-		}
-	}
-
 	if (entry != NULL)
 	{
 		// First decrypt the thing
 		int64_t zipSize;
-		char* buffer = this->Decrypt(filepath, keyStr, &zipSize);
+		char* buffer = this->Decrypt(entry, keyStr, &zipSize);
 		if (buffer != NULL)
 		{
 			uLongf uSize = entry->uncompressedSize;

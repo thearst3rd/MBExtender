@@ -57,24 +57,28 @@ namespace TGE
 	public:
 		struct Contact
 		{
-			SimObject *object;
-			void *_empty;
-			Point3D position;
-			Point3D normal;
-			Point3F actualNormal;
-			void *_empty2;
-			Point3D surfaceVelocity;
-			Point3D surfaceFrictionVelocity;
-			F64 staticFriction;
-			F64 kineticFriction;
-			Point3D vAtC;
-			F64 vAtCMag;
-			F64 normalForce;
-			F64 contactDistance;
-			F32 friction;
-			F32 restitution;
-			F32 force;
-			U32 material;
+			SimObject *object; // 1944
+#ifdef _WIN32
+			void *_empty; // 1948
+#endif
+			Point3D position; // 1972
+			Point3D normal; // 1996
+			Point3F actualNormal; // 2008
+#ifdef _WIN32
+			void *_empty2; // 2012
+#endif
+			Point3D surfaceVelocity; // 2036
+			Point3D surfaceFrictionVelocity; // 2060
+			F64 staticFriction; // 2068
+			F64 kineticFriction; // 2076
+			Point3D vAtC; // 2100
+			F64 vAtCMag; // 2108
+			F64 normalForce; // 2116
+			F64 contactDistance; // 2124
+			F32 friction; // 2128
+			F32 restitution; // 2132
+			F32 force; // 2136
+			U32 material; // 2140
 		};
 		struct MaterialCollision
 		{
@@ -85,7 +89,7 @@ namespace TGE
 
 		FIELD(Vector<Contact>, mContacts, 0x78C);
 		FIELD(Contact, mBestContact, 0x798);
-		FIELD(Contact, mLastContact, 0x860);
+		FIELD(Contact, mLastContact, 0x860_win, 0x858_mac);
 		FIELD(F32, mRadius, 0x9E0_win, 0x9D0_mac);
 		FIELD(ConcretePolyList, mPolyList, 0xAD4_win, 0xAC0_mac);
 		FIELD(Vector<MaterialCollision>, mMaterialCollisions, 0xA7C_win, 0xA68_mac);

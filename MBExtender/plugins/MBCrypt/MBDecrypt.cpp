@@ -30,6 +30,22 @@ static std::map<TGE::File*, MemoryStream*> openPakFiles;
 
 static KeyStore keyStore;
 
+bool icompare_pred(unsigned char a, unsigned char b)
+{
+	return std::tolower(a) == std::tolower(b);
+}
+
+bool icompare(std::string const& a, std::string const& b)
+{
+	if (a.length() == b.length()) {
+		return std::equal(b.begin(), b.end(),
+			a.begin(), icompare_pred);
+	}
+	else {
+		return false;
+	}
+}
+
 bool initPlugin(MBX::Plugin& plugin)
 {
 	MBX_INSTALL(plugin, MBCrypt);
@@ -128,12 +144,12 @@ MBX_OVERRIDE_MEMBERFN(TGE::File::FileStatus, TGE::File::open, (TGE::File* thispt
 	{
 		for (auto& file : pak->entries)
 		{
-			if (file.filepath == fn)
+			if (icompare(file.filepath, fn))
 			{
 				if (openMode == TGE::File::AccessMode::Read)
 				{
 					int64_t bufSize;
-					char* buf = pak->ReadFile(fn, keyStore.aesKey, &bufSize);
+					char* buf = pak->ReadFile(&file, keyStore.aesKey, &bufSize);
 					MemoryStream* str = new MemoryStream();
 					str->createFromBuffer((uint8_t*)buf, bufSize);
 					delete[] buf;
