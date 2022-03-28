@@ -32,7 +32,7 @@ static KeyStore keyStore;
 
 bool icompare_pred(unsigned char a, unsigned char b)
 {
-	return std::tolower(a) == std::tolower(b);
+	return tolower(a) == tolower(b);
 }
 
 bool icompare(std::string const& a, std::string const& b)
@@ -186,7 +186,7 @@ MBX_CONSOLE_FUNCTION(loadMBPackage, void, 2, 2, "loadMBPackage(package)")
 	{
 		TGE::Con::errorf("Could not load package %s", argv[1]);
 	}
-	
+
 }
 
 void unloadPackageContents(MBPakFile* package, PackageFilter filter = All)
@@ -423,10 +423,10 @@ MBX_OVERRIDE_MEMBERFN(TGE::File::FileStatus, TGE::File::read, (TGE::File* thispt
 		}
 		uint8_t* buffer = str->getBuffer();
 		memcpy(dst, (buffer + str->tell()), *bytesRead);
-		try 
+		try
 		{
 			str->seek(str->tell() + *bytesRead);
-		} 
+		}
 		catch (...)
 		{
 			thisptr->currentStatus = TGE::File::FileStatus::EOS;
