@@ -65,6 +65,8 @@ namespace TGE
 		GETTERFN(const char *, getInteriorResource, 0x2FC);
 		GETTERFN(U32, getInteriorIndex, 0x300);
 
+		GETTERFN(Interior*, getInterior, 0x308);
+
 		MEMBERFN(void, processTick, (const Move *move), 0x4087F6_win, 0x24B560_mac);
 		MEMBERFN(void, renderObject, (SceneState *state, SceneRenderImage *renderImage), 0x5654C0_win, 0x24D320_mac);
 

@@ -60,4 +60,11 @@ namespace TGE
 		F32 restitution;
 		F32 force;
 	};
+
+	class MaterialPropertyMap : public SimObject
+	{
+		BRIDGE_CLASS(MaterialPropertyMap);
+	public:
+		MEMBERFN(Material*, getMapEntry, (const char *name), 0x62950_mac, 0x40739c_win);
+	};
 }

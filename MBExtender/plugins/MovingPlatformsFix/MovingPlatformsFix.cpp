@@ -187,6 +187,18 @@ MBX_ON_CLIENT_PROCESS(onProcess, (uint32_t delta)) {
 	}
 }
 
+MBX_OVERRIDE_MEMBERFN(TGE::Material*, TGE::SceneObject::getMaterialPropertyUnvirt, (TGE::SceneObject* thisObj, U32 which), originalGetMaterialProperty) {
+	TGE::PathedInterior* pi = TGE::TypeInfo::manual_dynamic_cast<TGE::PathedInterior*>(thisObj, &TGE::TypeInfo::SceneObject, &TGE::TypeInfo::PathedInterior, 0);
+	
+	if (pi && !TGE::Con::getBoolVariable("$NoMovingPlatformFrictions")) {
+		const char* name = pi->getInterior()->mMaterialList->mTextureNames[which];
+		TGE::MaterialPropertyMap* propMap = (TGE::MaterialPropertyMap*)TGE::Sim::findObject("MaterialPropertyMap");
+		return propMap->getMapEntry(name);
+		
+	}
+	return originalGetMaterialProperty(thisObj, which);
+}
+
 MBX_CONSOLE_METHOD(PathedInterior, getTargetPosition, S32, 2, 2, "PathedInterior.getTargetPosition() -> gets the interior's target position on its path") {
 	return object->getTargetPosition();
 }

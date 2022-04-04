@@ -94,6 +94,7 @@ namespace TGE
 		UNDEFVIRT(prepRenderImage);
 		UNDEFVIRT(scopeObject);
 		virtual Material* getMaterialProperty(U32 which) = 0;
+		MEMBERFN(Material*, getMaterialPropertyUnvirt, (U32 which), 0x18dc20_mac, 0x403288_win);
 		UNDEFVIRT(onSceneAdd);
 		UNDEFVIRT(onSceneRemove);
 		UNDEFVIRT(transformModelview);
