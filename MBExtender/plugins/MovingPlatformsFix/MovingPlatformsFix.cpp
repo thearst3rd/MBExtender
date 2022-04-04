@@ -478,5 +478,6 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::findContacts, (TGE::Marble* thisObj, U3
 bool initPlugin(MBX::Plugin &plugin)
 {
 	MBX_INSTALL(plugin, MovingPlatformsFix);
+	TGE::Con::setBoolVariable("$NoMovingPlatformFrictions", 0);
 	return true;
 }
