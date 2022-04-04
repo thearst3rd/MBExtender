@@ -225,14 +225,16 @@ int Node_getPrevNode(const char* objId, const char* nodeId, const char* groupId)
 
 		if (strcmp(obj->getClassRep()->getClassName(), "StaticShape") == 0) {
 			TGE::GameBase* gameObj = static_cast<TGE::GameBase*>(obj);
-			if (strcmp(gameObj->getDataBlock()->mName, "PathNode") == 0) {
-				const char* nextNode = obj->getDataField("nextNode"_ts, NULL);
-				const char* _nextNodeId = obj->getDataField("_nextNodeId"_ts, NULL);
+			TGE::GameBaseData* datablock = gameObj->getDataBlock();
+			if (datablock)
+				if (strcmp(gameObj->getDataBlock()->mName, "PathNode") == 0) {
+					const char* nextNode = obj->getDataField("nextNode"_ts, NULL);
+					const char* _nextNodeId = obj->getDataField("_nextNodeId"_ts, NULL);
 
-				if ((isObject(nextNode) && TGE::Sim::findObject(nextNode)->getId() == node->getId()) || (strcmp(_nextNodeId, "") != 0 && strcmp(_nextNodeId, StringMath::print(getSyncId(node))) == 0)) {
-					return obj->getId();
+					if ((isObject(nextNode) && TGE::Sim::findObject(nextNode)->getId() == node->getId()) || (strcmp(_nextNodeId, "") != 0 && strcmp(_nextNodeId, StringMath::print(getSyncId(node))) == 0)) {
+						return obj->getId();
+					}
 				}
-			}
 		}
 	}
 	return -1;

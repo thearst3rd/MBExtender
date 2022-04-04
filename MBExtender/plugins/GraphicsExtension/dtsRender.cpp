@@ -113,7 +113,10 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderMountedImage, (TGE::ShapeBase*
 
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderObject, (TGE::ShapeBase* thisptr, TGE::SceneState* state, TGE::SceneRenderImage* image), originalShapeBaseRender) {
-	const char* shapeFile = thisptr->getDataBlock()->getDataField(TGE::StringTable->insert("shapeFile", false), NULL);
+	TGE::GameBaseData* datablock = thisptr->getDataBlock();
+	if (!datablock)
+		return;
+	const char* shapeFile = datablock->getDataField(TGE::StringTable->insert("shapeFile", false), NULL);
 	if (currentPass == "bloom") {
 		gNoShaders = strstr(shapeFile, "Marble") != NULL || strstr(shapeFile, "marble") != NULL || strstr(shapeFile, "tornado") != NULL;
 		if (strstr(shapeFile, "images/megamarble.dts") != NULL)
