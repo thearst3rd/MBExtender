@@ -39,6 +39,7 @@
 #include <TorqueLib/core/stringTable.h>
 #include <TorqueLib/terrain/sky.h>
 #include <TorqueLib/game/tsStatic.h>
+#include <TorqueLib/game/trigger.h>
 #include <unordered_set>
 
 #ifdef _WIN32
@@ -110,6 +111,11 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderMountedImage, (TGE::ShapeBase*
 		originalRenderMImage(thisptr, state, renderImage);
 }
 
+MBX_OVERRIDE_MEMBERFN(void, TGE::Trigger::renderObject, (TGE::Trigger* thisptr, TGE::SceneState* state, TGE::SceneRenderImage* image), originalTriggerRenderObject) {
+	if (currentPass == "fwd")
+		originalTriggerRenderObject(thisptr, state, image);
+	
+}
 
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderObject, (TGE::ShapeBase* thisptr, TGE::SceneState* state, TGE::SceneRenderImage* image), originalShapeBaseRender) {
