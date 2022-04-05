@@ -58,6 +58,7 @@ void MBPakFile::ReadHeader(std::ifstream& stream)
 	{
 		MBPakFileEntry entry;
 		entry.filepath = readString(stream);
+		entry.loaded = false;
 		stream.read((char*)&entry.encrypted, sizeof(uint8_t));
 		stream.read((char*)&entry.fileOffset, sizeof(int64_t));
 		stream.read((char*)&entry.uncompressedSize, sizeof(int64_t));

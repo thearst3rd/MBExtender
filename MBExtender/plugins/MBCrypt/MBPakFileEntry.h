@@ -9,4 +9,5 @@ public:
 	int compressedSize;
 	int64_t fileOffset;
 	int encrypted;
+	bool loaded;
 };

@@ -97,11 +97,30 @@ std::string getFileDir(std::string filename)
 	return directory;
 }
 
-void loadPackageContents(MBPakFile* package)
+enum PackageFilter
+{
+	All,
+	MissionData
+};
+
+void loadPackageContents(MBPakFile* package, PackageFilter filter = All)
 {
 	for (auto& entry : package->entries)
 	{
+		if (entry.loaded)
+			continue; // Don't load things again
+
 		std::string fname = getFileName(entry.filepath);
+
+		if (filter == MissionData)
+		{
+			if (fname.find("platinum/data/missions/") == std::string::npos)
+			{
+				continue;
+			}
+		}
+
+		entry.loaded = true;
 
 		std::string dpath = getFileDir(entry.filepath);
 
@@ -138,6 +157,17 @@ MBX_CONSOLE_FUNCTION(loadMBPackage, void, 2, 2, "loadMBPackage(package)")
 	std::string zipn = std::string(argv[1]) + ".mbpak";
 	std::string path = std::string("packages/") + zipn;
 
+	// Check if we have already loaded it
+
+	for (auto& loadedPak : loadedPackages)
+	{
+		if (loadedPak->path == path)
+		{
+			loadPackageContents(loadedPak);
+			return;
+		}
+	}
+
 	try
 	{
 		MBPakFile* pak = new MBPakFile(path, &keyStore);
@@ -159,11 +189,24 @@ MBX_CONSOLE_FUNCTION(loadMBPackage, void, 2, 2, "loadMBPackage(package)")
 	
 }
 
-void unloadPackageContents(MBPakFile* package)
+void unloadPackageContents(MBPakFile* package, PackageFilter filter = All)
 {
 	for (auto& entry : package->entries)
 	{
+		if (!entry.loaded) // Don't unload whats not loaded
+			continue;
+
 		std::string fname = getFileName(entry.filepath);
+
+		if (filter == MissionData)
+		{
+			if (fname.find("platinum/data/missions/") == std::string::npos)
+			{
+				continue;
+			}
+		}
+
+		entry.loaded = false;
 		std::string dpath = getFileDir(entry.filepath);
 
 		const char* fpath = TGE::StringTable->insert(entry.filepath.c_str(), false);
@@ -239,6 +282,76 @@ MBX_CONSOLE_FUNCTION(deletePackage, bool, 2, 2, "deletePackage(file)")
 
 	return true;
 }
+
+MBX_CONSOLE_FUNCTION(loadMBPackageMis, void, 2, 2, "loadMBPackageMis(file)")
+{
+	TGE::Con::printf("Loading package %s", argv[1]);
+	std::string zipn = std::string(argv[1]) + ".mbpak";
+	std::string path = std::string("packages/") + zipn;
+
+	// Check if we have already loaded it
+	
+	for (auto& loadedPak : loadedPackages)
+	{
+		if (loadedPak->path == path)
+		{
+			loadPackageContents(loadedPak, MissionData);
+			return;
+		}
+	}
+
+	try
+	{
+		MBPakFile* pak = new MBPakFile(path, &keyStore);
+		if (pak->failed)
+		{
+			TGE::Con::errorf("Could not load package %s", argv[1]);
+			delete pak;
+		}
+		else
+		{
+			loadedPackages.push_back(pak);
+			loadPackageContents(pak, MissionData);
+		}
+	}
+	catch (...)
+	{
+		TGE::Con::errorf("Could not load package %s", argv[1]);
+	}
+}
+
+MBX_CONSOLE_FUNCTION(unloadMBPackageMis, void, 2, 2, "unloadMBPackageMis(file)")
+{
+	TGE::Con::printf("Unloading package %s", argv[1]);
+	std::string zipn = std::string(argv[1]) + ".mbpak";
+	std::string path = std::string("packages/") + zipn;
+
+	int idx = -1;
+	for (int i = 0; i < loadedPackages.size(); i++)
+	{
+		if (loadedPackages[i]->path == path)
+		{
+			idx = i;
+			break;
+		}
+	}
+
+	if (idx != -1)
+	{
+		MBPakFile* pak = loadedPackages[idx];
+		unloadPackageContents(pak, MissionData);
+
+		for (auto& entry : pak->entries)
+		{
+			if (entry.loaded)
+				return;
+		}
+
+		delete pak;
+		loadedPackages.erase(loadedPackages.begin() + idx);
+	}
+}
+
 
 MBX_OVERRIDE_MEMBERFN(TGE::File::FileStatus, TGE::File::open, (TGE::File* thisptr, const char* filename, const TGE::File::AccessMode openMode), origOpen)
 {
