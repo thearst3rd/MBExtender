@@ -918,6 +918,12 @@ MBX_OVERRIDE_FN(HWND, TGE::createWindow, (int width, int height, bool fullscreen
 
 	return hwnd;
 }
+
+MBX_OVERRIDE_FN(bool, TGE::excludeOtherInstances, (const char* mutexName), origExcludeOtherInstances)
+{
+	return true; // Allow multiple instances of the game
+}
+
 #endif
 
 // Block the game from changing the screen gamma because this is [current year]

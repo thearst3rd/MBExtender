@@ -47,4 +47,6 @@ namespace TGE
 		MEMBERFN(void, textureKill, (), 0x402EF0_win, 0xD5DF0_mac);
 		MEMBERFN(void, textureResurrect, (), 0x404228_win, 0xD5D10_mac);
 	};
+
+	GLOBALVAR(bool, gDGLRender, 0x65D8C0_win, 0x2DA8E9_mac);
 }

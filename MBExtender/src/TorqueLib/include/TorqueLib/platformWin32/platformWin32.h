@@ -64,5 +64,7 @@ namespace TGE
 
 	FN(HWND, createWindow, (int width, int height, bool fullscreen), 0x4065a0_win);
 
+	FN(bool, excludeOtherInstances, (const char* mutexName), 0x403D41_win);
+
 	STDCALLFN(LRESULT, WindowProc, (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam), 0x590140_win);
 }

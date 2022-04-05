@@ -31,6 +31,7 @@ bool Pass::initBuffers(Point2I extent) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this->colorBuffer, 0);
 
+
 	glGenTextures(1, &this->depthBuffer);
 	glBindTexture(GL_TEXTURE_2D, this->depthBuffer);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, extent.x, extent.y, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, 0);
@@ -39,6 +40,7 @@ bool Pass::initBuffers(Point2I extent) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, this->depthBuffer, 0);
+
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -84,16 +86,25 @@ void Pass::unload() {
 	if (this->shader != NULL)
 		delete this->shader;
 
+	glDeleteTextures(1, &this->colorBuffer);
+	this->colorBuffer = 0;
+	glDeleteTextures(1, &this->depthBuffer);
+	this->depthBuffer = 0;
+
 	if ((this->flags & PassBuffers::Color) != 0) {
-		glDeleteTextures(1, &this->colorBuffer);
-		this->colorBuffer = 0;
+		glDeleteTextures(1, &this->finalColorBuffer);
+		this->finalColorBuffer = 0;
 	}
 	if ((this->flags & PassBuffers::Depth) != 0) {
-		glDeleteTextures(1, &this->depthBuffer);
-		this->depthBuffer = 0;
+		glDeleteTextures(1, &this->finalDepthBuffer);
+		this->finalDepthBuffer = 0;
 	}
+
 	glDeleteFramebuffers(1, &this->frameBuffer);
 	this->frameBuffer = 0;
+
+	glDeleteFramebuffers(1, &this->finalFrameBuffer);
+	this->finalFrameBuffer = 0;
 }
 
 void Pass::render(Point2I extent) {
