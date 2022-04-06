@@ -529,6 +529,20 @@ void flushInteriorRenderData() {
 	gPathedInteriorRenderData.clear();
 }
 
+MBX_CONSOLE_FUNCTION(enableShaders, void, 1, 1, "enableShaders()") {
+	gEnableState.shaders = true;
+
+	initShaders();
+	SkyMaterial::getSky()->loadTextures();
+}
+
+MBX_CONSOLE_FUNCTION(disableShaders, void, 1, 1, "disableShaders()") {
+	gEnableState.shaders = false;
+
+	unloadShaders();
+	SkyMaterial::getSky()->unloadTextures();
+}
+
 MBX_ON_GL_CONTEXT_READY(interiorExtensionReady, ())
 {
 	if (!gEnableState.global || !gEnableState.shaders)

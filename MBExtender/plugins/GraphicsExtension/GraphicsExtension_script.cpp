@@ -475,22 +475,6 @@ MBX_CONSOLE_FUNCTION(disableInteriorRenderBuffers, void, 1, 1, "disableInteriorR
 	gEnableState.interiorRenderBuffers = false;
 }
 
-MBX_CONSOLE_FUNCTION(enableShaders, void, 1, 1, "enableShaders()") {
-	gEnableState.shaders = true;
-}
-
-MBX_CONSOLE_FUNCTION(disableShaders, void, 1, 1, "disableShaders()") {
-	gEnableState.shaders = false;
-}
-
-MBX_CONSOLE_FUNCTION(enablePostFX, void, 1, 1, "enablePostFX()") {
-	gEnableState.postFX = true;
-}
-
-MBX_CONSOLE_FUNCTION(disablePostFX, void, 1, 1, "disablePostFX()") {
-	gEnableState.postFX = false;
-}
-
 MBX_CONSOLE_FUNCTION(loadSkyboxTextures, void, 1, 1, "loadSkyboxTextures()") {
 	if (gEnableState.shaders) {
 		SkyMaterial::getSky()->loadTextures();

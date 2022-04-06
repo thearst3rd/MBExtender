@@ -700,6 +700,16 @@ MBX_CONSOLE_FUNCTION(highresScreenshot, void, 3, 3, "(extent, dest)") {
 	highResolutionScreenshot(StringMath::scan<Point2I>(argv[1]), argv[2]);
 }
 
+MBX_CONSOLE_FUNCTION(enablePostFX, void, 1, 1, "enablePostFX()") {
+	gEnableState.postFX = true;
+	setUpPostProcessing();
+}
+
+MBX_CONSOLE_FUNCTION(disablePostFX, void, 1, 1, "disablePostFX()") {
+	gEnableState.postFX = false;
+	unloadPostProcessing();
+}
+
 MBX_ON_GL_CONTEXT_DESTROY(postProcessingDestroy, ())
 {
 	unloadPostProcessing();
