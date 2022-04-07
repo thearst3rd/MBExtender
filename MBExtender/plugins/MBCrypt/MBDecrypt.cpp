@@ -114,7 +114,7 @@ void loadPackageContents(MBPakFile* package, PackageFilter filter = All)
 
 		if (filter == MissionData)
 		{
-			if (fname.find("platinum/data/missions/") == std::string::npos)
+			if (entry.filepath.find("platinum/data/missions/") == std::string::npos)
 			{
 				continue;
 			}
@@ -200,7 +200,7 @@ void unloadPackageContents(MBPakFile* package, PackageFilter filter = All)
 
 		if (filter == MissionData)
 		{
-			if (fname.find("platinum/data/missions/") == std::string::npos)
+			if (entry.filepath.find("platinum/data/missions/") == std::string::npos)
 			{
 				continue;
 			}
