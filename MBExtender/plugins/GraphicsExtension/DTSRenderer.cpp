@@ -27,7 +27,11 @@
 #define SHAPE_DEFAULT_VERT "platinum/data/shaders/shapeV.glsl"
 #define SHAPE_DEFAULT_FRAG "platinum/data/shaders/shapeF.glsl"
 
-std::vector<std::string> glowTextures = {"item_glow", "antigrav_glow", "arrowsign_arrow_glow", "endpad_glow", "blast_glow", "grow_glow", "superSpeed_star", "arrowsign_chain", "blastwave", "sigil", "sigil_glow"};
+std::vector<std::string> glowTextures = {"item_glow", "antigrav_glow", "arrowsign_arrow_glow", "endpad_glow", "blast_glow", "grow_glow", "superSpeed_star", "arrowsign_chain", "blastwave", "sigil", "sigil_glow", "misty", "mistyglow", "corona", "abyss2"};
+
+std::map<std::string, float> alphaMultipliers = {
+	{ "misty", 0.33f },
+};
 
 DTSRenderer::DTSRenderer() {
 	mVertexBuffer = 0;
@@ -151,6 +155,8 @@ void DTSRenderer::renderDTS(TGE::TSShapeInstance *inst, TGE::TSShapeInstance::Me
 		//Specular exponent
 		glUniform1i(specularExponentLocation, static_cast<GLint>(SkyMaterial::getSky()->getSpecularExponent()));
 
+		glUniform1f(mShader->getUniformLocation("alphaMultiplier"), 1.0f);
+
 		// Set materials & Draw
 		for (const auto &data : mTriangleList->getDrawCalls()) {
 			U32 matIndex = data.first;
@@ -159,6 +165,10 @@ void DTSRenderer::renderDTS(TGE::TSShapeInstance *inst, TGE::TSShapeInstance::Me
 			char* matName = materials->mTextureNames[matNum];
 
 			if (std::find(glowTextures.begin(), glowTextures.end(), std::string(matName)) != glowTextures.end()) {
+
+				if (alphaMultipliers.find(std::string(matName)) != alphaMultipliers.end()) {
+					glUniform1f(mShader->getUniformLocation("alphaMultiplier"), alphaMultipliers[std::string(matName)]);
+				}
 
 				// TODO: see if we can stop using setMaterial.
 				TGE::TSMesh::setMaterial(matIndex, materials);

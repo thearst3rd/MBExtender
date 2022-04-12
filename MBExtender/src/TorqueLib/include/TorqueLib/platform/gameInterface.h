@@ -33,10 +33,10 @@ namespace TGE
 	{
 		BRIDGE_CLASS(GameInterface);
 	public:
-		UNDEFVIRT(main);
-		UNDEFVIRT(textureKill);
-		UNDEFVIRT(textureResurrect);
-		UNDEFVIRT(refreshWindow);
+	   virtual int main(int argc, const char **argv) = 0;
+	   virtual void textureKill() = 0;
+	   virtual void textureResurrect() = 0;
+	   virtual void refreshWindow() = 0;
 		virtual void postEvent(Event &ev) = 0;
 	};
 

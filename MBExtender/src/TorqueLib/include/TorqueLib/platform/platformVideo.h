@@ -44,17 +44,20 @@ namespace TGE
 	{
 		BRIDGE_CLASS(DisplayDevice);
 	public:
+
 		UNDEFVIRT(initDevice);
 		virtual bool activate(U32 width, U32 height, U32 bpp, bool fullScreen) = 0;
 		virtual void shutdown(bool force) = 0;
 		virtual bool setScreenMode(U32 width, U32 height, U32 bpp, bool fullScreen, bool forceIt = false, bool repaint = true) = 0;
-		UNDEFVIRT(setResolution);
-		UNDEFVIRT(toggleFullScreen);
-		UNDEFVIRT(swapBuffers);
-		UNDEFVIRT(getDriverInfo);
-		UNDEFVIRT(getGammaCorrection);
-		UNDEFVIRT(setGammaCorrection);
-		UNDEFVIRT(setVerticalSync);
+		virtual bool setResolution( U32 width, U32 height, U32 bpp );
+		virtual bool toggleFullScreen();
+		virtual void swapBuffers() = 0;
+		virtual const char* getDriverInfo() = 0;
+		virtual bool getGammaCorrection(F32 &g) = 0;
+		virtual bool setGammaCorrection(F32 g) = 0;
+		virtual bool setVerticalSync( bool on ) = 0;
+		GETTERFN(Vector<Resolution>, mResolutionList, 0x8_win, 0x8_mac);
+		GETTERFN(bool, mFullscreenOnly, 0x14_win, 0x14_mac);
 	};
 
 	class OpenGLDevice : public DisplayDevice
@@ -66,6 +69,7 @@ namespace TGE
 		MEMBERFN(bool, setScreenMode, (U32 width, U32 height, U32 bpp, bool fullScreen, bool forceIt, bool repaint), 0x406366_win, 0x1EFAE0_mac);
 		MEMBERFN(bool, getGammaCorrection, (F32 &g), 0x406F69_win, 0x1EE9D0_mac);
 		MEMBERFN(bool, setGammaCorrection, (F32 g), 0x405A06_win, 0x1EE7F0_mac);
+		MEMBERFN(void, swapBuffers, (), 0x40259F_win, 0x01EE630_mac);
 	};
 
 	GLOBALVAR(bool, isFullScreen, 0x6C7CBC_win, 0x30DC2C_mac);

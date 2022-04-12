@@ -38,7 +38,7 @@ namespace TGE
 {
 	struct Win32PlatState
 	{
-		U32 unused0;
+		S32 log_fp;
 		HINSTANCE hInstOpenGL;
 		HINSTANCE hInstGLU;
 		HINSTANCE hInstOpenAL;
@@ -58,11 +58,18 @@ namespace TGE
 	GLOBALVAR(bool, windowLocked, 0x6DFC9D_win);
 	GLOBALVAR(S32, modifierKeys, 0x6DFCA0_win);
 	GLOBALVAR(char, windowName, 0x6794DC_win);
+	GLOBALVAR(bool, videoNeedResurrect, 0x6C7D0E_win);
+	GLOBALVAR(bool, glStateSuppSwapInterval, 0x6DDC7E_win);
 
 	FN(void, CheckCursorPos, (), 0x58F1A0_win);
 	FN(void, setMouseClipping, (), 0x40759F_win);
 
+	FN(void, alertOK, (const char *windowTitle, const char *message), 0x4047CD_win);
 	FN(HWND, createWindow, (int width, int height, bool fullscreen), 0x4065a0_win);
+	FN(HWND, createCurtain, (U32 width, U32 height), 0x4028EC_win);
+	FN(void, createPixelFormat, ( PIXELFORMATDESCRIPTOR *pPFD, S32 colorBits, S32 depthBits, S32 stencilBits, bool stereo ), 0x403445_win);
+	FN(S32, chooseBestPixelFormat, (HDC hDC, PIXELFORMATDESCRIPTOR *pPFD), 0x406C30_win);
+	FN(void, setWindowSize, (U32 newWidth, U32 newHeight), 0x4035FD_win);
 
 	FN(bool, excludeOtherInstances, (const char* mutexName), 0x403D41_win);
 
