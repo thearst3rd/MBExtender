@@ -11,12 +11,13 @@ public:
 		Color,
 		Depth
 	};
-	Pass(std::string name, std::string shaderPathV, std::string shaderPathF, int flags);
+	Pass(std::string name, std::string shaderPathV, std::string shaderPathF, int flags, int renderFlags);
 	~Pass();
 	std::string name;
 	std::string shaderPathV;
 	std::string shaderPathF;
 	int flags;
+	int renderFlags;
 	GLuint frameBuffer;
 	GLuint colorBuffer;
 	GLuint depthBuffer;
@@ -30,4 +31,6 @@ public:
 	void unload();
 	void render(Point2I extent);
 	virtual void processPass(Point2I extent);
+	virtual void prerender();
+	virtual void postrender();
 };

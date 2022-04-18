@@ -3,11 +3,12 @@
 
 extern std::string currentPass;
 
-Pass::Pass(std::string name, std::string shaderPathV, std::string shaderPathF, int flags) {
+Pass::Pass(std::string name, std::string shaderPathV, std::string shaderPathF, int flags, int renderFlags) {
 	this->name = name;
 	this->shaderPathV = shaderPathV;
 	this->shaderPathF = shaderPathF;
 	this->flags = flags;
+	this->renderFlags = renderFlags;
 }
 
 Pass::~Pass() {
@@ -113,11 +114,21 @@ void Pass::render(Point2I extent) {
 	GL_CheckErrors("activate bloombuffer");
 	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	renderGame(0xFFFFFFFF);
+	prerender();
+	renderGame(renderFlags);
+	postrender();
 	GL_CheckErrors("render game");
 	processPass(extent);
 }
 
 void Pass::processPass(Point2I extent) {
+
+}
+
+void Pass::prerender() {
+
+}
+
+void Pass::postrender() {
 
 }

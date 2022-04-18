@@ -149,6 +149,8 @@ void MarbleRenderer::renderMarble(TGE::TSShapeInstance *inst, TGE::TSShapeInstan
 		glUniformMatrix4fv(mShader->getUniformLocation("inverse_model_mat"), 1, GL_FALSE, inverseModel);
 		glUniformMatrix4fv(mShader->getUniformLocation("rot_from_torque_mat"), 1, GL_FALSE, rotFromTorque);
 		glUniformMatrix4fv(mShader->getUniformLocation("rot_to_torque_mat"), 1, GL_FALSE, rotToTorque);
+		
+		glUniform1i(mShader->getUniformLocation("time"), TGE::Sim::gCurrentTime);
 
 		//Find some uniform locations for sun fields that we can modify
 		S32 ambientColorLocation = mShader->getUniformLocation("ambient_color");
