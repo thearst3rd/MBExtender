@@ -27,8 +27,90 @@
 
 #include <TorqueLib/math/mMatrix.h>
 #include <TorqueLib/math/mPoint3.h>
+#include <TorqueLib/core/resManager.h>
 
 namespace TGE
 {
+
+	namespace Audio {
+		struct Description
+		{
+			F32  mVolume;    // 0-1    1=loudest volume
+			bool mIsLooping;
+			bool mIsStreaming;
+			bool mIs3D;
+
+			F32  mReferenceDistance;
+			F32  mMaxDistance;
+			U32  mConeInsideAngle;
+			U32  mConeOutsideAngle;
+			F32  mConeOutsideVolume;
+			Point3F mConeVector;
+
+			// environment info
+			F32 mEnvironmentLevel;
+
+			// used by 'AudioEmitter' class
+			S32  mLoopCount;
+			S32  mMinLoopGap;
+			S32  mMaxLoopGap;
+
+			// each 'type' can have its own volume
+			S32  mType;
+		};
+	}
+
+	class AudioBuffer : ResourceInstance {
+		StringTableEntry mFilename;
+		bool mLoading;
+		int malBuffer;
+	};
+
+	struct LoopingImage
+	{
+	   int             mHandle;
+	   Resource<AudioBuffer>   mBuffer;
+	   Audio::Description      mDescription;
+	   void* mEnvironment;
+
+	   Point3F                 mPosition;
+	   Point3F                 mDirection;
+	   F32                     mPitch;
+	   F32                     mScore;
+	   U32                     mCullTime;
+	};
+
+	struct LoopingList : VectorPtr<LoopingImage*> {
+
+	};
+
+	class AudioStreamSource {
+	public:
+		int             mHandle;
+		int				    mSource;
+
+		Audio::Description      mDescription;
+		void* mEnvironment;
+
+		Point3F                 mPosition;
+		Point3F                 mDirection;
+		F32                     mPitch;
+		F32                     mScore;
+		U32                     mCullTime;
+
+		bool					bFinishedPlaying;
+		bool					bIsValid;
+		const char* mFilename;
+	};
+
+	struct StreamingList : VectorPtr<AudioStreamSource*> {
+
+	};
+
 	FN(int, alxPlay, (void *profile, MatrixF *mat, Point3F *point), 0x408733_win, 0xD130_mac);
+	FN(bool, cullSource, (int* index, float volume), 0x5EA490_win, 0x85B0_mac);
+
+	GLOBALVAR(LoopingList, mLoopingList, 0x6E3BA0_win);
+	GLOBALVAR(StreamingList, mStreamingList, 0x6E3E68_win);
+	GLOBALVAR(U32, mAudioNumSources, 0x6E3E90_win, 0x3134C0_mac);
 }

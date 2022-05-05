@@ -49,6 +49,7 @@
 #include <TorqueLib/core/stringTable.h>
 #include <TorqueLib/game/net/net.h>
 #include <TorqueLib/sim/netConnection.h>
+#include <TorqueLib/audio/audio.h>
 #if defined(_WIN32)
 #include <TorqueLib/platformWin32/platformWin32.h>
 #endif
@@ -925,6 +926,38 @@ MBX_OVERRIDE_FN(bool, TGE::excludeOtherInstances, (const char* mutexName), origE
 }
 
 #endif
+
+MBX_OVERRIDE_FN(bool, TGE::cullSource, (int* index, float volume), origCullSource)
+{
+	F32 minVolume = volume;
+	S32 best = -1;
+#if defined(_WIN32)
+	F32* mAudioScore = reinterpret_cast<F32*>(0x6E3C8C);
+	U32* mAudioType = reinterpret_cast<U32*>(0x6E3E24);
+#elif defined(__APPLE__)
+	F32* mAudioScore = reinterpret_cast<F32*>(0x3135C0_mac);
+	U32* mAudioType = reinterpret_cast<U32*>(0x313540_mac);
+#endif
+
+	for (S32 i = 0; i < TGE::mAudioNumSources; i++)
+	{
+		F32 val = mAudioScore[i];
+		if (val < minVolume)
+		{
+			minVolume = mAudioScore[i];
+			best = i;
+		}
+	}
+
+	if (best == -1)
+		return(false);
+
+	U32 type = mAudioType[best];
+	if (type == 2)
+		return false;
+
+	return origCullSource(index, volume);
+}
 
 // Block the game from changing the screen gamma because this is [current year]
 
