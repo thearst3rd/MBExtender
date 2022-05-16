@@ -35,6 +35,7 @@
 #include <GLHelper/GLHelper.h>
 #include <GL/wglew.h>
 #include <TorqueLib/gui/core/guiCanvas.h>
+#define RENDERDOC
 #endif
 
 MBX_MODULE(FullscreenHack);
@@ -60,6 +61,9 @@ MBX_OVERRIDE_FN(void, TGE::Video::deactivate, (bool force), originalDeactivate)
 }
 
 #ifdef _WIN32
+
+int oglMajor = 2;
+int oglMinor = 1;
 
 #ifdef RENDERDOC
 typedef HGLRC WINAPI wglCreateContextAttribsARB_type(HDC hdc, HGLRC hShareContext,
@@ -158,6 +162,11 @@ void init_opengl_extensions(void)
 	wglChoosePixelFormatARB_ext = (wglChoosePixelFormatARB_type*)wglGetProcAddress(
 		"wglChoosePixelFormatARB");
 
+	const GLubyte* oglVersion = glGetString(GL_VERSION);
+
+	TGE::Con::printf("GLVERSION: %s", oglVersion);
+	sscanf((const char*)oglVersion, "%d.%d", &oglMajor, &oglMinor);
+
 	wglMakeCurrent(dummy_dc, 0);
 	wglDeleteContext(dummy_context);
 	ReleaseDC(dummy_window, dummy_dc);
@@ -168,10 +177,80 @@ void init_opengl_extensions(void)
 
 #endif
 
-GLuint renderBuffer;
-GLuint renderColorTexture;
+GLuint renderBuffer = 0;
+GLuint renderColorTexture = 0;
 bool hackReady = false;
 bool hackSupported = true;
+LONG fullscreenWidth;
+LONG fullscreenHeight;
+bool glContextCreated = false;
+
+void destroyUpscaledFramebuffer() 
+{
+	if (renderBuffer != NULL) 
+	{
+		TGE::Con::printf("Destroying fullscreen framebuffer");
+		glDeleteFramebuffers(1, &renderBuffer);
+		glDeleteTextures(1, &renderColorTexture);
+
+		renderBuffer = 0;
+		renderColorTexture = 0;
+		GL_CheckErrors("upscalebuffer destroy");
+	}
+}
+
+void generateUpscaleFramebuffer() 
+{
+	RECT wrect;
+	GetWindowRect(TGE::winState.appWindow, &wrect);
+	fullscreenWidth = abs(wrect.right - wrect.left);
+	fullscreenHeight = abs(wrect.bottom - wrect.top);
+	//DEVMODE dmode;
+	//memset(&dmode, 0, sizeof(DEVMODE));
+	//bool stillGoing = true;
+	//int imode = 0;
+
+	//while (stillGoing) {
+	//	stillGoing = EnumDisplaySettings(NULL, imode++, &dmode);
+
+	//	fullscreenWidth = max(fullscreenWidth, dmode.dmPelsWidth);
+	//	fullscreenHeight = max(fullscreenHeight, dmode.dmPelsHeight);
+	//}
+
+
+	if (fullscreenWidth == 0 || fullscreenHeight == 0) {
+		fullscreenWidth = TGE::winState.desktopWidth;
+		fullscreenHeight = TGE::winState.desktopHeight;
+	}
+
+	TGE::Con::printf("Creating fullscreen framebuffer for desktop resolution %d x %d", fullscreenWidth, fullscreenHeight);
+	glGenFramebuffers(1, &renderBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderBuffer);
+
+	// set up non-multisampled texture
+	glGenTextures(1, &renderColorTexture);
+	glBindTexture(GL_TEXTURE_2D, renderColorTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, fullscreenWidth, fullscreenHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderColorTexture, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	int result = (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	GL_CheckErrors("upscaleBuffer Init");
+
+	if (result)
+		hackReady = true;
+	else
+		hackSupported = false;
+
+	if (!hackSupported) {
+		TGE::Con::printf("PC does not support our implementation of fullscreen display scaling, falling back to previous methods");
+	}
+}
 
 MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice* thisObj, U32 width, U32 height, U32 bpp, bool fullScreen, bool forceIt, bool repaint), origSetScreenMode)
 {
@@ -504,8 +583,8 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 
 		int attribList[] =
 		{
-		  WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-		  WGL_CONTEXT_MINOR_VERSION_ARB, 3, 
+		  WGL_CONTEXT_MAJOR_VERSION_ARB, oglMajor,
+		  WGL_CONTEXT_MINOR_VERSION_ARB, oglMinor, 
 		  WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, 0
 		};
 #ifdef RENDERDOC
@@ -547,7 +626,7 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 	TGE::currentResolution = newRes;
 	TGE::setWindowSize(newRes.size.x, newRes.size.y);
 	char tempBuf[15];
-	snprintf(tempBuf, sizeof(tempBuf), "%d %d %d", TGE::currentResolution.size.x, TGE::currentResolution.size.y, TGE::currentResolution.size.y);
+	snprintf(tempBuf, sizeof(tempBuf), "%d %d %d", TGE::currentResolution.size.x, TGE::currentResolution.size.y, TGE::currentResolution.bpp);
 	TGE::Con::setVariable("$pref::Video::resolution", tempBuf);
 
 	// if (curtain)
@@ -560,6 +639,11 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 
 	if (repaint)
 		TGE::Con::evaluatef("resetCanvas();");
+
+	if (glContextCreated) {
+		destroyUpscaledFramebuffer();
+		generateUpscaleFramebuffer();
+	}
 
 	return true;
 }
@@ -578,34 +662,14 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::OpenGLDevice::swapBuffers, (TGE::OpenGLDevice* 
 
 MBX_ON_GL_CONTEXT_DESTROY(fullscreenHackDestroy, ())
 {
-	glDeleteFramebuffers(1, &renderBuffer);
-	glDeleteTextures(1, &renderColorTexture);
+	destroyUpscaledFramebuffer();
+	glContextCreated = false;
 }
 
 MBX_ON_GL_CONTEXT_READY(fullscreenHackReady, ())
 {
-	glGenFramebuffers(1, &renderBuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, renderBuffer);
-
-	// set up non-multisampled texture
-	glGenTextures(1, &renderColorTexture);
-	glBindTexture(GL_TEXTURE_2D, renderColorTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, TGE::winState.desktopWidth, TGE::winState.desktopHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderColorTexture, 0);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	int result = (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	GL_CheckErrors("init non-msaa framebuffer");
-
-	if (result)
-		hackReady = true;
-	else
-		hackSupported = false;
+	generateUpscaleFramebuffer();
+	glContextCreated = true;
 }
 
 #endif
