@@ -391,20 +391,23 @@ MBX_CONSOLE_METHOD(SceneObject, getSyncId, S32, 2, 2, "%sceneObject.getSyncId();
  * @return The ghosted object ID (torque id) or -1 if the object doesn't
  *         exist from the referenced ghost ID.
  */
-MBX_CONSOLE_FUNCTION(getClientSyncObject, S32, 2, 2, "getClientSyncObject(%ghostId);") {
-	SyncId ghostId = atoi(argv[1]);
-
+SimObjectId getClientSyncObject(SyncId ghostId) {
 	auto iter = gClientGhostActiveList.find(ghostId);
 	if (iter == gClientGhostActiveList.key_end()) {
 		return -1;
 	}
 
 	SimObjectId found = (*iter).second;
-	TGE::SimObject *obj = TGE::Sim::findObject(StringMath::print(found));
+	TGE::SimObject* obj = TGE::Sim::findObject(StringMath::print(found));
 	if (obj == NULL)
 		return -1;
 
 	return found;
+}
+
+
+MBX_CONSOLE_FUNCTION(getClientSyncObject, S32, 2, 2, "getClientSyncObject(%ghostId);") {
+	return getClientSyncObject(atoi(argv[1]));
 }
 
 /* Gets the object from the sync ID on the server.

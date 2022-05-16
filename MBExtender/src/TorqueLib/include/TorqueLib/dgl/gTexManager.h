@@ -72,6 +72,9 @@ namespace TGE
 			}
 			return NULL;
 		}
+
+		MEMBERFN(void, lock, (), 0x409165_win, 0x64F10_mac);
+		MEMBERFN(void, unlock, (), 0x408C29_win, 0x67830_mac);
 	};
 
 	namespace TextureManager
@@ -81,6 +84,8 @@ namespace TGE
 		FN(TGE::TextureObject *, registerTexture, (const char *textureName, const GBitmap *data, bool clampToEdge), 0x45A8D0_win, 0x67BD0_mac);
 		FN(bool, createGLName, (TGE::GBitmap *pBitmap, bool clampToEdge, U32 firstMip, U32 type, TGE::TextureObject *to), 0x40265D_win, 0x66570_mac);
 		FN(TGE::GBitmap *, createPaddedBitmap, (TGE::GBitmap *pBitmap), 0x405641_win, 0x66270_mac);
+		FN(void, preDestroy, (), 0x406C44_win);
+		FN(void, destroy, (), 0x404651_win);
 	};
 
 	GLOBALVAR(bool, sgTextureTrilinear, 0x6A7621_win, 0x2DA890_mac);

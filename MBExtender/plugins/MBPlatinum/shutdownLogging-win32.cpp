@@ -28,6 +28,7 @@
 #include <TorqueLib/core/stringTable.h>
 #include <TorqueLib/game/fx/particleEngine.h>
 #include <TorqueLib/sceneGraph/sceneGraph.h>
+#include <TorqueLib/dgl/gTexManager.h>
 
 MBX_MODULE(ShutdownLogging);
 
@@ -60,11 +61,6 @@ namespace TGE
 		FN(void, destroy, (), 0x4026FD_win);
 	}
 
-	namespace TextureManager
-	{
-		FN(void, preDestroy, (), 0x406C44_win);
-	}
-
 	namespace Platform
 	{
 		FN(void, shutdown, (), 0x407D56_win);
@@ -83,11 +79,6 @@ namespace TGE
 	namespace NetStringTable
 	{
 		FN(void, destroy, (), 0x405493_win);
-	}
-
-	namespace TextureManager
-	{
-		FN(void, destroy, (), 0x404651_win);
 	}
 
 	namespace FrameAllocator

@@ -8,6 +8,7 @@
 #include "sync.h"
 #include <TorqueLib/game/item.h>
 #include <unordered_map>
+#include <TorqueLib/console/scriptObject.h>
 
 MBX_MODULE(Interpolation);
 
@@ -40,6 +41,14 @@ static bool isObject(const char *str)
 		return false;
 	else
 		return (TGE::Sim::findObject(str) != NULL);
+}
+
+static bool isObject(int obj)
+{
+	if (obj <= 0)
+		return false;
+	else
+		return (TGE::Sim::findObject_int(obj) != NULL);
 }
 
 // Copied from MBRewind lol
@@ -151,14 +160,14 @@ TGE::SimObject* Node_getNextNode(const char* objId, const char* nodeId) {
 
 	const char* _nextNodeId = node->getDataField("_nextNodeId"_ts, NULL);
 	if (strcmp(_nextNodeId, "") != 0) {
-		const char* sync = TGE::Con::executef(2, "getClientSyncObject", _nextNodeId);
+		int sync = getClientSyncObject(atoi(_nextNodeId));
 		if (isObject(sync)) {
-			return TGE::Sim::findObject(sync);
+			return TGE::Sim::findObject_int(sync);
 		}
 	}
 
 	if (Node_isBranching(nodeId)) {
-		if (!isObject(objId) && !isObject(TGE::Con::executef(2, "getClientSyncObject", objId))) {
+		if (!isObject(objId) && !isObject(getClientSyncObject(atoi(objId)))) {
 			const char* branchNodes = node->getDataField("branchNodes"_ts, NULL);
 			std::stringstream ss(branchNodes);
 			char line[64];
@@ -174,8 +183,9 @@ TGE::SimObject* Node_getNextNode(const char* objId, const char* nodeId) {
 		char line[64];
 
 		const char* pathRngStart = node->getDataField("_pathRngStart"_ts, NULL);
-		const char* branchNodeCount = TGE::StringTable->insert(StringMath::print(getUnitCount(branchNodes, "\t\n")), false);
+		const char* branchNodeCount = MBX_Strdup(StringMath::print(getUnitCount(branchNodes, "\t\n")));
 		const char* sprng = TGE::Con::executef(4, "getSprng", pathRngStart, "0", branchNodeCount);
+		MBX_Free((void*)branchNodeCount);
 
 		int rng = atoi(sprng);
 
@@ -242,10 +252,14 @@ int Node_getPrevNode(const char* objId, const char* nodeId, const char* groupId)
 
 MBX_CONSOLE_FUNCTION(Node_getPrevNode, int, 4, 4, "Node_getPrevNode(%obj, %node, %group)")
 {
-	const char* arg1 = TGE::StringTable->insert(argv[1], false);
-	const char* arg2 = TGE::StringTable->insert(argv[2], false);
-	const char* arg3 = TGE::StringTable->insert(argv[3], false);
-	return Node_getPrevNode(arg1, arg2, arg3);
+	const char* arg1 = MBX_Strdup(argv[1]);
+	const char* arg2 = MBX_Strdup(argv[2]);
+	const char* arg3 = MBX_Strdup(argv[3]);
+	int retval = Node_getPrevNode(arg1, arg2, arg3);
+	MBX_Free((void*)arg1);
+	MBX_Free((void*)arg2);
+	MBX_Free((void*)arg3);
+	return retval;
 }
 
 float Node_getAdjustedProgress(const char* nodeId, float t) {
@@ -270,40 +284,40 @@ MBX_CONSOLE_FUNCTION(Node_getAdjustedProgress, float, 4, 4, "Node_getAdjustedPro
 	return Node_getAdjustedProgress(argv[2], t);
 }
 
-const char* Node_getBezierHandle1(const char* nodeId) {
+int Node_getBezierHandle1(const char* nodeId) {
 	TGE::SceneObject* obj = static_cast<TGE::SceneObject*>(TGE::Sim::findObject(nodeId));
 	const char* bezierHandle1 = obj->getDataField("BezierHandle1"_ts, NULL);
 	if (isObject(bezierHandle1))
-		return bezierHandle1;
+		return TGE::Sim::findObject(bezierHandle1)->getId();
 
-	const char* sync = TGE::Con::executef(2, "getClientSyncObject", obj->getDataField("_BezierHandle1id"_ts, NULL));
+	int sync = getClientSyncObject(atoi(obj->getDataField("_BezierHandle1id"_ts, NULL)));
 
-	if (strcmp(sync, "") == 0 && isObject(sync))
+	if (isObject(sync))
 		return sync;
 
-	return "-1";
+	return -1;
 }
 
-MBX_CONSOLE_FUNCTION(Node_getBezierHandle1, const char*, 3, 3, "Node_getBezierHandle1(%obj, %node)")
+MBX_CONSOLE_FUNCTION(Node_getBezierHandle1, int, 3, 3, "Node_getBezierHandle1(%obj, %node)")
 {
 	return Node_getBezierHandle1(argv[2]);
 }
 
-const char* Node_getBezierHandle2(const char* nodeId) {
+int Node_getBezierHandle2(const char* nodeId) {
 	TGE::SceneObject* obj = static_cast<TGE::SceneObject*>(TGE::Sim::findObject(nodeId));
 	const char* bezierHandle2 = obj->getDataField("BezierHandle2"_ts, NULL);
 	if (isObject(bezierHandle2))
-		return bezierHandle2;
+		return TGE::Sim::findObject(bezierHandle2)->getId();
 
-	const char* sync = TGE::Con::executef(2, "getClientSyncObject", obj->getDataField("_BezierHandle2id"_ts, NULL));
+	int sync = getClientSyncObject(atoi(obj->getDataField("_BezierHandle2id"_ts, NULL)));
 
-	if (strcmp(sync, "") == 0 && isObject(sync))
+	if (isObject(sync))
 		return sync;
 
-	return "-1";
+	return -1;
 }
 
-MBX_CONSOLE_FUNCTION(Node_getBezierHandle2, const char*, 3, 3, "Node_getBezierHandle2(%obj, %node)")
+MBX_CONSOLE_FUNCTION(Node_getBezierHandle2, int, 3, 3, "Node_getBezierHandle2(%obj, %node)")
 {
 	return Node_getBezierHandle2(argv[2]);
 }
@@ -329,12 +343,12 @@ std::vector<Point3F> Node_getPointList(const char* objId, const char* nodeId, co
 	posList.push_back(startPos);
 
 	bool nodeBezier = atoi(node->getDataField("bezier"_ts, NULL)) > 0; 
-	const char* bezierHandle2 = TGE::StringTable->insert(Node_getBezierHandle2(nodeId), false);
+	int bezierHandle2 = Node_getBezierHandle2(nodeId);
 
 	bool nodeSpline = atoi(node->getDataField("Spline"_ts, NULL)) > 0;
 
 	if (nodeBezier && isObject(bezierHandle2)) {
-		TGE::GameBase* bezierHandle = static_cast<TGE::GameBase*>(TGE::Sim::findObject(bezierHandle2));
+		TGE::GameBase* bezierHandle = static_cast<TGE::GameBase*>(TGE::Sim::findObject_int(bezierHandle2));
 		posList.push_back(bezierHandle->getTransform().getPosition());
 	}
 	else if (nodeSpline) {
@@ -350,13 +364,14 @@ std::vector<Point3F> Node_getPointList(const char* objId, const char* nodeId, co
 		posList.push_back(splinePos);
 	}
 
+
 	bool nextBezier = atoi(next->getDataField("bezier"_ts, NULL)) > 0;
-	const char* bezierHandle1 = TGE::StringTable->insert(Node_getBezierHandle1(next->getIdString()), false);
+	int bezierHandle1 = Node_getBezierHandle1(next->getIdString());
 
 	bool nextSpline = atoi(next->getDataField("Spline"_ts, NULL)) > 0;
 
 	if (nextBezier && isObject(bezierHandle1)) {
-		TGE::GameBase* bezierHandle = static_cast<TGE::GameBase*>(TGE::Sim::findObject(bezierHandle1));
+		TGE::GameBase* bezierHandle = static_cast<TGE::GameBase*>(TGE::Sim::findObject_int(bezierHandle1));
 		posList.push_back(bezierHandle->getTransform().getPosition());
 	}
 	else if (nextSpline) {
@@ -377,9 +392,9 @@ std::vector<Point3F> Node_getPointList(const char* objId, const char* nodeId, co
 
 MBX_CONSOLE_FUNCTION(Node_getPointList, const char *, 4, 4, "Node_getPointList(%obj, %node, %prev)")
 {
-	const char* arg1 = TGE::StringTable->insert(argv[1], false);
-	const char* arg2 = TGE::StringTable->insert(argv[2], false);
-	const char* arg3 = TGE::StringTable->insert(argv[3], false);
+	const char* arg1 = MBX_Strdup(argv[1]);
+	const char* arg2 = MBX_Strdup(argv[2]);
+	const char* arg3 = MBX_Strdup(argv[3]);
 
 	std::vector<Point3F> posList = Node_getPointList(arg1, arg2, arg3);
 
@@ -396,6 +411,10 @@ MBX_CONSOLE_FUNCTION(Node_getPointList, const char *, 4, 4, "Node_getPointList(%
 	strcpy(retbuf, res.c_str());
 	retbuf[res.size()] = '\0';
 
+	MBX_Free((void*)arg1);
+	MBX_Free((void*)arg2);
+	MBX_Free((void*)arg3);
+
 	return retbuf;
 }
 
@@ -411,11 +430,19 @@ Point3F Node_getPathPosition(const char* objId, const char* nodeId, const char* 
 
 MBX_CONSOLE_FUNCTION(Node_getPathPosition, const char *, 5, 5, "Node_getPathPosition(%obj, %node, %prev, %t)")
 {
-	const char* arg1 = TGE::StringTable->insert(argv[1], false);
-	const char* arg2 = TGE::StringTable->insert(argv[2], false);
-	const char* arg3 = TGE::StringTable->insert(argv[3], false);
-	const char* arg4 = TGE::StringTable->insert(argv[4], false);
-	return StringMath::print(Node_getPathPosition(arg1, arg2, arg3, atof(arg4)));
+	const char* arg1 = MBX_Strdup(argv[1]);
+	const char* arg2 = MBX_Strdup(argv[2]);
+	const char* arg3 = MBX_Strdup(argv[3]);
+	const char* arg4 = MBX_Strdup(argv[4]);
+
+	const char* ret = StringMath::print(Node_getPathPosition(arg1, arg2, arg3, atof(arg4)));
+
+	MBX_Free((void*)arg1);
+	MBX_Free((void*)arg2);
+	MBX_Free((void*)arg3);
+	MBX_Free((void*)arg4);
+
+	return ret;
 }
 
 float Node_getPathTime(const char* objId, const char* nodeId) {
@@ -484,12 +511,19 @@ AngAxisF Node_getPathRotation(const char* objId, const char* nodeId, float tVal)
 
 MBX_CONSOLE_FUNCTION(Node_getPathRotation, const char *, 5, 5, "Node_getPathRotation(%obj, %node, %prev, %t)")
 {
-	const char* arg1 = TGE::StringTable->insert(argv[1], false);
-	const char* arg2 = TGE::StringTable->insert(argv[2], false);
-	const char* arg3 = TGE::StringTable->insert(argv[3], false);
-	const char* arg4 = TGE::StringTable->insert(argv[4], false);
+	const char* arg1 = MBX_Strdup(argv[1]);
+	const char* arg2 = MBX_Strdup(argv[2]);
+	const char* arg3 = MBX_Strdup(argv[3]);
+	const char* arg4 = MBX_Strdup(argv[4]);
 
-	return StringMath::print(Node_getPathRotation(arg1, arg2, atof(arg4)));
+	const char* ret = StringMath::print(Node_getPathRotation(arg1, arg2, atof(arg4)));
+
+	MBX_Free((void*)arg1);
+	MBX_Free((void*)arg2);
+	MBX_Free((void*)arg3);
+	MBX_Free((void*)arg4);
+
+	return ret;
 }
 
 Point3F Node_getPathScale(const char* objId, const char* nodeId, float tVal) {
@@ -515,12 +549,19 @@ Point3F Node_getPathScale(const char* objId, const char* nodeId, float tVal) {
 
 MBX_CONSOLE_FUNCTION(Node_getPathScale, const char *, 5, 5, "Node_getPathScale(%obj, %node, %prev, %t)")
 {
-	const char* arg1 = TGE::StringTable->insert(argv[1], false);
-	const char* arg2 = TGE::StringTable->insert(argv[2], false);
-	const char* arg3 = TGE::StringTable->insert(argv[3], false);
-	const char* arg4 = TGE::StringTable->insert(argv[4], false);
+	const char* arg1 = MBX_Strdup(argv[1]);
+	const char* arg2 = MBX_Strdup(argv[2]);
+	const char* arg3 = MBX_Strdup(argv[3]);
+	const char* arg4 = MBX_Strdup(argv[4]);
 
-	return StringMath::print(Node_getPathScale(arg1, arg2, atof(arg4)));
+	const char* ret = StringMath::print(Node_getPathScale(arg1, arg2, atof(arg4)));
+
+	MBX_Free((void*)arg1);
+	MBX_Free((void*)arg2);
+	MBX_Free((void*)arg3);
+	MBX_Free((void*)arg4);
+
+	return ret;
 }
 
 MBX_CONSOLE_FUNCTION(Node_getPathTransform, const char *, 5, 5, "Node_getPathTransform(%obj, %node, %prev, %t)")
@@ -530,14 +571,14 @@ MBX_CONSOLE_FUNCTION(Node_getPathTransform, const char *, 5, 5, "Node_getPathTra
 	bool useRotation = atoi(node->getDataField("useRotation"_ts, NULL)) > 0;
 	bool useScale = atoi(node->getDataField("useScale"_ts, NULL)) > 0;
 
-	const char* arg1 = TGE::StringTable->insert(argv[1], false);
-	const char* arg2 = TGE::StringTable->insert(argv[2], false);
-	const char* arg3 = TGE::StringTable->insert(argv[3], false);
-	const char* arg4 = TGE::StringTable->insert(argv[4], false);
+	const char* arg1 = MBX_Strdup(argv[1]);
+	const char* arg2 = MBX_Strdup(argv[2]);
+	const char* arg3 = MBX_Strdup(argv[3]);
+	const char* arg4 = MBX_Strdup(argv[4]);
 
-	const char* pos = TGE::StringTable->insert((usePosition ? executefnmspc("Node", "getPathPosition", 4, arg1, arg2, arg3, arg4) : ""), false);
-	const char* rot = TGE::StringTable->insert((useRotation ? executefnmspc("Node", "getPathRotation", 4, arg1, arg2, arg3, arg4) : ""), false);
-	const char* scale = TGE::StringTable->insert((useScale ? executefnmspc("Node", "getPathScale", 4, arg1, arg2, arg3, arg4) : ""), false);
+	const char* pos = MBX_Strdup((usePosition ? executefnmspc("Node", "getPathPosition", 4, arg1, arg2, arg3, arg4) : ""));
+	const char* rot = MBX_Strdup((useRotation ? executefnmspc("Node", "getPathRotation", 4, arg1, arg2, arg3, arg4) : ""));
+	const char* scale = MBX_Strdup((useScale ? executefnmspc("Node", "getPathScale", 4, arg1, arg2, arg3, arg4) : ""));
 
 	std::string res = std::string(pos) + "\t" + std::string(rot) + "\t" + std::string(scale);
 
@@ -545,15 +586,23 @@ MBX_CONSOLE_FUNCTION(Node_getPathTransform, const char *, 5, 5, "Node_getPathTra
 	strcpy(retbuf, res.c_str());
 	retbuf[res.size()] = '\0';
 
+	MBX_Free((void*)arg1);
+	MBX_Free((void*)arg2);
+	MBX_Free((void*)arg3);
+	MBX_Free((void*)arg4);
+	MBX_Free((void*)pos);
+	MBX_Free((void*)rot);
+	MBX_Free((void*)scale);
+
 	return retbuf;
 }
 
 MBX_CONSOLE_FUNCTION(Node_updatePath, void, 5, 5, "Node_updatePath(%obj, %node, %prev, %position)")
 {
-	const char* arg1 = TGE::StringTable->insert(argv[1], false);
-	const char* arg2 = TGE::StringTable->insert(argv[2], false);
-	const char* arg3 = TGE::StringTable->insert(argv[3], false);
-	const char* arg4 = TGE::StringTable->insert(argv[4], false);
+	const char* arg1 = MBX_Strdup(argv[1]);
+	const char* arg2 = MBX_Strdup(argv[2]);
+	const char* arg3 = MBX_Strdup(argv[3]);
+	const char* arg4 = MBX_Strdup(argv[4]);
 
 	TGE::SceneObject* node = static_cast<TGE::SceneObject*>(TGE::Sim::findObject(arg2));
 	TGE::SceneObject* obj = static_cast<TGE::SceneObject*>(TGE::Sim::findObject(arg1));
@@ -617,4 +666,174 @@ MBX_CONSOLE_FUNCTION(Node_updatePath, void, 5, 5, "Node_updatePath(%obj, %node, 
 
 	if (useScale)
 		obj->setScale(scale);
+
+	MBX_Free((void*)arg1);
+	MBX_Free((void*)arg2);
+	MBX_Free((void*)arg3);
+	MBX_Free((void*)arg4);
+}
+
+MBX_CONSOLE_FUNCTION(updateClientParentedObjects, void, 2, 2, "updateclientParentedObjects(%delta)")
+{
+	TGE::ScriptObject* clientParentedObjects = static_cast<TGE::ScriptObject*>(TGE::Sim::findObject("ClientParentedObjects"));
+	if (clientParentedObjects != NULL) {
+		int count = atoi(TGE::Con::executef(clientParentedObjects, 1, "getSize"));
+		for (int i = 0; i < count; i++) {
+			const char* indexStr = MBX_Strdup(StringMath::print(count));
+			int id = atoi(TGE::Con::executef(clientParentedObjects, 2, "getEntry", indexStr));
+			MBX_Free((void*)indexStr);
+
+			SimObjectId objid = getClientSyncObject(id);
+			if (!isObject(objid)) {
+				continue;
+			}
+
+			TGE::SceneObject* obj = static_cast<TGE::SceneObject*>(TGE::Sim::findObject_int(objid));
+
+			SimObjectId parentid = getClientSyncObject(atoi(obj->getDataField("_parentId"_ts, NULL)));
+
+			if (!isObject(parentid)) {
+				continue;
+			}
+
+			TGE::SceneObject* parent = static_cast<TGE::SceneObject*>(TGE::Sim::findObject_int(parentid));
+
+			const char* simple = obj->getDataField("parentSimple"_ts, NULL);
+			const char* transform = obj->getDataField("_parentTransform"_ts, NULL);
+			const char* offset = obj->getDataField("parentOffset"_ts, NULL);
+			const char* noRot = obj->getDataField("parentNoRot"_ts, NULL);
+
+			MatrixF trans = parent->getTransform();
+			if (atoi(noRot) > 0) {
+				Point3F pos = trans.getPosition();
+				trans = MatrixF(true);
+				trans.setPosition(pos);
+			}
+
+			MatrixF finalTransform;
+
+			if (atoi(simple) > 0) {
+				finalTransform = trans;
+			} else {
+				if (strcmp(transform, "") == 0) {
+					continue;
+				}
+
+				finalTransform = trans * StringMath::scan<MatrixF>(transform);
+			}
+
+			MatrixF off(true);
+			if (strcmp(offset, "") != 0)
+				off.setPosition(StringMath::scan<Point3F>(offset));
+
+			finalTransform *= off;
+
+			if (strcmp(obj->getClassRep()->getClassName(), "Item") == 0) {
+				AngAxisF itemRot = AngAxisF(Point3F(0, 0, 1), TGE::Sim::gCurrentTime * (2 * M_PI) / 3);
+				MatrixF itemMat;
+				itemRot.setMatrix(&itemMat);
+
+				finalTransform *= itemMat;
+			}
+
+			obj->setTransformVirt(finalTransform);		
+		}
+	}
+}
+
+MatrixF calcParentModeTrans(TGE::SceneObject* obj, TGE::SceneObject* parent)
+{
+	MatrixF ptform = parent->getTransform();
+	ptform = ptform.scale(Point3F(1, 1, 1) / ptform.getScale());
+	
+	MatrixF ttform = obj->getTransform();
+	ttform = ttform.scale(Point3F(1, 1, 1) / ptform.getScale());
+	
+	AngAxisF ptrans(ptform);
+	AngAxisF ttrans(ttform);
+	ptrans.axis.x *= -1;
+	
+	MatrixF r1, r2;
+	ptrans.setMatrix(&r1);
+	ttrans.setMatrix(&r2);
+	
+	MatrixF rot = r2 * r1;
+	Point3F trans = obj->getTransform().getPosition() - parent->getTransform().getPosition();
+	rot.setPosition(trans);
+	return rot;
+}
+
+MBX_CONSOLE_FUNCTION(calcParentModeTrans, const char*, 3, 3, "calcParentModeTrans(%object, %parent)")
+{
+	TGE::SceneObject* obj = static_cast<TGE::SceneObject*>(TGE::Sim::findObject(argv[1]));
+	TGE::SceneObject* parent = static_cast<TGE::SceneObject*>(TGE::Sim::findObject(argv[2]));
+	if (obj && parent) {
+		MatrixF ptform = parent->getTransform();
+		ptform = ptform.scale(Point3F(1,1,1) / ptform.getScale());
+
+		MatrixF ttform = obj->getTransform();
+		ttform = ttform.scale(Point3F(1, 1, 1) / ptform.getScale());
+
+		AngAxisF ptrans(ptform);
+		AngAxisF ttrans(ttform);
+		ptrans.axis.x *= -1;
+
+		MatrixF r1, r2;
+		ptrans.setMatrix(&r1);
+		ttrans.setMatrix(&r2);
+
+		MatrixF rot = r2 * r1;
+		AngAxisF rotAA(rot);
+		Point3F trans = obj->getTransform().getPosition() - parent->getTransform().getPosition();
+		char* retbuf = TGE::Con::getReturnBuffer(256);
+		sprintf(retbuf, "%f %f %f %f %f %f %f", trans.x, trans.y, trans.z, rotAA.axis.x, rotAA.axis.y, rotAA.axis.z, rotAA.angle);
+		return retbuf;
+	}
+	return "";
+}
+
+MBX_CONSOLE_METHOD(SceneObject, updateParenting, void, 3, 3, "SceneObject::updateParenting(%this, %delta)")
+{
+	TGE::SceneObject* parent = static_cast<TGE::SceneObject*>(TGE::Sim::findObject(object->getDataField("parent"_ts, NULL)));
+	if (parent == NULL)
+		return;
+
+	const char* simple = object->getDataField("parentSimple"_ts, NULL);
+	const char* transform = object->getDataField("_parentTransform"_ts, NULL);
+	const char* offset = object->getDataField("parentOffset"_ts, NULL);
+	const char* noRot = object->getDataField("parentNoRot"_ts, NULL);
+
+	MatrixF trans = parent->getTransform();
+	if (atoi(noRot) > 0) {
+		Point3F pos = trans.getPosition();
+		trans = MatrixF(true);
+		trans.setPosition(pos);
+	}
+
+	MatrixF finalTransform;
+
+	if (atoi(simple) > 0) {
+		finalTransform = trans;
+	}
+	else {
+		MatrixF parentTrans;
+
+		if (strcmp(transform, "") == 0) {
+			parentTrans = calcParentModeTrans(object, parent);
+			object->setDataField("_parentTransform"_ts, NULL, StringMath::print(parentTrans));
+		}
+		else {
+			parentTrans = StringMath::scan<MatrixF>(transform);
+		}
+
+		finalTransform = trans * parentTrans;
+	}
+
+	MatrixF off(true);
+	if (strcmp(offset, "") != 0)
+		off.setPosition(StringMath::scan<Point3F>(offset));
+
+	finalTransform *= off;
+
+	object->setTransformVirt(finalTransform);
 }

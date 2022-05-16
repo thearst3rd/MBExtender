@@ -4,3 +4,5 @@ typedef S32 SyncId;
 
 
 SyncId getSyncId(TGE::NetObject* object);
+
+SimObjectId getClientSyncObject(SyncId ghostId);

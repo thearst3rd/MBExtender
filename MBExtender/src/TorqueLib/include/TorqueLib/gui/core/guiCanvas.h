@@ -34,6 +34,8 @@ namespace TGE
 		BRIDGE_CLASS(GuiCanvas);
 	public:
 		MEMBERFN(void, renderFrame, (bool bufferSwap), 0x50C160_win, 0x10D730_mac);
+		GETTERFN(GuiControl*, getMouseControl, 0xEC_win, 0xEC_mac);
+		GETTERFN(Point2I, getCursorPos, 0xD0_win, 0xD0_mac);
 	};
 
 	GLOBALVAR(GuiCanvas *, Canvas, 0x6AF8C8_win, 0x2DB4AC_mac);

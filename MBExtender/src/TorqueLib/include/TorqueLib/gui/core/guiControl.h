@@ -45,7 +45,7 @@ namespace TGE
 		UNDEFVIRT(getHelpTag);
 		UNDEFVIRT(getHelpText);
 		UNDEFVIRT(getCursor);
-		UNDEFVIRT(resize);
+		virtual void resize(const Point2I &newPosition, const Point2I &newExtent);
 		UNDEFVIRT(childResized);
 		UNDEFVIRT(parentResized);
 		UNDEFVIRT(onRender);
@@ -55,7 +55,7 @@ namespace TGE
 		UNDEFVIRT(getScriptValue);
 		UNDEFVIRT(setScriptValue);
 		UNDEFVIRT(pointInControl);
-		UNDEFVIRT(findHitControl);
+		virtual GuiControl* findHitControl(const Point2I &pt, S32 initialLayer = -1);
 		UNDEFVIRT(onInputEvent);
 		UNDEFVIRT(onMouseUp);
 		UNDEFVIRT(onMouseDown);
@@ -89,6 +89,7 @@ namespace TGE
 		GETTERFN(bool, isAwake, 0x4E);
 		GETTERFN(RectI, getBounds, 0x58);
 		GETTERFN(Point2I, getPosition, 0x58);
+		SETTERFN(Point2I, setPosition, 0x58);
 		GETTERFN(Point2I, getExtent, 0x60);
 		GETTERFN(GuiControlProfile *, getProfile, 0x48);
 		GETTERFN(bool, getActive, 0x4D);
@@ -100,5 +101,6 @@ namespace TGE
 		MEMBERFN(void, renderChildControls, (Point2I offset, RectI const& rect), 0x402013_win, 0x1085A0_mac);
 		MEMBERFN(void, renderJustifiedText, (Point2I offset, Point2I extent, const char *text), 0x408571_win, 0x107AD0_mac);
 		MEMBERFN(void, GuiControl_onRender, (Point2I offset, const RectI &rect), 0x404142_win, 0x108710_mac);
+		MEMBERFN(bool, cursorInControl, (), 0x4042CD_win, 0x10A220_mac);
 	};
 }

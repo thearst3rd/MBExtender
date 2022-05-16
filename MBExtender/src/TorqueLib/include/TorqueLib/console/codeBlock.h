@@ -58,5 +58,10 @@ namespace TGE
 		MEMBERFN(const char*, exec,
 			(U32 ip, const char *functionName, Namespace *thisNamespace, U32 argc, const char **argv, bool noCalls),
 			0x403328_win, 0x44620_mac);
+
+		MEMBERFN(void, incRefCount, (), 0x401B6D_win, 0x3D120_mac);
+		MEMBERFN(void, decRefCount, (), 0x4050B0_win, 0x40090_mac);
+		MEMBERFN(const char*, getFileLine, (U32 ip), 0x404D6D_win, 0x41360_mac);
+		MEMBERFN(void, findBreakLine, (U32 ip, U32 &line, U32 &instruction), 0x4053D0_win, 0x3CDC0_mac);
 	};
 }

@@ -36,9 +36,11 @@ namespace TGE
 		BRIDGE_CLASS(GuiBitmapCtrl);
 	public:
 		GETTERFN(TextureHandle *, getTextureHandle, 0x98);
+		SETTERFN(TextureHandle *, setTextureHandle, 0x98);
 		GETTERFN(Point2I, getStartPoint, 0x9C);
 		GETTERFN(bool, getWrap, 0xA4);
 		GETTERFN(const char *, getBitmap, 0x94);
 		MEMBERFN(void, onRender, (Point2I offset, const RectI &updateRect), 0x408F94_win, 0x1121F0_mac);
+		MEMBERFN(void, setBitmap, (const char* name, bool resize), 0x406082_win, 0x1127B0_mac);
 	};
 }

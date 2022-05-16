@@ -432,3 +432,25 @@ MBX_CONSOLE_FUNCTION(_innerRadarLoop, void, 7, 7, "_innerRadarLoop(%targetGroup,
 		}
 	}
 }
+
+MBX_CONSOLE_FUNCTION(RadarClearTargets, void, 1, 1, "RadarClearTargets();") {
+	TGE::SimGroup* targetGroup = static_cast<TGE::SimGroup*>(TGE::Sim::findObject("TargetGroup"));
+	if (targetGroup != NULL) {
+		while (targetGroup->mObjectList.size() > 0) {
+			TGE::SimObject* obj = targetGroup->mObjectList[0];
+			TGE::SimObject* dot = TGE::Sim::findObject(obj->getDataField("dot"_ts, NULL));
+			if (dot != NULL) {
+				dot->deleteObject();
+			}
+			obj->deleteObject();
+		}
+		targetGroup->mObjectList.clear();
+	}
+	TGE::GuiControl* radarControl = static_cast<TGE::GuiControl*>(TGE::Sim::findObject("PG_RadarContent"));
+	if (radarControl != NULL) {
+		while (radarControl->mObjectList.size() > 0) {
+			radarControl->mObjectList.back()->deleteObject();
+		}
+		radarControl->mObjectList.clear();
+	}
+}

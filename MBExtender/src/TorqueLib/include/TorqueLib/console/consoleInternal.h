@@ -32,6 +32,113 @@
 
 namespace TGE
 {
+	enum CompiledInstructions
+	{
+	   OP_FUNC_DECL,
+	   OP_CREATE_OBJECT,
+	   OP_CREATE_DATABLOCK,
+   
+	   OP_NAME_OBJECT,
+	   OP_ADD_OBJECT,
+	   OP_END_OBJECT,
+	   OP_JMPIFFNOT,
+	   OP_JMPIFNOT,
+	   OP_JMPIFF,
+	   OP_JMPIF,
+	   OP_JMPIFNOT_NP,
+	   OP_JMPIF_NP,
+	   OP_JMP,
+	   OP_RETURN,
+	   OP_CMPEQ,
+	   OP_CMPGR,
+	   OP_CMPGE,
+	   OP_CMPLT,
+	   OP_CMPLE,
+	   OP_CMPNE,
+	   OP_XOR,
+	   OP_MOD,
+	   OP_BITAND,
+	   OP_BITOR,
+	   OP_NOT,
+	   OP_NOTF,
+	   OP_ONESCOMPLEMENT,
+
+	   OP_SHR,
+	   OP_SHL,
+	   OP_AND,
+	   OP_OR,
+
+	   OP_ADD,
+	   OP_SUB,
+	   OP_MUL,
+	   OP_DIV,
+	   OP_NEG,
+
+	   OP_SETCURVAR,
+	   OP_SETCURVAR_CREATE,
+	   OP_SETCURVAR_ARRAY,
+	   OP_SETCURVAR_ARRAY_CREATE,
+
+	   OP_LOADVAR_UINT,
+	   OP_LOADVAR_FLT,
+	   OP_LOADVAR_STR,
+
+	   OP_SAVEVAR_UINT,
+	   OP_SAVEVAR_FLT,
+	   OP_SAVEVAR_STR,
+
+	   OP_SETCUROBJECT,
+	   OP_SETCUROBJECT_NEW,
+
+	   OP_SETCURFIELD,
+	   OP_SETCURFIELD_ARRAY,
+
+	   OP_LOADFIELD_UINT,
+	   OP_LOADFIELD_FLT,
+	   OP_LOADFIELD_STR,
+
+	   OP_SAVEFIELD_UINT,
+	   OP_SAVEFIELD_FLT,
+	   OP_SAVEFIELD_STR,
+
+	   OP_STR_TO_UINT,
+	   OP_STR_TO_FLT,
+	   OP_STR_TO_NONE,
+	   OP_FLT_TO_UINT,
+	   OP_FLT_TO_STR,
+	   OP_FLT_TO_NONE,
+	   OP_UINT_TO_FLT,
+	   OP_UINT_TO_STR,
+	   OP_UINT_TO_NONE,
+
+	   OP_LOADIMMED_UINT,
+	   OP_LOADIMMED_FLT,
+	   OP_TAG_TO_STR,
+	   OP_LOADIMMED_STR,
+	   OP_LOADIMMED_IDENT,
+   
+	   OP_CALLFUNC_RESOLVE,
+	   OP_CALLFUNC,
+	   OP_PROCESS_ARGS,
+   
+	   OP_ADVANCE_STR,
+	   OP_ADVANCE_STR_APPENDCHAR,
+	   OP_ADVANCE_STR_COMMA,
+	   OP_ADVANCE_STR_NUL,
+	   OP_REWIND_STR,
+	   OP_TERMINATE_REWIND_STR,
+	   OP_COMPARE_STR,
+   
+	   OP_PUSH,
+	   OP_PUSH_FRAME,
+   
+	   OP_BREAK,
+   
+	   OP_INVALID
+	};
+
+
+
 	class CodeBlock;
 	class ExprEvalState;
 	class SimObject;
@@ -119,6 +226,10 @@ namespace TGE
 
 		CodeBlock *code;
 		U32 ip;
+
+		MEMBERFN(Dictionary::Entry*, add, (StringTableEntry name), 0x4068E3_win, 0x33AF0_mac);
+		MEMBERFN(Dictionary::Entry*, lookup, (StringTableEntry name), 0x4066CC_win, 0x33000_mac);
+		MEMBERFN(const char*, getVariable, (StringTableEntry name, bool* entValid), 0x401924_win, 0x337F0_mac);
 	};
 
 	class ExprEvalState
@@ -130,6 +241,9 @@ namespace TGE
 		bool traceOn;
 		Dictionary globalVars;
 		Vector<Dictionary *> stack;
+
+		MEMBERFN(void, pushFrame, (StringTableEntry frameName, Namespace *ns), 0x40417E_win, 0x34520_mac);
+		MEMBERFN(void, popFrame, (), 0x40417E_win, 0x34F40_mac);
 	};
 
 	GLOBALVAR(ExprEvalState, gEvalState, 0x694A70_win, 0x2FF2C0_mac);
