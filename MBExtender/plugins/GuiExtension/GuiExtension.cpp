@@ -40,6 +40,8 @@
 #include <TorqueLib/gui/controls/guiCheckBoxCtrl.h>
 #include <TorqueLib/gui/controls/guiMLTextCtrl.h>
 #include <TorqueLib/gui/core/guiTypes.h>
+#include <TorqueLib/gui/core/guiCanvas.h>
+#include <unordered_map>
 
 MBX_MODULE(GuiExtension);
 
@@ -52,15 +54,24 @@ bool initPlugin(MBX::Plugin &plugin)
 	return true;
 }
 
+std::unordered_map<TGE::GuiBitmapCtrl*, TGE::TextureObject*> specialTexs;
+
 MBX_OVERRIDE_MEMBERFN(void, TGE::GuiBitmapCtrl::onRender, (TGE::GuiBitmapCtrl *thisptr, Point2I offset, RectI const &updateRect), originalBitmapOnRender) {
 
 	TGE::TextureHandle *mTextureHandle = thisptr->getTextureHandle();
 	TGE::TextureObject* texture = (TGE::TextureObject *) mTextureHandle;
 
+	bool special = false;
+
+	if (specialTexs.find(thisptr) != specialTexs.end()) {
+		texture = specialTexs[thisptr];
+		special = true;
+	}
+
 	RectI mBounds = thisptr->getBounds();
 	TGE::GuiControlProfile *mProfile = thisptr->getProfile();
 
-	if (mTextureHandle)
+	if (mTextureHandle || special)
 	{
 		TGE::dglClearBitmapModulation();
 
@@ -104,7 +115,7 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::GuiBitmapCtrl::onRender, (TGE::GuiBitmapCtrl *t
 		}
 	}
 
-	if (mProfile->getBorder() || !mTextureHandle)
+	if (mProfile->getBorder() || (!mTextureHandle && !special))
 	{
 		RectI rect(offset.x, offset.y, mBounds.extent.x, mBounds.extent.y);
 		TGE::dglDrawRect(rect, mProfile->getBorderColor());
@@ -302,3 +313,206 @@ MBX_CONSOLE_FUNCTION(textLen, int, 2, 4, "textLen(%text, %font, %size);") {
 }
 
 
+// misc.cs
+
+MBX_CONSOLE_METHOD(GuiControl, setExtent, void, 3, 3, "GuiControl::setExtent(%extent)") {
+	TGE::GuiControl* ctrl = static_cast<TGE::GuiControl*>(object);
+	Point2F pos = StringMath::scan<Point2F>(argv[2]);
+	Point2I posInt = Point2I(pos.x, pos.y);
+	if (posInt != ctrl->getExtent()) {
+		ctrl->resize(ctrl->getPosition(), posInt);
+	}
+}
+
+MBX_CONSOLE_METHOD(GuiControl, setPosition, void, 3, 3, "GuiControl::setPosition(%position)") {
+	TGE::GuiControl* ctrl = static_cast<TGE::GuiControl*>(object);
+	Point2F pos = StringMath::scan<Point2F>(argv[2]);
+	Point2I posInt = Point2I(pos.x, pos.y);
+	if (posInt != ctrl->getPosition()) {
+		ctrl->resize(posInt, ctrl->getExtent());
+	}
+}
+
+MBX_CONSOLE_METHOD(GuiControl, setHeight, void, 3, 3, "GuiControl::setHeight(%height)") {
+	TGE::GuiControl* ctrl = static_cast<TGE::GuiControl*>(object);
+	U32 height = atoi(argv[2]);
+	Point2I ctrlpos = ctrl->getPosition();
+	Point2I extent = ctrl->getExtent();
+	if (height != extent.y) {
+		extent.y = height;
+		ctrl->resize(ctrlpos, extent);
+	}
+}
+
+MBX_CONSOLE_METHOD(GuiControl, setWidth, void, 3, 3, "GuiControl::setWidth(%width)") {
+	TGE::GuiControl* ctrl = static_cast<TGE::GuiControl*>(object);
+	U32 width = atoi(argv[2]);
+	Point2I ctrlpos = ctrl->getPosition();
+	Point2I extent = ctrl->getExtent();
+	if (width != extent.x) {
+		extent.x = width;
+		ctrl->resize(ctrlpos, extent);
+	}
+}
+
+MBX_CONSOLE_METHOD(GuiControl, getX, S32, 2, 2, "GuiControl::getX()") {
+	TGE::GuiControl* ctrl = static_cast<TGE::GuiControl*>(object);
+	return ctrl->getPosition().x;
+}
+
+MBX_CONSOLE_METHOD(GuiControl, getY, S32, 2, 2, "GuiControl::getY()") {
+	TGE::GuiControl* ctrl = static_cast<TGE::GuiControl*>(object);
+	return ctrl->getPosition().y;
+}
+
+MBX_CONSOLE_METHOD(GuiControl, getWidth, S32, 2, 2, "GuiControl::getWidth()") {
+	TGE::GuiControl* ctrl = static_cast<TGE::GuiControl*>(object);
+	return ctrl->getExtent().x;
+}
+
+
+MBX_CONSOLE_METHOD(GuiControl, getHeight, S32, 2, 2, "GuiControl::getHeight()") {
+	TGE::GuiControl* ctrl = static_cast<TGE::GuiControl*>(object);
+	return ctrl->getExtent().y;
+}
+
+MBX_CONSOLE_METHOD(GuiCanvas, getMouseControl, S32, 2, 2, "GuiCanvas::getMouseControl()") {
+	TGE::GuiControl* ctrl = object->findHitControl(object->getCursorPos());
+	if (ctrl != NULL) {
+		return ctrl->getId();
+	}
+	else return 0;
+}
+
+MBX_CONSOLE_METHOD(GuiControl, isCursorOn, bool, 2, 2, "GuiControl::isCursorOn()") {
+	return object->cursorInControl();
+}
+
+static const char* numPaths[] = {
+	"platinum/client/ui/game/numbers/0.png",
+	"platinum/client/ui/game/numbers/1.png",
+	"platinum/client/ui/game/numbers/2.png",
+	"platinum/client/ui/game/numbers/3.png",
+	"platinum/client/ui/game/numbers/4.png",
+	"platinum/client/ui/game/numbers/5.png",
+	"platinum/client/ui/game/numbers/6.png",
+	"platinum/client/ui/game/numbers/7.png",
+	"platinum/client/ui/game/numbers/8.png",
+	"platinum/client/ui/game/numbers/9.png",
+	"platinum/client/ui/game/numbers/point.png",
+	"platinum/client/ui/game/numbers/colon.png",
+	"platinum/client/ui/game/numbers/dash.png",
+	"platinum/client/ui/game/numbers/slash.png",
+};
+
+TGE::TextureObject* numHandles[14];
+
+void unloadTimerTextures() {
+	for (int i = 0; i < 14; i++) {
+		if (numHandles[i] != NULL) {
+			(*numHandles[i]).mRefCount--;
+			numHandles[i] = NULL;
+		}
+	}
+	specialTexs.clear();
+}
+
+MBX_CONSOLE_FUNCTION(unloadTimerTextures, void, 1, 1, "unloadTimerTextures()") {
+	unloadTimerTextures();
+}
+
+MBX_CONSOLE_METHOD(GuiBitmapCtrl, setNumber, void, 3, 3, "GuiBitmapCtrl::setNumber(number)") {
+
+	char num = argv[2][0];
+	int index = -1;
+	TGE::TextureObject** handle = NULL;
+	if (isalpha(num)) {
+		if (num == 'p') handle = &numHandles[10];
+		if (num == 'c') handle = &numHandles[11];
+		if (num == 'd') handle = &numHandles[12];
+		if (num == 's') handle = &numHandles[13];
+	}
+	else {
+		handle = &numHandles[num - '0'];
+	}
+
+	index = handle - &numHandles[0];
+
+	if (index < 0 || index > 13) {
+		return;
+	}
+
+	if (*handle != NULL) {
+		specialTexs[object] = *handle;
+	}
+	else {
+		*handle = TGE::TextureManager::loadTexture(numPaths[index], 0, true);
+		(*handle)->mRefCount++;
+		specialTexs[object] = *handle;
+	}
+}
+
+MBX_CONSOLE_METHOD(GuiBitmapCtrl, setTimeNumber, void, 3, 3, "GuiBitmapCtrl::setTimeNumber(number)") {
+
+	char num = argv[2][0];
+	int index = -1;
+	TGE::TextureObject** handle = NULL;
+	if (isalpha(num)) {
+		if (num == 'p') handle = &numHandles[10];
+		if (num == 'c') handle = &numHandles[11];
+		if (num == 'd') handle = &numHandles[12];
+		if (num == 's') handle = &numHandles[13];
+	}
+	else {
+		handle = &numHandles[num - '0'];
+	}
+
+	index = handle - &numHandles[0];
+
+	if (index < 0 || index > 13) {
+		return;
+	}
+
+	if (*handle != NULL) {
+		specialTexs[object] = *handle;
+	} else {
+		*handle = TGE::TextureManager::loadTexture(numPaths[index], 0, true);
+		(*handle)->mRefCount++;
+		specialTexs[object] = *handle;
+	}
+
+	object->setDataField("bitmapColor"_ts, 0, TGE::Con::getVariable("$PlayTimerColor"));
+}
+
+MBX_CONSOLE_METHOD(GuiBitmapCtrl, setNumberColor, void, 4, 4, "GuiBitmapCtrl::setNumberColor(number, color)") {
+
+	char num = argv[2][0];
+	int index = -1;
+	TGE::TextureObject** handle = NULL;
+	if (isalpha(num)) {
+		if (num == 'p') handle = &numHandles[10];
+		if (num == 'c') handle = &numHandles[11];
+		if (num == 'd') handle = &numHandles[12];
+		if (num == 's') handle = &numHandles[13];
+	}
+	else {
+		handle = &numHandles[num - '0'];
+	}
+
+	index = handle - &numHandles[0];
+
+	if (index < 0 || index > 13) {
+		return;
+	}
+
+	if (*handle != NULL) {
+		specialTexs[object] = *handle;
+	}
+	else {
+		*handle = TGE::TextureManager::loadTexture(numPaths[index], 0, true);
+		(*handle)->mRefCount++;
+		specialTexs[object] = *handle;
+	}
+
+	object->setDataField("bitmapColor"_ts, 0, TGE::StringTable->insert(argv[3], false));
+}
