@@ -172,6 +172,7 @@ void init_opengl_extensions(void)
 	ReleaseDC(dummy_window, dummy_dc);
 	DestroyWindow(dummy_window);
 
+
 	extInitialized = true;
 }
 
@@ -183,6 +184,7 @@ bool hackReady = false;
 bool hackSupported = true;
 LONG fullscreenWidth;
 LONG fullscreenHeight;
+float scaleFactor = 1;
 bool glContextCreated = false;
 
 void destroyUpscaledFramebuffer() 
@@ -203,10 +205,13 @@ void generateUpscaleFramebuffer()
 {
 	RECT wrect;
 	GetWindowRect(TGE::winState.appWindow, &wrect);
+
+	DEVMODE dmode;
+	memset(&dmode, 0, sizeof(DEVMODE));
+	EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dmode);
+
 	fullscreenWidth = abs(wrect.right - wrect.left);
 	fullscreenHeight = abs(wrect.bottom - wrect.top);
-	//DEVMODE dmode;
-	//memset(&dmode, 0, sizeof(DEVMODE));
 	//bool stillGoing = true;
 	//int imode = 0;
 
@@ -222,6 +227,8 @@ void generateUpscaleFramebuffer()
 		fullscreenWidth = TGE::winState.desktopWidth;
 		fullscreenHeight = TGE::winState.desktopHeight;
 	}
+
+	scaleFactor = min((float)fullscreenWidth / (float)dmode.dmPelsWidth, (float)fullscreenHeight / (float)dmode.dmPelsHeight);
 
 	TGE::Con::printf("Creating fullscreen framebuffer for desktop resolution %d x %d", fullscreenWidth, fullscreenHeight);
 	glGenFramebuffers(1, &renderBuffer);
@@ -259,6 +266,11 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 	init_opengl_extensions();
 #endif
 
+	TGE::Con::printf("Desktop Size: %d x %d, Window Size: %d x %d", TGE::winState.desktopWidth, TGE::winState.desktopHeight, fullscreenWidth, fullscreenHeight);
+
+	width *= scaleFactor;
+	height *= scaleFactor;
+
 	// HWND curtain = NULL;
 	char errorMessage[256];
 	TGE::Resolution newRes;
@@ -293,42 +305,42 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 		return false;
 	}
 
-	if (newFullScreen)
-	{
-		if (newRes.bpp != 16 && thisObj->mFullscreenOnly())
-			newRes.bpp = 16;
+	//if (newFullScreen)
+	//{
+	//	if (newRes.bpp != 16 && thisObj->mFullscreenOnly())
+	//		newRes.bpp = 16;
 
-		// Match the new resolution to one in the list:
-		U32 resIndex = 0;
-		U32 bestScore = 0, thisScore = 0;
-		for (int i = 0; i < thisObj->mResolutionList().size(); i++)
-		{
-			if (newRes.bpp == thisObj->mResolutionList()[i].bpp && newRes.size == thisObj->mResolutionList()[i].size)
-			{
-				resIndex = i;
-				break;
-			}
-			else
-			{
-				thisScore = abs(S32(newRes.size.x) - S32(thisObj->mResolutionList()[i].size.x))
-					+ abs(S32(newRes.size.y) - S32(thisObj->mResolutionList()[i].size.y))
-					+ (newRes.bpp == thisObj->mResolutionList()[i].bpp ? 0 : 1);
+	//	// Match the new resolution to one in the list:
+	//	U32 resIndex = 0;
+	//	U32 bestScore = 0, thisScore = 0;
+	//	for (int i = 0; i < thisObj->mResolutionList().size(); i++)
+	//	{
+	//		if (newRes.bpp == thisObj->mResolutionList()[i].bpp && newRes.size == thisObj->mResolutionList()[i].size)
+	//		{
+	//			resIndex = i;
+	//			break;
+	//		}
+	//		else
+	//		{
+	//			thisScore = abs(S32(newRes.size.x) - S32(thisObj->mResolutionList()[i].size.x))
+	//				+ abs(S32(newRes.size.y) - S32(thisObj->mResolutionList()[i].size.y))
+	//				+ (newRes.bpp == thisObj->mResolutionList()[i].bpp ? 0 : 1);
 
-				if (!bestScore || (thisScore < bestScore))
-				{
-					bestScore = thisScore;
-					resIndex = i;
-				}
-			}
-		}
+	//			if (!bestScore || (thisScore < bestScore))
+	//			{
+	//				bestScore = thisScore;
+	//				resIndex = i;
+	//			}
+	//		}
+	//	}
 
-		newRes = thisObj->mResolutionList()[resIndex];
-	}
-	else
-	{
-		// Basically ignore the bit depth parameter:
-		newRes.bpp = TGE::winState.desktopBitsPixel;
-	}
+	//	newRes = thisObj->mResolutionList()[resIndex];
+	//}
+	//else
+	//{
+	//	// Basically ignore the bit depth parameter:
+	//	newRes.bpp = TGE::winState.desktopBitsPixel;
+	//}
 
 	// Return if already at this resolution:
 	if (!forceIt && newRes.bpp == TGE::currentResolution.bpp && newRes.size.x == TGE::currentResolution.size.x && newRes.size.y == TGE::currentResolution.size.y && newFullScreen == TGE::isFullScreen)
@@ -655,7 +667,7 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::OpenGLDevice::swapBuffers, (TGE::OpenGLDevice* 
 		glBlitFramebuffer(0, 0, TGE::currentResolution.size.x, TGE::currentResolution.size.y, 0, 0, TGE::currentResolution.size.x, TGE::currentResolution.size.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, renderBuffer);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		glBlitFramebuffer(0, 0, TGE::currentResolution.size.x, TGE::currentResolution.size.y, 0, 0, TGE::winState.desktopWidth, TGE::winState.desktopHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+		glBlitFramebuffer(0, 0, TGE::currentResolution.size.x, TGE::currentResolution.size.y, 0, 0, fullscreenWidth, fullscreenHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
 	originalBufferSwap(thisObj);
 }
