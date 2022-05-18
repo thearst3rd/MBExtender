@@ -305,42 +305,42 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 		return false;
 	}
 
-	//if (newFullScreen)
-	//{
-	//	if (newRes.bpp != 16 && thisObj->mFullscreenOnly())
-	//		newRes.bpp = 16;
+	if (newFullScreen)
+	{
+		if (newRes.bpp != 16 && thisObj->mFullscreenOnly())
+			newRes.bpp = 16;
 
-	//	// Match the new resolution to one in the list:
-	//	U32 resIndex = 0;
-	//	U32 bestScore = 0, thisScore = 0;
-	//	for (int i = 0; i < thisObj->mResolutionList().size(); i++)
-	//	{
-	//		if (newRes.bpp == thisObj->mResolutionList()[i].bpp && newRes.size == thisObj->mResolutionList()[i].size)
-	//		{
-	//			resIndex = i;
-	//			break;
-	//		}
-	//		else
-	//		{
-	//			thisScore = abs(S32(newRes.size.x) - S32(thisObj->mResolutionList()[i].size.x))
-	//				+ abs(S32(newRes.size.y) - S32(thisObj->mResolutionList()[i].size.y))
-	//				+ (newRes.bpp == thisObj->mResolutionList()[i].bpp ? 0 : 1);
+		// Match the new resolution to one in the list:
+		U32 resIndex = 0;
+		U32 bestScore = 0, thisScore = 0;
+		for (int i = 0; i < thisObj->mResolutionList().size(); i++)
+		{
+			if (newRes.bpp == thisObj->mResolutionList()[i].bpp && newRes.size == thisObj->mResolutionList()[i].size)
+			{
+				resIndex = i;
+				break;
+			}
+			else
+			{
+				thisScore = abs(S32(newRes.size.x) - S32(thisObj->mResolutionList()[i].size.x))
+					+ abs(S32(newRes.size.y) - S32(thisObj->mResolutionList()[i].size.y))
+					+ (newRes.bpp == thisObj->mResolutionList()[i].bpp ? 0 : 1);
 
-	//			if (!bestScore || (thisScore < bestScore))
-	//			{
-	//				bestScore = thisScore;
-	//				resIndex = i;
-	//			}
-	//		}
-	//	}
+				if (!bestScore || (thisScore < bestScore))
+				{
+					bestScore = thisScore;
+					resIndex = i;
+				}
+			}
+		}
 
-	//	newRes = thisObj->mResolutionList()[resIndex];
-	//}
-	//else
-	//{
-	//	// Basically ignore the bit depth parameter:
-	//	newRes.bpp = TGE::winState.desktopBitsPixel;
-	//}
+		newRes = thisObj->mResolutionList()[resIndex];
+	}
+	else
+	{
+		// Basically ignore the bit depth parameter:
+		newRes.bpp = TGE::winState.desktopBitsPixel;
+	}
 
 	// Return if already at this resolution:
 	if (!forceIt && newRes.bpp == TGE::currentResolution.bpp && newRes.size.x == TGE::currentResolution.size.x && newRes.size.y == TGE::currentResolution.size.y && newFullScreen == TGE::isFullScreen)
@@ -434,13 +434,10 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 		//U32 adjWidth = windowRect.right - windowRect.left;
 		//U32 adjHeight = windowRect.bottom - windowRect.top;
 
-		//// Center the window on the desktop:
+		////// Center the window on the desktop:
 		//test = SetWindowPos(TGE::winState.appWindow, 0, 0, 0, adjWidth, adjHeight, SWP_NOZORDER);
 
-		if (hackSupported)
-			test = DISP_CHANGE_SUCCESSFUL;
-		else
-			test = ChangeDisplaySettings(&devMode, CDS_FULLSCREEN); // Cause goddamnit we have to do it the old way since the gpu doesnt support it
+		test = ChangeDisplaySettings(&devMode, CDS_FULLSCREEN); // Cause goddamnit we have to do it the old way since the gpu doesnt support it
 		if (test != DISP_CHANGE_SUCCESSFUL)
 		{
 			TGE::isFullScreen = false;
@@ -470,7 +467,7 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 	else if (TGE::isFullScreen)
 	{
 		TGE::Con::printf("Changing to the desktop display settings (%dx%dx%d)...", TGE::winState.desktopWidth, TGE::winState.desktopHeight, TGE::winState.desktopBitsPixel);
-		// ChangeDisplaySettings(NULL, 0);
+		ChangeDisplaySettings(NULL, 0);
 		TGE::isFullScreen = false;
 	}
 	TGE::Con::setBoolVariable("$pref::Video::fullScreen", TGE::isFullScreen);
@@ -516,7 +513,7 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 	{
 		// Move and size the window to take up the whole screen:
 		
-		if (!SetWindowPos(TGE::winState.appWindow, 0, 0, 0, hackSupported ? TGE::winState.desktopWidth : newRes.size.x, hackSupported ? TGE::winState.desktopHeight : newRes.size.y, SWP_NOZORDER))
+		if (!SetWindowPos(TGE::winState.appWindow, 0, 0, 0, newRes.size.x, newRes.size.y, SWP_NOZORDER))
 		{
 			snprintf(errorMessage, 255, "OpenGLDevice::setScreenMode\nSetWindowPos failed to move the window to (0,0) and size it to %dx%d.", newRes.size.x, newRes.size.y);
 			AssertFatal(false, errorMessage);
@@ -652,35 +649,35 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 	if (repaint)
 		TGE::Con::evaluatef("resetCanvas();");
 
-	if (glContextCreated) {
-		destroyUpscaledFramebuffer();
-		generateUpscaleFramebuffer();
-	}
+	//if (glContextCreated) {
+	//	destroyUpscaledFramebuffer();
+	//	generateUpscaleFramebuffer();
+	//}
 
 	return true;
 }
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::OpenGLDevice::swapBuffers, (TGE::OpenGLDevice* thisObj), originalBufferSwap) {
-	if (TGE::isFullScreen && hackReady) {
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderBuffer);
-		glBlitFramebuffer(0, 0, TGE::currentResolution.size.x, TGE::currentResolution.size.y, 0, 0, TGE::currentResolution.size.x, TGE::currentResolution.size.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, renderBuffer);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		glBlitFramebuffer(0, 0, TGE::currentResolution.size.x, TGE::currentResolution.size.y, 0, 0, fullscreenWidth, fullscreenHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	}
+	//if (TGE::isFullScreen && hackReady) {
+	//	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	//	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderBuffer);
+	//	glBlitFramebuffer(0, 0, TGE::currentResolution.size.x, TGE::currentResolution.size.y, 0, 0, TGE::currentResolution.size.x, TGE::currentResolution.size.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	//	glBindFramebuffer(GL_READ_FRAMEBUFFER, renderBuffer);
+	//	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	//	glBlitFramebuffer(0, 0, TGE::currentResolution.size.x, TGE::currentResolution.size.y, 0, 0, fullscreenWidth, fullscreenHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	//}
 	originalBufferSwap(thisObj);
 }
 
 MBX_ON_GL_CONTEXT_DESTROY(fullscreenHackDestroy, ())
 {
-	destroyUpscaledFramebuffer();
+	// destroyUpscaledFramebuffer();
 	glContextCreated = false;
 }
 
 MBX_ON_GL_CONTEXT_READY(fullscreenHackReady, ())
 {
-	generateUpscaleFramebuffer();
+	// generateUpscaleFramebuffer();
 	glContextCreated = true;
 }
 
