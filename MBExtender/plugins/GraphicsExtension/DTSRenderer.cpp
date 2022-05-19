@@ -23,15 +23,23 @@
 #include "DTSRenderer.h"
 #include <MathLib/MathLib.h>
 #include <TorqueLib/core/tVector.h>
+#include <TorqueLib/core/stringTable.h>
 
 #define SHAPE_DEFAULT_VERT "platinum/data/shaders/shapeV.glsl"
 #define SHAPE_DEFAULT_FRAG "platinum/data/shaders/shapeF.glsl"
 
-std::vector<std::string> glowTextures = {"item_glow", "antigrav_glow", "arrowsign_arrow_glow", "endpad_glow", "blast_glow", "grow_glow", "superSpeed_star", "arrowsign_chain", "blastwave", "sigil", "sigil_glow", "misty", "mistyglow", "corona", "abyss2"};
-
-std::map<std::string, float> alphaMultipliers = {
-	{ "misty", 0.33f },
+struct GlowMaterialInfo {
+	const char* name;
+	float alphaMultiplier = 1;
 };
+
+std::map<const char*, GlowMaterialInfo> glowMaterialInfo;
+
+//std::vector<std::string> glowTextures = {"item_glow", "antigrav_glow", "arrowsign_arrow_glow", "endpad_glow", "blast_glow", "grow_glow", "superSpeed_star", "arrowsign_chain", "blastwave", "sigil", "sigil_glow", "misty", "mistyglow", "corona", "abyss2"};
+//
+//std::map<std::string, float> alphaMultipliers = {
+//	{ "misty", 0.33f },
+//};
 
 DTSRenderer::DTSRenderer() {
 	mVertexBuffer = 0;
@@ -162,13 +170,13 @@ void DTSRenderer::renderDTS(TGE::TSShapeInstance *inst, TGE::TSShapeInstance::Me
 			U32 matIndex = data.first;
 			U32 matNum = matIndex & 0xFFFFFFF; // bit for the material index
 
-			char* matName = materials->mTextureNames[matNum];
+			const char* matName = TGE::StringTable->insert(materials->mTextureNames[matNum], false);
 
-			if (std::find(glowTextures.begin(), glowTextures.end(), std::string(matName)) != glowTextures.end()) {
+			if (glowMaterialInfo.find(matName) != glowMaterialInfo.end()) {
 
-				if (alphaMultipliers.find(std::string(matName)) != alphaMultipliers.end()) {
-					glUniform1f(mShader->getUniformLocation("alphaMultiplier"), alphaMultipliers[std::string(matName)]);
-				}
+				GlowMaterialInfo& glowinfo = glowMaterialInfo[matName];
+					
+				glUniform1f(mShader->getUniformLocation("alphaMultiplier"), glowinfo.alphaMultiplier);
 
 				// TODO: see if we can stop using setMaterial.
 				TGE::TSMesh::setMaterial(matIndex, materials);

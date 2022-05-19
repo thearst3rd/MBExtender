@@ -61,8 +61,13 @@ std::unordered_set<TGE::TSMesh*> gMeshesChecked;
 
 bool gNoShaders = false;
 
+struct GlowMaterialInfo {
+	const char* name;
+	float alphaMultiplier = 1;
+};
+
 extern std::string currentPass;
-extern std::vector<std::string> glowTextures;
+extern std::map<const char*, GlowMaterialInfo> glowMaterialInfo;
 
 class DistanceComparer {
 public:
@@ -205,8 +210,8 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::TSMesh::render, (TGE::TSMesh *thisptr, S32 fram
 	if (gMeshesChecked.find(thisptr) == gMeshesChecked.end()) {
 		for (int i = 0; i < materials->mTextureNames.size(); i++)
 		{
-			char* matName = materials->mTextureNames[i];
-			if (std::find(glowTextures.begin(), glowTextures.end(), std::string(matName)) != glowTextures.end()) {
+			const char* matName = TGE::StringTable->insert(materials->mTextureNames[i], false);
+			if (glowMaterialInfo.find(matName) != glowMaterialInfo.end()) {
 				drawDetailCrap = true;
 				gMeshesToDraw.insert(thisptr);
 				break;
@@ -266,6 +271,29 @@ void cleanupDtsRenderers() {
 MBX_CONSOLE_FUNCTION(reloadDts, void, 1,1, "") {
 	cleanupDtsRenderers();
 	//Renderer will be recreated the next time any marble is rendered
+}
+
+MBX_CONSOLE_FUNCTION(registerGlowMaterial, void, 2, 3, "registerGlowMaterial(name, [alphaMultiplier])") {
+	const char* matName = TGE::StringTable->insert(argv[1], false);
+	if (glowMaterialInfo.find(matName) == glowMaterialInfo.end()) {
+		GlowMaterialInfo minfo;
+		minfo.name = matName;
+		minfo.alphaMultiplier = argc == 3 ? atof(argv[2]) : 1;
+		glowMaterialInfo[matName] = minfo;
+	}
+}
+
+MBX_CONSOLE_FUNCTION(unregisterGlowMaterial, void, 2, 2, "uregisterGlowMaterial(name)") {
+	const char* matName = TGE::StringTable->insert(argv[1], false);
+	if (glowMaterialInfo.find(matName) != glowMaterialInfo.end()) {
+		glowMaterialInfo.erase(matName);
+	}
+}
+
+MBX_CONSOLE_FUNCTION(reloadGlowShaders, void, 1, 1, "reloadGlowShaders()") {
+	cleanupDtsRenderers();
+	gMeshesChecked.clear();
+	gMeshesToDraw.clear();
 }
 
 MBX_CONSOLE_METHOD(ShapeBase, reloadShader, void, 2, 2, "") {
