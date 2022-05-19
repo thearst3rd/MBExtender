@@ -35,6 +35,8 @@
 #include <TorqueLib/gui/core/guiControl.h>
 #include <TorqueLib/sim/sceneObject.h>
 #include <TorqueLib/game/marble/marble.h>
+#include <TorqueLib/gui/controls/guiBitmapCtrl.h>
+#include <TorqueLib/console/scriptObject.h>
 
 MBX_MODULE(Radar);
 
@@ -88,19 +90,81 @@ inline void radar_setDot(GuiControl *dot, const Point2I &pos, const Point2I &ext
 	// dot, position, extent, bitmap
 
 	// FUCKING TORQUE. JUST UN FUCKING BELIEVABLE
-	char *positionStr = MBX_Strdup(StringMath::print<Point2I>(pos));
-	char *extentStr   = MBX_Strdup(StringMath::print<Point2I>(extent));
+	//char *positionStr = MBX_Strdup(StringMath::print<Point2I>(pos));
+	//char *extentStr   = MBX_Strdup(StringMath::print<Point2I>(extent));
 
-	Con::evaluatef("Radar::setDot(%d, \"%s\", \"%s\", \"%s\", %s);",
-		dot->getId(),
-		positionStr,
-		extentStr,
-		bitmap.c_str(),
-		StringMath::print(reset)
-	);
+	if (reset) {
+		dot->setDataField("bitmapRotation"_ts, NULL, "");
+		dot->setDataField("bitmapColor"_ts, NULL, "");
+		dot->setVisible(true);
+	}
+	dot->setPosition(pos);
+	dot->setExtent(extent);
+	
+	static_cast<GuiBitmapCtrl*>(dot)->setBitmap(bitmap.c_str(), false);
 
-	MBX_Free(positionStr);
-	MBX_Free(extentStr);
+	//Con::evaluatef("Radar::setDot(%d, \"%s\", \"%s\", \"%s\", %s);",
+	//	dot->getId(),
+	//	positionStr,
+	//	extentStr,
+	//	bitmap.c_str(),
+	//	StringMath::print(reset)
+	//);
+
+	//MBX_Free(positionStr);
+	//MBX_Free(extentStr);
+}
+
+void RadarAddTarget(SceneObject* object, const char* bitmap) {
+	TGE::Con::evaluatef("Radar::AddTarget(%d, \"%s\");", object->getId(), bitmap);
+	//bool shouldShowResult = atoi(TGE::Con::executef(1, "shouldShowRadar"));
+	//if (!shouldShowResult)
+	//	return;
+
+	//TGE::SimGroup* targetGroup = static_cast<TGE::SimGroup*>(TGE::Sim::findObject("TargetGroup"));
+	//if (targetGroup == NULL) {
+	//	TGE::SimGroup* rootGroup = static_cast<TGE::SimGroup*>(TGE::Sim::findObject("RootGroup"));
+	//	targetGroup = TGE::SimGroup::create();
+	//	targetGroup->assignName("TargetGroup");
+	//	rootGroup->addObject(targetGroup);
+	//}
+
+	//TGE::ScriptObject* script = TGE::ScriptObject::create();
+	//std::string soname = std::string("RadarTarget") + object->getIdString();
+	//script->assignName(soname.c_str());
+	//script->setDataField("obj"_ts, NULL, object->getIdString());
+	//script->setDataField("dot"_ts, NULL, TGE::Con::executef(3, "Radar::AddDot", object->getIdString(), bitmap));
+	//targetGroup->addObject(script);
+}
+
+void RadarRemoveTarget(SimObject* object) {
+	std::string scriptN = "RadarTarget";
+	std::string dotN = "RadarDot";
+	if (object != NULL) {
+		scriptN += object->getIdString();
+		dotN += object->getIdString();
+	}
+	TGE::SimObject* script = TGE::Sim::findObject(scriptN.c_str());
+	if (script != NULL) {
+		TGE::SimObject* scriptDot = TGE::Sim::findObject(script->getDataField("dot"_ts, NULL));
+		if (scriptDot != NULL)
+			scriptDot->deleteObject();
+		script->deleteObject();
+	}
+	TGE::SimObject* dot = TGE::Sim::findObject(dotN.c_str());
+	while (dot != NULL) {
+		dot->deleteObject();
+		dot = TGE::Sim::findObject(dotN.c_str());
+	}
+}
+
+void RadarSetDotColor(GuiBitmapCtrl* dot, const char* skin, float angle) {
+	dot->setBitmap("platinum/client/ui/mp/radar/Pointer.png", true);
+	dot->setDataField("bitmapRotation"_ts, NULL, StringMath::print(( -180.0 / M_PI) * angle));
+	std::string rcVar = std::string("$RadarColor") + skin;
+	const char* bmpColor = TGE::Con::getVariable(rcVar.c_str());
+	dot->setDataField("bitmapColor"_ts, NULL, bmpColor);
+	dot->setVisible(skin[0] != 'n');
 }
 
 const F32 pi_2 = M_PI_F / 2.0f;
@@ -282,7 +346,8 @@ MBX_CONSOLE_FUNCTION(_innerRadarLoop, void, 7, 7, "_innerRadarLoop(%targetGroup,
 			// TODO: check if its hidden using C++
 			if (obj == NULL || (obj->mTypeMask & TGE::TypeMasks::ItemObjectType && static_cast<ShapeBase*>(obj)->isHidden())) {
 				// fire a remove target script callback.
-				Con::executef(targetGroup->mObjectList.at(i), 1, "Radar::RemoveTarget");
+				RadarRemoveTarget(targetGroup->mObjectList.at(i));
+				// Con::executef(targetGroup->mObjectList.at(i), 1, "Radar::RemoveTarget");
 				continue;
 			}
 
@@ -293,13 +358,15 @@ MBX_CONSOLE_FUNCTION(_innerRadarLoop, void, 7, 7, "_innerRadarLoop(%targetGroup,
 			if (alwaysShow) {
 				if ((itemPos - marblePos).lenSquared() > gemDistanceLimit2) {
 					// fire a remove target script callback.
-					Con::executef(targetGroup->mObjectList.at(i), 1, "Radar::RemoveTarget");
+					RadarRemoveTarget(targetGroup->mObjectList.at(i));
+					// Con::executef(targetGroup->mObjectList.at(i), 1, "Radar::RemoveTarget");
 					continue;
 				}
 			} else {
 				if ((itemPos - marblePos).lenSquared() > distanceLimit2) {
 					// fire a remove target script callback.
-					Con::executef(targetGroup->mObjectList.at(i), 1, "Radar::RemoveTarget");
+					RadarRemoveTarget(targetGroup->mObjectList.at(i));
+					// Con::executef(targetGroup->mObjectList.at(i), 1, "Radar::RemoveTarget");
 					continue;
 				}
 			}
@@ -379,7 +446,8 @@ MBX_CONSOLE_FUNCTION(_innerRadarLoop, void, 7, 7, "_innerRadarLoop(%targetGroup,
 			// TODO: check if its hidden using C++
 			if (obj == NULL || (obj->mTypeMask & TGE::TypeMasks::ItemObjectType && static_cast<ShapeBase*>(obj)->isHidden())) {
 				// fire a remove target script callback.
-				Con::executef(targetGroup->mObjectList.at(i), 1, "Radar::RemoveTarget");
+				RadarRemoveTarget(targetGroup->mObjectList.at(i));
+				// Con::executef(targetGroup->mObjectList.at(i), 1, "Radar::RemoveTarget");
 				continue;
 			}
 
@@ -390,13 +458,15 @@ MBX_CONSOLE_FUNCTION(_innerRadarLoop, void, 7, 7, "_innerRadarLoop(%targetGroup,
 			if (alwaysShow) {
 				if ((itemPos - marblePos).lenSquared() > gemDistanceLimit2) {
 					// fire a remove target script callback.
-					Con::executef(targetGroup->mObjectList.at(i), 1, "Radar::RemoveTarget");
+					RadarRemoveTarget(targetGroup->mObjectList.at(i));
+					// Con::executef(targetGroup->mObjectList.at(i), 1, "Radar::RemoveTarget");
 					continue;
 				}
 			} else {
 				if ((itemPos - marblePos).lenSquared() > distanceLimit2) {
 					// fire a remove target script callback.
-					Con::executef(targetGroup->mObjectList.at(i), 1, "Radar::RemoveTarget");
+					RadarRemoveTarget(targetGroup->mObjectList.at(i));
+					// Con::executef(targetGroup->mObjectList.at(i), 1, "Radar::RemoveTarget");
 					continue;
 				}
 			}
@@ -416,7 +486,8 @@ MBX_CONSOLE_FUNCTION(_innerRadarLoop, void, 7, 7, "_innerRadarLoop(%targetGroup,
 					skin = "base";
 				extent = Point2I(64, 64);
 				bitmap = "platinum/client/ui/mp/radar/Pointer.png";
-				Con::executef(4, "RadarSetDotColor", dot->getIdString(), skin.c_str(), StringMath::print(angle));
+				RadarSetDotColor(static_cast<TGE::GuiBitmapCtrl*>(dot), skin.c_str(), angle);
+				// Con::executef(4, "RadarSetDotColor", dot->getIdString(), skin.c_str(), StringMath::print(angle));
 			} else {
 				pos = vectorClamp(pos, -1.0f, 1.0f);
 				bitmap = dot->getDataField("image"_ts, NULL);
@@ -453,4 +524,18 @@ MBX_CONSOLE_FUNCTION(RadarClearTargets, void, 1, 1, "RadarClearTargets();") {
 		}
 		radarControl->mObjectList.clear();
 	}
+}
+
+MBX_CONSOLE_METHOD(SceneObject, setRadarTarget, void, 2, 3, "SceneObject::setRadarTarget(%bitmap)") {
+	const char* bmp = argc == 3 ? MBX_Strdup(argv[2]) : "";
+	bool shouldShowResult = atoi(TGE::Con::executef(1, "shouldShowRadar"));
+	if (shouldShowResult) {
+		RadarAddTarget(object, bmp);
+	}
+	if (argc == 3)
+		MBX_Free((void*)bmp);
+}
+
+MBX_CONSOLE_METHOD(SceneObject, removeRadarTarget, void, 2, 2, "SceneObject::removeRadarTarget()") {
+	RadarRemoveTarget(object);
 }

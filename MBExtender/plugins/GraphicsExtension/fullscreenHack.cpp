@@ -268,8 +268,8 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 
 	TGE::Con::printf("Desktop Size: %d x %d, Window Size: %d x %d", TGE::winState.desktopWidth, TGE::winState.desktopHeight, fullscreenWidth, fullscreenHeight);
 
-	width *= scaleFactor;
-	height *= scaleFactor;
+	//width *= scaleFactor;
+	//height *= scaleFactor;
 
 	// HWND curtain = NULL;
 	char errorMessage[256];
@@ -494,7 +494,9 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 		windowRect.right = newRes.size.x;
 		windowRect.bottom = newRes.size.y;
 
-		AdjustWindowRect(&windowRect, GetWindowLong(TGE::winState.appWindow, GWL_STYLE), false);
+		TGE::Con::printf("DPI: %d", GetDpiForWindow(TGE::winState.appWindow));
+		AdjustWindowRectExForDpi(&windowRect, GetWindowLong(TGE::winState.appWindow, GWL_STYLE), false, 0, GetDpiForWindow(TGE::winState.appWindow));
+		// AdjustWindowRect(&windowRect, GetWindowLong(TGE::winState.appWindow, GWL_STYLE), false);
 		U32 adjWidth = windowRect.right - windowRect.left;
 		U32 adjHeight = windowRect.bottom - windowRect.top;
 

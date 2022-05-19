@@ -37,7 +37,7 @@ namespace TGE
 	{
 		BRIDGE_CLASS(GuiControl);
 	public:
-		UNDEFVIRT(setVisible);
+		virtual void setVisible(bool value);
 		UNDEFVIRT(makeFirstResponder);
 		UNDEFVIRT(getScrollLineSizes);
 		UNDEFVIRT(setHelp_int);
