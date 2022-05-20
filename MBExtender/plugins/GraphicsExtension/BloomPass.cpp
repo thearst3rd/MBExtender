@@ -21,7 +21,7 @@ void BloomPass::processPass(Point2I extent) {
 	glBindFramebuffer(GL_FRAMEBUFFER, this->finalFrameBuffer);
 	GL_CheckErrors("render bloom");
 	glClearColor(0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
 	// bind shader and texture uniform
@@ -44,8 +44,11 @@ void BloomPass::processPass(Point2I extent) {
 	this->shader->setUniformLocation("textureSampler", 0);
 	this->shader->setUniformLocation("depthSampler", 1);
 	this->shader->setUniformLocation("bloomDepthSampler", 2);
-	glUniform1ui(this->shader->getUniformLocation("compareDepth"), 1);
+	glUniform1i(this->shader->getUniformLocation("compareDepth"), 1);
 	glUniform1i(this->shader->getUniformLocation("bloomQuality"), bloomQualityLevel);
+	glUniform1i(this->shader->getUniformLocation("passNum"), 1);
+	glUniform1ui(this->shader->getUniformLocation("horizontalDir"), 1);
+	glUniform1f(this->shader->getUniformLocation("offsetMultiplier"), 1.0f);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, this->colorBuffer);
@@ -74,14 +77,19 @@ void BloomPass::processPass(Point2I extent) {
 			glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
 			GL_CheckErrors("render bloom: 2");
 			glClearColor(0, 0, 0, 0);
-			glClear(GL_COLOR_BUFFER_BIT);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			this->shader->activate();
 			this->shader->setUniformLocation("textureSampler", 0);
 			this->shader->setUniformLocation("depthSampler", 1);
 			this->shader->setUniformLocation("bloomDepthSampler", 2);
-			glUniform1ui(this->shader->getUniformLocation("compareDepth"), 0);
+			glUniform1i(this->shader->getUniformLocation("compareDepth"), 0);
 			glUniform1i(this->shader->getUniformLocation("bloomQuality"), bloomQualityLevel);
+			glUniform1i(this->shader->getUniformLocation("passNum"), 2+(i*2));
+
+			glUniform1ui(this->shader->getUniformLocation("horizontalDir"), i == 0 ? 1 : 0);
+			glUniform1f(this->shader->getUniformLocation("offsetMultiplier"), -1.0f);
+
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, this->finalColorBuffer);
 			glActiveTexture(GL_TEXTURE1);
@@ -105,14 +113,19 @@ void BloomPass::processPass(Point2I extent) {
 			glBindFramebuffer(GL_FRAMEBUFFER, this->finalFrameBuffer);
 			GL_CheckErrors("render bloom: 2");
 			glClearColor(0, 0, 0, 0);
-			glClear(GL_COLOR_BUFFER_BIT);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			this->shader->activate();
 			this->shader->setUniformLocation("textureSampler", 0);
 			this->shader->setUniformLocation("depthSampler", 1);
 			this->shader->setUniformLocation("bloomDepthSampler", 2);
-			glUniform1ui(this->shader->getUniformLocation("compareDepth"), 0);
+			glUniform1i(this->shader->getUniformLocation("compareDepth"), 0);
 			glUniform1i(this->shader->getUniformLocation("bloomQuality"), bloomQualityLevel);
+			glUniform1i(this->shader->getUniformLocation("passNum"), 3 + (i * 2));
+
+			glUniform1ui(this->shader->getUniformLocation("horizontalDir"), 0);
+			glUniform1f(this->shader->getUniformLocation("offsetMultiplier"), 1.0f);
+
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, this->colorBuffer);
 			glActiveTexture(GL_TEXTURE1);
