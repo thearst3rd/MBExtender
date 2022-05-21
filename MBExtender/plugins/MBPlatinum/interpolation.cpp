@@ -716,8 +716,9 @@ MBX_CONSOLE_FUNCTION(updateClientParentedObjects, void, 2, 2, "updateclientParen
 	if (clientParentedObjects != NULL) {
 		int count = atoi(TGE::Con::executef(clientParentedObjects, 1, "getSize"));
 		for (int i = 0; i < count; i++) {
-			const char* indexStr = MBX_Strdup(StringMath::print(count));
-			int id = atoi(TGE::Con::executef(clientParentedObjects, 2, "getEntry", indexStr));
+			const char* indexStr = MBX_Strdup(StringMath::print(i));
+			const char* getEntryStr = TGE::Con::executef(clientParentedObjects, 2, "getEntry", indexStr);
+			int id = atoi(getEntryStr);
 			MBX_Free((void*)indexStr);
 
 			SimObjectId objid = getClientSyncObject(id);
@@ -766,14 +767,15 @@ MBX_CONSOLE_FUNCTION(updateClientParentedObjects, void, 2, 2, "updateclientParen
 			finalTransform *= off;
 
 			if (strcmp(obj->getClassRep()->getClassName(), "Item") == 0) {
-				AngAxisF itemRot = AngAxisF(Point3F(0, 0, 1), TGE::Sim::gCurrentTime * (2 * M_PI) / 3);
+				AngAxisF itemRot = AngAxisF(Point3F(0, 0, 1), ((float)TGE::Sim::gCurrentTime / 1000) * (2 * M_PI) / 3);
 				MatrixF itemMat;
 				itemRot.setMatrix(&itemMat);
 
 				finalTransform *= itemMat;
 			}
 
-			obj->setTransformVirt(finalTransform);		
+			obj->setTransformVirt(finalTransform);	
+			// obj->setTransformMember(finalTransform);
 		}
 	}
 }
@@ -873,6 +875,7 @@ MBX_CONSOLE_METHOD(SceneObject, updateParenting, void, 3, 3, "SceneObject::updat
 	finalTransform *= off;
 
 	object->setTransformVirt(finalTransform);
+	object->setTransformMember(finalTransform);
 }
 
 MBX_CONSOLE_FUNCTION(SceneObjectgetSurfaceVelocity, const char*, 5, 5, "SceneObjectgetSurfaceVelocity(this, marble, point, distance)")

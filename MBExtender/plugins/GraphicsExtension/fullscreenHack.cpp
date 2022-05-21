@@ -409,7 +409,7 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 			TGE::Con::errorf("SetWindowLong failed to change the window style!");
 	}
 
-	U32 test;
+	S32 test;
 	if (newFullScreen)
 	{
 		// Change the display settings:
