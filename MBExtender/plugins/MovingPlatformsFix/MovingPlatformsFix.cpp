@@ -427,16 +427,32 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::findContacts, (TGE::Marble* thisObj, U3
 			contact.force = force;
 			contact.material = materialId;
 
+			const char* contactVertStr = MBX_Strdup(StringMath::print(contactVert));
+			const char* normalStr = MBX_Strdup(StringMath::print(normal));
+			const char* surfaceVelocityStr = MBX_Strdup(StringMath::print(surfaceVelocity));
+			const char* contactDistanceStr = MBX_Strdup(StringMath::print(contactDistance));
+			const char* frictionStr = MBX_Strdup(StringMath::print(friction));
+			const char* forceStr = MBX_Strdup(StringMath::print(force));
+			const char* materialIdStr = MBX_Strdup(StringMath::print(materialId));
+
 			TGE::Con::executef(thisObj, 9, "onCollide", 
-					TGE::StringTable->insert(StringMath::print(contactVert), false),
-					TGE::StringTable->insert(StringMath::print(normal), false),
-					TGE::StringTable->insert(StringMath::print(surfaceVelocity), false),
-					TGE::StringTable->insert(StringMath::print(contactDistance), false),
-					TGE::StringTable->insert(poly->object->getIdString(), false),
-					TGE::StringTable->insert(StringMath::print(friction), false),
-					TGE::StringTable->insert(StringMath::print(force), false),
-					TGE::StringTable->insert(StringMath::print(materialId), false)
+					contactVertStr,
+					normalStr,
+					surfaceVelocityStr,
+					contactDistanceStr,
+					poly->object->getIdString(),
+					frictionStr,
+					forceStr,
+					materialIdStr
 				);
+			MBX_Free((void*)contactVertStr);
+			MBX_Free((void*)contactVertStr);
+			MBX_Free((void*)normalStr);
+			MBX_Free((void*)surfaceVelocityStr);
+			MBX_Free((void*)contactDistanceStr);
+			MBX_Free((void*)frictionStr);
+			MBX_Free((void*)forceStr);
+			MBX_Free((void*)materialIdStr);
 
 			thisObj->mContacts().push_back(contact);
 
