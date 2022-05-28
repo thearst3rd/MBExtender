@@ -110,7 +110,9 @@ namespace TGE
 	FN(int, alxPlay, (void *profile, MatrixF *mat, Point3F *point), 0x408733_win, 0xD130_mac);
 	FN(bool, cullSource, (int* index, float volume), 0x5EA490_win, 0x85B0_mac);
 
+#if defined(_WIN32)
 	GLOBALVAR(LoopingList, mLoopingList, 0x6E3BA0_win);
 	GLOBALVAR(StreamingList, mStreamingList, 0x6E3E68_win);
+#endif
 	GLOBALVAR(U32, mAudioNumSources, 0x6E3E90_win, 0x3134C0_mac);
 }
