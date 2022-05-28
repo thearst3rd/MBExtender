@@ -878,137 +878,137 @@ MBX_CONSOLE_METHOD(SceneObject, updateParenting, void, 3, 3, "SceneObject::updat
 	object->setTransformMember(finalTransform);
 }
 
-MBX_CONSOLE_FUNCTION(SceneObjectgetSurfaceVelocity, const char*, 5, 5, "SceneObjectgetSurfaceVelocity(this, marble, point, distance)")
-{
-	TGE::SceneObject* thisobj = static_cast<TGE::SceneObject*>(TGE::Sim::findObject(argv[1]));
-	TGE::Marble* marble = static_cast<TGE::Marble*>(TGE::Sim::findObject(argv[2]));
-
-	const char* pointstr = MBX_Strdup(argv[3]);
-	const char* diststr = MBX_Strdup(argv[4]);
-
-	if (strstr(thisobj->getClassRep()->getClassName(), "StaticShape")) {
-		TGE::ShapeBase* thisShape = static_cast<TGE::ShapeBase*>(thisobj);
-		if (strcasestr(thisShape->getDataBlock()->mName, "IceShard") != NULL) {
-			if (atoi(marble->getDataField("fireball"_ts, NULL))) {
-				MBX_Free((void*)pointstr);
-				MBX_Free((void*)diststr);
-				return StringMath::print(marble->getVelocity() * TGE::Con::getFloatVariable("$shardBounce"));
-			}
-		}
-	}
-
-	SyncId marbleSyncId = getSyncId(marble);
-	const char* syncIdStr = MBX_Strdup(StringMath::print(marbleSyncId));
-
-	TGE::SimObject* clientParentedObjects = TGE::Sim::findObject("ClientParentedObjects");
-	TGE::SimObject* clientMovingObjects = TGE::Sim::findObject("ClientMovingObjects");
-
-	if (atoi(TGE::Con::executef(clientParentedObjects, 2, "containsEntry", syncIdStr))) {
-		SyncId parentId = getClientSyncObject(atoi(marble->getDataField("_parentId"_ts, NULL)));
-		TGE::SimObject* parent = TGE::Sim::findObject_int(parentId);
-		if (parent == NULL) {
-			MBX_Free((void*)syncIdStr);
-			MBX_Free((void*)pointstr);
-			MBX_Free((void*)diststr);
-			return "0 0 0";
-		} else {
-			MBX_Free((void*)syncIdStr);
-			const char* ret = TGE::Con::executef(parent, 5, "getSurfaceVelocity", parent->getIdString(), marble->getIdString(), pointstr, diststr);
-			MBX_Free((void*)pointstr);
-			MBX_Free((void*)diststr);
-			return ret;
-		}
-	}
-
-	if (!atoi(TGE::Con::executef(clientMovingObjects, 2, "containsEntry", syncIdStr))) {
-		MBX_Free((void*)syncIdStr);
-		MBX_Free((void*)pointstr);
-		MBX_Free((void*)diststr);
-		return "0 0 0";
-	}
-
-	MBX_Free((void*)syncIdStr);
-
-	if (atoi(thisobj->getDataField("disablePhysics"_ts, NULL))) {
-		MBX_Free((void*)pointstr);
-		MBX_Free((void*)diststr);
-		return "0 0 0";
-	}
-
-	SyncId prevId = getClientSyncObject(atoi(thisobj->getDataField("_pathPrevSyncId"_ts, NULL)));
-	SyncId nodeId = getClientSyncObject(atoi(thisobj->getDataField("_pathSyncId"_ts, NULL)));
-	const char* nodeIdStr = StringMath::print(nodeId);
-
-	TGE::SceneObject* nextNode = static_cast<TGE::SceneObject*>(Node_getNextNode(thisobj->getIdString(), nodeIdStr));
-
-	if (nextNode == NULL || nextNode->getId() == nodeId) {
-		MBX_Free((void*)pointstr);
-		MBX_Free((void*)diststr);
-		return "0 0 0";
-	}
-
-	TGE::SceneObject* node = static_cast<TGE::SceneObject*>(TGE::Sim::findObject_int(nodeId));
-	TGE::SceneObject* prevNode = static_cast<TGE::SceneObject*>(TGE::Sim::findObject_int(prevId));
-
-	float timeDelta = atof(node->getDataField("timeToNext"_ts, NULL));
-	float t = atof(node->getDataField("_pathPosition"_ts, NULL)) / max(timeDelta, 1);
-
-	Point3F transVel(0, 0, 0);
-
-	if (atoi(node->getDataField("usePosition"_ts, NULL))) {
-		transVel = VectorBezierDeriv(Node_getAdjustedProgress(node->getIdString(), t), Node_getPointList(thisobj->getIdString(), node->getIdString(), prevNode->getIdString()));
-		transVel *= (float)1000 / t;
-	}
-
-	Point3F rotVel(0, 0, 0);
-
-	if (atoi(node->getDataField("useRotation"_ts, NULL))) {
-
-		if (timeDelta != 0) {
-			MatrixF startTransform = nextNode->getTransform();
-			MatrixF endTransform = node->getTransform();
-			AngAxisF startRot, endRot;
-			startRot.set(startTransform);
-			endRot.set(endTransform);
-
-			AngAxisF r1 = RotInterpolate(startRot, endRot, Node_getAdjustedProgress(node->getIdString(), t));
-			AngAxisF r2 = RotInterpolate(startRot, endRot, Node_getAdjustedProgress(node->getIdString(), t + 0.001));
-
-			MatrixF r1mat, r2mat;
-			r1.setMatrix(&r1mat);
-			r2.setMatrix(&r2mat);
-
-			MatrixF div = MatrixDivide(r2mat, r1mat);
-			AngAxisF rot;
-			rot.set(div);
-
-			rot.angle /= 0.001;
-
-			Point3F point = StringMath::scan<Point3F>(pointstr);
-
-			if (fmodf(rot.angle, M_2PI_F) != 0) {
-				if (atoi(node->getDataField("reverseRotation"_ts, NULL))) {
-					rot.angle *= -1;
-				}
-				Point3F center = thisobj->getTransform().getPosition();
-				Point3F mpos = marble->getWorldBox().getCenter();
-				Point3F off = point - center;
-
-				float offLen = VectorRej(off, rot.axis).len();
-				float dist = (point - mpos).len();
-
-				float mult = mClampF(marble->getCollisionRadius() / dist, 1, 2);
-
-				Point3F vel = mCross(off, rot.axis);
-				vel.normalizeSafe();
-				float speed = (rot.angle * offLen / (timeDelta / 1000)) * mult;
-
-				rotVel = vel * speed;
-			}
-		}
-	}
-
-	MBX_Free((void*)pointstr);
-	MBX_Free((void*)diststr);
-	return StringMath::print(transVel + rotVel);
-}
+//MBX_CONSOLE_FUNCTION(SceneObjectgetSurfaceVelocity, const char*, 5, 5, "SceneObjectgetSurfaceVelocity(this, marble, point, distance)")
+//{
+//	TGE::SceneObject* thisobj = static_cast<TGE::SceneObject*>(TGE::Sim::findObject(argv[1]));
+//	TGE::Marble* marble = static_cast<TGE::Marble*>(TGE::Sim::findObject(argv[2]));
+//
+//	const char* pointstr = MBX_Strdup(argv[3]);
+//	const char* diststr = MBX_Strdup(argv[4]);
+//
+//	if (strstr(thisobj->getClassRep()->getClassName(), "StaticShape")) {
+//		TGE::ShapeBase* thisShape = static_cast<TGE::ShapeBase*>(thisobj);
+//		if (strcasestr(thisShape->getDataBlock()->mName, "IceShard") != NULL) {
+//			if (atoi(marble->getDataField("fireball"_ts, NULL))) {
+//				MBX_Free((void*)pointstr);
+//				MBX_Free((void*)diststr);
+//				return StringMath::print(marble->getVelocity() * TGE::Con::getFloatVariable("$shardBounce"));
+//			}
+//		}
+//	}
+//
+//	SyncId marbleSyncId = getSyncId(marble);
+//	const char* syncIdStr = MBX_Strdup(StringMath::print(marbleSyncId));
+//
+//	TGE::SimObject* clientParentedObjects = TGE::Sim::findObject("ClientParentedObjects");
+//	TGE::SimObject* clientMovingObjects = TGE::Sim::findObject("ClientMovingObjects");
+//
+//	if (atoi(TGE::Con::executef(clientParentedObjects, 2, "containsEntry", syncIdStr))) {
+//		SyncId parentId = getClientSyncObject(atoi(marble->getDataField("_parentId"_ts, NULL)));
+//		TGE::SimObject* parent = TGE::Sim::findObject_int(parentId);
+//		if (parent == NULL) {
+//			MBX_Free((void*)syncIdStr);
+//			MBX_Free((void*)pointstr);
+//			MBX_Free((void*)diststr);
+//			return "0 0 0";
+//		} else {
+//			MBX_Free((void*)syncIdStr);
+//			const char* ret = TGE::Con::executef(parent, 5, "getSurfaceVelocity", parent->getIdString(), marble->getIdString(), pointstr, diststr);
+//			MBX_Free((void*)pointstr);
+//			MBX_Free((void*)diststr);
+//			return ret;
+//		}
+//	}
+//
+//	if (!atoi(TGE::Con::executef(clientMovingObjects, 2, "containsEntry", syncIdStr))) {
+//		MBX_Free((void*)syncIdStr);
+//		MBX_Free((void*)pointstr);
+//		MBX_Free((void*)diststr);
+//		return "0 0 0";
+//	}
+//
+//	MBX_Free((void*)syncIdStr);
+//
+//	if (atoi(thisobj->getDataField("disablePhysics"_ts, NULL))) {
+//		MBX_Free((void*)pointstr);
+//		MBX_Free((void*)diststr);
+//		return "0 0 0";
+//	}
+//
+//	SyncId prevId = getClientSyncObject(atoi(thisobj->getDataField("_pathPrevSyncId"_ts, NULL)));
+//	SyncId nodeId = getClientSyncObject(atoi(thisobj->getDataField("_pathSyncId"_ts, NULL)));
+//	const char* nodeIdStr = StringMath::print(nodeId);
+//
+//	TGE::SceneObject* nextNode = static_cast<TGE::SceneObject*>(Node_getNextNode(thisobj->getIdString(), nodeIdStr));
+//
+//	if (nextNode == NULL || nextNode->getId() == nodeId) {
+//		MBX_Free((void*)pointstr);
+//		MBX_Free((void*)diststr);
+//		return "0 0 0";
+//	}
+//
+//	TGE::SceneObject* node = static_cast<TGE::SceneObject*>(TGE::Sim::findObject_int(nodeId));
+//	TGE::SceneObject* prevNode = static_cast<TGE::SceneObject*>(TGE::Sim::findObject_int(prevId));
+//
+//	float timeDelta = atof(node->getDataField("timeToNext"_ts, NULL));
+//	float t = atof(node->getDataField("_pathPosition"_ts, NULL)) / max(timeDelta, 1);
+//
+//	Point3F transVel(0, 0, 0);
+//
+//	if (atoi(node->getDataField("usePosition"_ts, NULL))) {
+//		transVel = VectorBezierDeriv(Node_getAdjustedProgress(node->getIdString(), t), Node_getPointList(thisobj->getIdString(), node->getIdString(), prevNode->getIdString()));
+//		transVel *= (float)1000 / t;
+//	}
+//
+//	Point3F rotVel(0, 0, 0);
+//
+//	if (atoi(node->getDataField("useRotation"_ts, NULL))) {
+//
+//		if (timeDelta != 0) {
+//			MatrixF startTransform = nextNode->getTransform();
+//			MatrixF endTransform = node->getTransform();
+//			AngAxisF startRot, endRot;
+//			startRot.set(startTransform);
+//			endRot.set(endTransform);
+//
+//			AngAxisF r1 = RotInterpolate(startRot, endRot, Node_getAdjustedProgress(node->getIdString(), t));
+//			AngAxisF r2 = RotInterpolate(startRot, endRot, Node_getAdjustedProgress(node->getIdString(), t + 0.001));
+//
+//			MatrixF r1mat, r2mat;
+//			r1.setMatrix(&r1mat);
+//			r2.setMatrix(&r2mat);
+//
+//			MatrixF div = MatrixDivide(r2mat, r1mat);
+//			AngAxisF rot;
+//			rot.set(div);
+//
+//			rot.angle /= 0.001;
+//
+//			Point3F point = StringMath::scan<Point3F>(pointstr);
+//
+//			if (fmodf(rot.angle, M_2PI_F) != 0) {
+//				if (atoi(node->getDataField("reverseRotation"_ts, NULL))) {
+//					rot.angle *= -1;
+//				}
+//				Point3F center = thisobj->getTransform().getPosition();
+//				Point3F mpos = marble->getWorldBox().getCenter();
+//				Point3F off = point - center;
+//
+//				float offLen = VectorRej(off, rot.axis).len();
+//				float dist = (point - mpos).len();
+//
+//				float mult = mClampF(marble->getCollisionRadius() / dist, 1, 2);
+//
+//				Point3F vel = mCross(off, rot.axis);
+//				vel.normalizeSafe();
+//				float speed = (rot.angle * offLen / (timeDelta / 1000)) * mult;
+//
+//				rotVel = vel * speed;
+//			}
+//		}
+//	}
+//
+//	MBX_Free((void*)pointstr);
+//	MBX_Free((void*)diststr);
+//	return StringMath::print(transVel + rotVel);
+//}
