@@ -47,7 +47,7 @@ void BloomPass::processPass(Point2I extent) {
 	glUniform1i(this->shader->getUniformLocation("compareDepth"), 1);
 	glUniform1i(this->shader->getUniformLocation("bloomQuality"), bloomQualityLevel);
 	glUniform1i(this->shader->getUniformLocation("passNum"), 1);
-	glUniform1ui(this->shader->getUniformLocation("horizontalDir"), 1);
+	glUniform1i(this->shader->getUniformLocation("horizontalDir"), 1);
 	glUniform1f(this->shader->getUniformLocation("offsetMultiplier"), 1.0f);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -87,7 +87,7 @@ void BloomPass::processPass(Point2I extent) {
 			glUniform1i(this->shader->getUniformLocation("bloomQuality"), bloomQualityLevel);
 			glUniform1i(this->shader->getUniformLocation("passNum"), 2+(i*2));
 
-			glUniform1ui(this->shader->getUniformLocation("horizontalDir"), i == 0 ? 1 : 0);
+			glUniform1i(this->shader->getUniformLocation("horizontalDir"), i == 0 ? 1 : 0);
 			glUniform1f(this->shader->getUniformLocation("offsetMultiplier"), -1.0f);
 
 			glActiveTexture(GL_TEXTURE0);
@@ -123,7 +123,7 @@ void BloomPass::processPass(Point2I extent) {
 			glUniform1i(this->shader->getUniformLocation("bloomQuality"), bloomQualityLevel);
 			glUniform1i(this->shader->getUniformLocation("passNum"), 3 + (i * 2));
 
-			glUniform1ui(this->shader->getUniformLocation("horizontalDir"), 0);
+			glUniform1i(this->shader->getUniformLocation("horizontalDir"), 0);
 			glUniform1f(this->shader->getUniformLocation("offsetMultiplier"), 1.0f);
 
 			glActiveTexture(GL_TEXTURE0);
