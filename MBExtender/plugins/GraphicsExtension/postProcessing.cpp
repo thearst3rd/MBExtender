@@ -145,7 +145,11 @@ MBX_OVERRIDE_FN(void, TGE::GameRenderWorld, (), originalGameRenderWorld) { // DO
 	}
 
 	for (auto& pass : passes) {
-		pass.second->render(extent);
+		if (pass.second != NULL)
+			pass.second->render(extent);
+		else {
+			TGE::Con::errorf("Bloom pass not created, somehow");
+		}
 	}
 
 	// Bind out front buffer. Backbuffer is now rendered into this shader as a texture on the quad.

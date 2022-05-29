@@ -927,7 +927,7 @@ MBX_OVERRIDE_FN(bool, TGE::excludeOtherInstances, (const char* mutexName), origE
 
 #endif
 
-MBX_OVERRIDE_FN(bool, TGE::cullSource, (int* index, float volume), origCullSource)
+MBX_OVERRIDE_FASTCALLFN(bool, TGE::cullSource, (int* index, float volume), origCullSource)
 {
 	F32 minVolume = volume;
 	S32 best = -1;
