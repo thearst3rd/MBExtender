@@ -31,6 +31,4 @@ public:
 	void unload();
 	void render(Point2I extent);
 	virtual void processPass(Point2I extent);
-	virtual void prerender();
-	virtual void postrender();
 };

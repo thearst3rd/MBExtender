@@ -114,21 +114,11 @@ void Pass::render(Point2I extent) {
 	GL_CheckErrors("activate bloombuffer");
 	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	this->prerender();
 	renderGame(renderFlags);
-	this->postrender();
 	GL_CheckErrors("render game");
 	this->processPass(extent);
 }
 
 void Pass::processPass(Point2I extent) {
-
-}
-
-void Pass::prerender() {
-
-}
-
-void Pass::postrender() {
 
 }
