@@ -18,17 +18,17 @@ public:
 	std::string shaderPathF;
 	int flags;
 	int renderFlags;
-	GLuint frameBuffer;
-	GLuint colorBuffer;
-	GLuint depthBuffer;
-	GLuint finalFrameBuffer;
-	GLuint finalColorBuffer;
-	GLuint finalDepthBuffer;
+	GLuint frameBuffer = 0;
+	GLuint colorBuffer = 0;
+	GLuint depthBuffer = 0;
+	GLuint finalFrameBuffer = 0;
+	GLuint finalColorBuffer = 0;
+	GLuint finalDepthBuffer = 0;
 	Shader* shader;
 
 	void initShader();
-	bool initBuffers(Point2I extent);
+	bool initBuffers(Point2I& extent);
 	void unload();
-	void render(Point2I extent);
-	virtual void processPass(Point2I extent);
+	void render(Point2I& extent);
+	virtual void processPass(Point2I& extent);
 };

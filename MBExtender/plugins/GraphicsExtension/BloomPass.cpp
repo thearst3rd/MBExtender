@@ -7,7 +7,7 @@ BloomPass::BloomPass() : Pass(std::string("bloom"), std::string("platinum/data/s
 {
 }
 
-void BloomPass::processPass(Point2I extent) {
+void BloomPass::processPass(Point2I& extent) {
 	// post processing
 	glViewport(0, 0, extent.x, extent.y);
 	glPushMatrix();

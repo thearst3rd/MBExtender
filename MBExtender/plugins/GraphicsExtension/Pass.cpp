@@ -19,7 +19,7 @@ void Pass::initShader() {
 	this->shader = new Shader(this->shaderPathV, this->shaderPathF);
 }
 
-bool Pass::initBuffers(Point2I extent) {
+bool Pass::initBuffers(Point2I& extent) {
 	glGenFramebuffers(1, &this->frameBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
 
@@ -108,17 +108,19 @@ void Pass::unload() {
 	this->finalFrameBuffer = 0;
 }
 
-void Pass::render(Point2I extent) {
+void Pass::render(Point2I& extent) {
 	currentPass = this->name;
-	glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
-	GL_CheckErrors("activate bloombuffer");
-	glClearColor(0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	renderGame(renderFlags);
-	GL_CheckErrors("render game");
-	this->processPass(extent);
+	if (this->frameBuffer != 0) {
+		glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
+		GL_CheckErrors("activate bloombuffer");
+		glClearColor(0, 0, 0, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		renderGame(this->renderFlags);
+		GL_CheckErrors("render game");
+		this->processPass(extent);
+	}
 }
 
-void Pass::processPass(Point2I extent) {
+void Pass::processPass(Point2I& extent) {
 
 }

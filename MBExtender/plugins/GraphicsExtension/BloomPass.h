@@ -4,5 +4,5 @@
 class BloomPass : Pass {
 public:
 	BloomPass();
-	virtual void processPass(Point2I extent);
+	virtual void processPass(Point2I& extent);
 };
