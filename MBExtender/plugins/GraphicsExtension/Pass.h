@@ -12,7 +12,7 @@ public:
 		Depth
 	};
 	Pass(std::string name, std::string shaderPathV, std::string shaderPathF, int flags, int renderFlags);
-	~Pass();
+	virtual ~Pass();
 	std::string name;
 	std::string shaderPathV;
 	std::string shaderPathF;
