@@ -144,6 +144,7 @@ MBX_OVERRIDE_FN(void, TGE::GameRenderWorld, (), originalGameRenderWorld) { // DO
 		GL_CheckErrors("blit");
 	}
 
+#ifdef _WIN32
 	for (auto& pass : passes) {
 		if (pass.second != NULL)
 			pass.second->render(extent);
@@ -151,6 +152,7 @@ MBX_OVERRIDE_FN(void, TGE::GameRenderWorld, (), originalGameRenderWorld) { // DO
 			TGE::Con::errorf("Bloom pass not created, somehow");
 		}
 	}
+#endif
 
 	// Bind out front buffer. Backbuffer is now rendered into this shader as a texture on the quad.
 	glBindFramebuffer(GL_FRAMEBUFFER, gFBO->finalRenderBufferHandle);
