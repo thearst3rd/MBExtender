@@ -446,7 +446,6 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::findContacts, (TGE::Marble* thisObj, U3
 					materialIdStr
 				);
 			MBX_Free((void*)contactVertStr);
-			MBX_Free((void*)contactVertStr);
 			MBX_Free((void*)normalStr);
 			MBX_Free((void*)surfaceVelocityStr);
 			MBX_Free((void*)contactDistanceStr);
