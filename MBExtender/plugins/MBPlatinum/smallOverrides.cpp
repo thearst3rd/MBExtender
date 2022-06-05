@@ -935,8 +935,8 @@ MBX_OVERRIDE_FN(bool, TGE::cullSource, (int* index, float volume), origCullSourc
 	F32* mAudioScore = reinterpret_cast<F32*>(0x6E3C8C);
 	U32* mAudioType = reinterpret_cast<U32*>(0x6E3E24);
 #elif defined(__APPLE__)
-	F32* mAudioScore = reinterpret_cast<F32*>(0x3135C0_mac);
-	U32* mAudioType = reinterpret_cast<U32*>(0x313540_mac);
+	F32* mAudioScore = reinterpret_cast<F32*>(0x3135C0);
+	U32* mAudioType = reinterpret_cast<U32*>(0x313540);
 #endif
 
 	for (S32 i = 0; i < TGE::mAudioNumSources; i++)
