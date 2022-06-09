@@ -76,6 +76,8 @@ wglChoosePixelFormatARB_type* wglChoosePixelFormatARB_ext;
 
 bool extInitialized = 0;
 
+bool integratedGfx = false;
+
 void init_opengl_extensions(void)
 {
 	// Before we can load extensions, we need a dummy OpenGL context, created using a dummy window.
@@ -163,6 +165,10 @@ void init_opengl_extensions(void)
 		"wglChoosePixelFormatARB");
 
 	const GLubyte* oglVersion = glGetString(GL_VERSION);
+	const GLubyte* gfx = glGetString(GL_RENDERER);
+
+	if (strstr((const char*)gfx, "Intel") != NULL)
+		integratedGfx = true;
 
 	TGE::Con::printf("GLVERSION: %s", oglVersion);
 	sscanf((const char*)oglVersion, "%d.%d", &oglMajor, &oglMinor);
@@ -540,49 +546,51 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 	if (newWindow)
 	{
 		TGE::Con::printf("Setting Pixel Format");
+		PIXELFORMATDESCRIPTOR pfd;
 		// Now we can choose a pixel format the modern way, using wglChoosePixelFormatARB.
-#ifdef RENDERDOC
-		int pixel_format_attribs[] = {
-			WGL_DRAW_TO_WINDOW_ARB,     GL_TRUE,
-			WGL_SUPPORT_OPENGL_ARB,     GL_TRUE,
-			WGL_DOUBLE_BUFFER_ARB,      GL_TRUE,
-			WGL_ACCELERATION_ARB,       WGL_FULL_ACCELERATION_ARB,
-			WGL_PIXEL_TYPE_ARB,         WGL_TYPE_RGBA_ARB,
-			WGL_COLOR_BITS_ARB,         32,
-			WGL_DEPTH_BITS_ARB,         24,
-			WGL_STENCIL_BITS_ARB,       8,
-			0
-		};
+		if (!integratedGfx)
+		{ 
+			int pixel_format_attribs[] = {
+				WGL_DRAW_TO_WINDOW_ARB,     GL_TRUE,
+				WGL_SUPPORT_OPENGL_ARB,     GL_TRUE,
+				WGL_DOUBLE_BUFFER_ARB,      GL_TRUE,
+				WGL_ACCELERATION_ARB,       WGL_FULL_ACCELERATION_ARB,
+				WGL_PIXEL_TYPE_ARB,         WGL_TYPE_RGBA_ARB,
+				WGL_COLOR_BITS_ARB,         32,
+				WGL_DEPTH_BITS_ARB,         24,
+				WGL_STENCIL_BITS_ARB,       8,
+				0
+			};
 
-		int pixel_format;
-		UINT num_formats;
-		wglChoosePixelFormatARB_ext(TGE::winState.appDC, pixel_format_attribs, 0, 1, &pixel_format, &num_formats);
-		if (!num_formats) {
-			TGE::Con::errorf("Failed to set the OpenGL 3.3 pixel format.");
-		}
+			int pixel_format;
+			UINT num_formats;
+			wglChoosePixelFormatARB_ext(TGE::winState.appDC, pixel_format_attribs, 0, 1, &pixel_format, &num_formats);
+			if (!num_formats) {
+				TGE::Con::errorf("Failed to set the OpenGL 3.3 pixel format.");
+			}
 
-		PIXELFORMATDESCRIPTOR pfd;
-		DescribePixelFormat(TGE::winState.appDC, pixel_format, sizeof(pfd), &pfd);
-		if (!SetPixelFormat(TGE::winState.appDC, pixel_format, &pfd)) {
-			TGE::Con::errorf("Failed to set the OpenGL 3.3 pixel format.");
-		}
-#else
-		// Set the pixel format of the new window:
-		PIXELFORMATDESCRIPTOR pfd;
-		TGE::createPixelFormat(&pfd, newRes.bpp, 24, 8, false);
-		S32 chosenFormat = TGE::chooseBestPixelFormat(TGE::winState.appDC, &pfd);
-		if (!chosenFormat)
+			DescribePixelFormat(TGE::winState.appDC, pixel_format, sizeof(pfd), &pfd);
+			if (!SetPixelFormat(TGE::winState.appDC, pixel_format, &pfd)) {
+				TGE::Con::errorf("Failed to set the OpenGL 3.3 pixel format.");
+			}
+		} 
+		else
 		{
-			AssertFatal(false, "OpenGLDevice::setScreenMode\nNo valid pixel formats found!");
-			return false;
+			// Set the pixel format of the new window:
+			TGE::createPixelFormat(&pfd, newRes.bpp, 24, 8, false);
+			S32 chosenFormat = TGE::chooseBestPixelFormat(TGE::winState.appDC, &pfd);
+			if (!chosenFormat)
+			{
+				AssertFatal(false, "OpenGLDevice::setScreenMode\nNo valid pixel formats found!");
+				return false;
+			}
+			DescribePixelFormat(TGE::winState.appDC, chosenFormat, sizeof(pfd), &pfd);
+			if (!SetPixelFormat(TGE::winState.appDC, chosenFormat, &pfd))
+			{
+				AssertFatal(false, "OpenGLDevice::setScreenMode\nFailed to set the pixel format!");
+				return false;
+			}
 		}
-		DescribePixelFormat(TGE::winState.appDC, chosenFormat, sizeof(pfd), &pfd);
-		if (!SetPixelFormat(TGE::winState.appDC, chosenFormat, &pfd))
-		{
-			AssertFatal(false, "OpenGLDevice::setScreenMode\nFailed to set the pixel format!");
-			return false;
-		}
-#endif
 		TGE::Con::printf("Pixel format set:");
 		TGE::Con::printf("  %d color bits, %d depth bits, %d stencil bits", pfd.cColorBits, pfd.cDepthBits, pfd.cStencilBits);
 	}
@@ -598,11 +606,11 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 		  WGL_CONTEXT_MINOR_VERSION_ARB, oglMinor, 
 		  WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB, 0
 		};
-#ifdef RENDERDOC
-		TGE::winState.hGLRC = wglCreateContextAttribsARB_ext(TGE::winState.appDC, NULL, attribList);
-#else
-		TGE::winState.hGLRC = wglCreateContext(TGE::winState.appDC);
-#endif
+		if (!integratedGfx)
+			TGE::winState.hGLRC = wglCreateContextAttribsARB_ext(TGE::winState.appDC, NULL, attribList);
+		else
+			TGE::winState.hGLRC = wglCreateContext(TGE::winState.appDC);
+
 		if (!TGE::winState.hGLRC)
 		{
 			AssertFatal(false, "OpenGLDevice::setScreenMode\nqwglCreateContext failed to create an OpenGL rendering context!");
@@ -657,18 +665,6 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 	//}
 
 	return true;
-}
-
-MBX_OVERRIDE_MEMBERFN(void, TGE::OpenGLDevice::swapBuffers, (TGE::OpenGLDevice* thisObj), originalBufferSwap) {
-	//if (TGE::isFullScreen && hackReady) {
-	//	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-	//	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderBuffer);
-	//	glBlitFramebuffer(0, 0, TGE::currentResolution.size.x, TGE::currentResolution.size.y, 0, 0, TGE::currentResolution.size.x, TGE::currentResolution.size.y, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	//	glBindFramebuffer(GL_READ_FRAMEBUFFER, renderBuffer);
-	//	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	//	glBlitFramebuffer(0, 0, TGE::currentResolution.size.x, TGE::currentResolution.size.y, 0, 0, fullscreenWidth, fullscreenHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	//}
-	originalBufferSwap(thisObj);
 }
 
 MBX_ON_GL_CONTEXT_DESTROY(fullscreenHackDestroy, ())
