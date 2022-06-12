@@ -500,9 +500,7 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::OpenGLDevice::setScreenMode, (TGE::OpenGLDevice
 		windowRect.right = newRes.size.x;
 		windowRect.bottom = newRes.size.y;
 
-		TGE::Con::printf("DPI: %d", GetDpiForWindow(TGE::winState.appWindow));
-		AdjustWindowRectExForDpi(&windowRect, GetWindowLong(TGE::winState.appWindow, GWL_STYLE), false, 0, GetDpiForWindow(TGE::winState.appWindow));
-		// AdjustWindowRect(&windowRect, GetWindowLong(TGE::winState.appWindow, GWL_STYLE), false);
+		AdjustWindowRect(&windowRect, GetWindowLong(TGE::winState.appWindow, GWL_STYLE), false);
 		U32 adjWidth = windowRect.right - windowRect.left;
 		U32 adjHeight = windowRect.bottom - windowRect.top;
 
