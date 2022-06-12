@@ -502,23 +502,27 @@ AngAxisF Node_getPathRotation(const char* objId, const char* nodeId, float tVal)
 
 	float finalT = Node_getAdjustedProgress(nodeId, t);
 
-	QuatF finalRot = QuatF(RotInterpolate(startRot, endRot, finalT));
+	AngAxisF finalRot = RotInterpolate(startRot, endRot, finalT);
 
 	//If they want it faster
 	if (strcmp(node->getDataField("RotationMultiplier"_ts, NULL), "") != 0)
 	{
-		finalRot *= atof(node->getDataField("RotationMultiplier"_ts, NULL));
+		finalRot.angle *= atof(node->getDataField("RotationMultiplier"_ts, NULL));
 		// %rot = RotMultiply(%rot, %node.FinalRotOffset);
 	}
 
 	//Final rot applied after all other rotations
 	if (strcmp(node->getDataField("FinalRotOffset"_ts, NULL), "") != 0 && strcmp(node->getDataField("FinalRotOffset"_ts, NULL), "0 0 0") != 0)
 	{
-		QuatF finalRotOffset = QuatF(StringMath::scan<AngAxisF>(node->getDataField("FinalRotOffset"_ts, NULL)));
-		finalRot *= finalRotOffset;
+		MatrixF finalRotOffset = MatrixF();
+		finalRotOffset.set(StringMath::scan<EulerF>(node->getDataField("FinalRotOffset"_ts, NULL)));
+		MatrixF rotM;
+		finalRot.setMatrix(&rotM);
+		MatrixF finalRotM = rotM * finalRotOffset;
+		finalRot = AngAxisF(finalRotM);
 		// rot = RotMultiply(%rot, %node.FinalRotOffset);
 	}
-	return AngAxisF(finalRot);
+	return finalRot;
 }
 
 MBX_CONSOLE_FUNCTION(Node_getPathRotation, const char *, 5, 5, "Node_getPathRotation(%obj, %node, %prev, %t)")
