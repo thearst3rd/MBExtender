@@ -512,10 +512,20 @@ AngAxisF Node_getPathRotation(const char* objId, const char* nodeId, float tVal)
 	}
 
 	//Final rot applied after all other rotations
-	if (strcmp(node->getDataField("FinalRotOffset"_ts, NULL), "") != 0 && strcmp(node->getDataField("FinalRotOffset"_ts, NULL), "0 0 0") != 0)
+	if (strcmp(node->getDataField("FinalRotOffset"_ts, NULL), "") != 0 && strcmp(node->getDataField("FinalRotOffset"_ts, NULL), "0 0 0") != 0 && strcmp(node->getDataField("FinalRotOffset"_ts, NULL), "1 0 0 0") != 0)
 	{
-		MatrixF finalRotOffset = MatrixF();
-		finalRotOffset.set(StringMath::scan<EulerF>(node->getDataField("FinalRotOffset"_ts, NULL)));
+		MatrixF finalRotOffset = MatrixF(true);
+		const char* fro = node->getDataField("FinalRotOffset"_ts, NULL);
+		float args[4];
+		int argcount = sscanf(fro, "%f %f %f %f", &args[0], &args[1], &args[2], &args[3]);
+		if (argcount == 3) { // Euler
+			EulerF rot(args[0] * M_PI / 180, args[1] * M_PI / 180, args[2] * M_PI / 180);
+			finalRotOffset.set(rot);
+		}
+		if (argcount == 4) { // Axis angle
+			AngAxisF rot(Point3F(args[0], args[1], args[2]), args[3]);
+			rot.setMatrix(&finalRotOffset);
+		}
 		MatrixF rotM;
 		finalRot.setMatrix(&rotM);
 		MatrixF finalRotM = rotM * finalRotOffset;
