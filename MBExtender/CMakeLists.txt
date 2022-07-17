@@ -25,7 +25,8 @@ include(FilterPlatformSources)
 include(ImportFramework)
 
 if(MSVC AND CMAKE_C_COMPILER_ID MATCHES "Clang" AND
-  NOT CMAKE_BUILD_TYPE STREQUAL "Release")
+  NOT CMAKE_BUILD_TYPE STREQUAL "Release" AND
+  NOT CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
   # clang miscompiles thiscall invocations if optimizations are disabled
   message(FATAL_ERROR "Windows builds with Clang must be in Release mode")
 endif()
@@ -89,6 +90,7 @@ if(MSVC)
     set(CMAKE_NINJA_CMCLDEPS_RC 0)
 
     # Fix broken llvm-ar invocation
+    set(CMAKE_STATIC_LINKER_FLAGS " " CACHE INTERNAL "" FORCE)
     set(CMAKE_C_CREATE_STATIC_LIBRARY "<CMAKE_AR> qc <TARGET> <LINK_FLAGS> <OBJECTS>")
     set(CMAKE_CXX_CREATE_STATIC_LIBRARY "<CMAKE_AR> qc <TARGET> <LINK_FLAGS> <OBJECTS>")
   endif()

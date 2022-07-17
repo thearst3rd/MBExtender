@@ -30,7 +30,7 @@
 // Some relevant bug reports can be found at:
 // * Clang: http://github.com/weidai11/cryptopp/issues/147
 #if (defined(_MSC_VER) && defined(__clang__) && !(defined( __clang_analyzer__)))
-# error: "Unsupported configuration"
+// # error: "Unsupported configuration"
 #endif
 
 // Windows platform

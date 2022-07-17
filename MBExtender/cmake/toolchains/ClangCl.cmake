@@ -144,4 +144,4 @@ foreach(TYPE EXE MODULE SHARED)
   # Not setting _INIT flags here because CMake's default flags are broken
   set(CMAKE_${TYPE}_LINKER_FLAGS "${LINK_ARGS}" CACHE INTERNAL "")
 endforeach()
-set(CMAKE_STATIC_LINKER_FLAGS "" CACHE INTERNAL "")
+set(CMAKE_STATIC_LINKER_FLAGS " " CACHE INTERNAL "" FORCE)
