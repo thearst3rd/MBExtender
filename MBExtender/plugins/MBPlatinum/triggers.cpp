@@ -49,10 +49,10 @@ MBX_CONSOLE_METHOD(Trigger, testObject, bool, 3, 3, "Trigger.testObject(object);
 
 	if (obj && (obj->mTypeMask & TGE::TypeMasks::GameBaseObjectType) == TGE::TypeMasks::GameBaseObjectType) {
 		TGE::GameBase *gb = static_cast<TGE::GameBase *>(obj);
-		Box3F colBox = gb->getCollisionBox();
-		colBox.scale(gb->getScale());
-		colBox.setCenter(colBox.getCenter() + gb->getWorldBox().getCenter());
-		Box3F triggerBox = object->getWorldBox();
+		Box3F colBox = gb->mObjBox;
+		colBox.scale(gb->mObjScale);
+		colBox.setCenter(colBox.getCenter() + gb->mWorldBox.getCenter());
+		Box3F triggerBox = object->mWorldBox;
 		return triggerBox.isOverlapped(colBox);
 	} else {
 		return false;

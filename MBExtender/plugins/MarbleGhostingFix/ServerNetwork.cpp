@@ -97,20 +97,20 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::MarbleUpdateEvent::unpack, (TGE::MarbleUpdateEv
 				}
 			}
 
-			if (controlObject->getVelocity() != velocity || controlObject->getAngularVelocity() != angularVelocity) {
+			if (controlObject->mVelocity != velocity || controlObject->mOmega != angularVelocity) {
 				if (!(forceTypes & VelocityUpdateFlag)) {
 					//Velocities
-					controlObject->setVelocity(velocity);
-					controlObject->setAngularVelocity(angularVelocity);
+					controlObject->mVelocity = velocity;
+					controlObject->mOmega = angularVelocity;
 					controlObject->setMaskBits(VelocityMask);
 				}
 			}
 
-			if (mFabs(controlObject->getCameraYaw() - cameraYaw) > POINT_EPSILON || mFabs(controlObject->getCameraPitch() - cameraPitch) > POINT_EPSILON) {
+			if (mFabs(controlObject->mCameraYaw - cameraYaw) > POINT_EPSILON || mFabs(controlObject->mCameraPitch - cameraPitch) > POINT_EPSILON) {
 				if (!(forceTypes & CameraUpdateFlag)) {
 					//Camera
-					controlObject->setCameraYaw(cameraYaw);
-					controlObject->setCameraPitch(cameraPitch);
+					controlObject->mCameraYaw = cameraYaw;
+					controlObject->mCameraPitch = cameraPitch;
 					controlObject->setMaskBits(CameraMask);
 				}
 			}
@@ -124,11 +124,11 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::MarbleUpdateEvent::unpack, (TGE::MarbleUpdateEv
 				}
 			}
 
-			if (mFabs(controlObject->getCollisionRadius() - size) > POINT_EPSILON) {
+			if (mFabs(controlObject->mRadius - size) > POINT_EPSILON) {
 				if (!(forceTypes & SizeUpdateFlag)) {
 					//Size
-					controlObject->setCollisionRadius(size);
-					controlObject->setCollisionBox(Box3F(size * 2.0f));
+					controlObject->mRadius = size;
+					controlObject->mObjBox = Box3F(size * 2.0f);
 					controlObject->setMaskBits(SizeMask);
 				}
 			}
@@ -149,8 +149,8 @@ MBX_OVERRIDE_MEMBERFN(U32, TGE::Marble::packUpdate, (TGE::Marble *thisptr, TGE::
 	//Should we send a velocity update?
 	if (stream->writeFlag((mask & VelocityMask) == VelocityMask)) {
 		//Extract velocities
-		Point3D velocity = thisptr->getVelocity();
-		Point3D angularVelocity = thisptr->getAngularVelocity();
+		Point3D velocity = thisptr->mVelocity;
+		Point3D angularVelocity = thisptr->mOmega;
 
 		//If we're forcing an update, use the stored velocity.
 		if ((forceFlags & VelocityUpdateFlag) == VelocityUpdateFlag) {
@@ -177,7 +177,7 @@ MBX_OVERRIDE_MEMBERFN(U32, TGE::Marble::packUpdate, (TGE::Marble *thisptr, TGE::
 	//Should we send camera updates?
 	if (stream->writeFlag((mask & CameraMask) == CameraMask)) {
 		//Get camera stuff from the marble
-		EulerF camera(thisptr->getCameraPitch(), thisptr->getCameraYaw(), 0);
+		EulerF camera(thisptr->mCameraPitch, thisptr->mCameraYaw, 0);
 		//If we're forcing an update, use the stored camera.
 		if ((forceFlags & CameraUpdateFlag) == CameraUpdateFlag) {
 			camera = gMarbleUpdates[thisptr->getId()].camera;
@@ -198,7 +198,7 @@ MBX_OVERRIDE_MEMBERFN(U32, TGE::Marble::packUpdate, (TGE::Marble *thisptr, TGE::
 	//Should we send size updates?
 	if (stream->writeFlag((mask & SizeMask) == SizeMask)) {
 		//Get radius from the marble
-		F32 size = thisptr->getCollisionRadius();
+		F32 size = thisptr->mRadius;
 		if ((forceFlags & SizeUpdateFlag) == SizeUpdateFlag) {
 			size = gMarbleUpdates[thisptr->getId()].size;
 		}
@@ -207,7 +207,7 @@ MBX_OVERRIDE_MEMBERFN(U32, TGE::Marble::packUpdate, (TGE::Marble *thisptr, TGE::
 	}
 
 	//Just always send controllable
-	stream->writeFlag(thisptr->getControllable());
+	stream->writeFlag(thisptr->mControllable);
 
 	//Don't clear the flags unless they're sent to ourselves
 	if (forceFlags && thisptr->getControllingClient() == connection) {

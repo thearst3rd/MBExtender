@@ -124,7 +124,7 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::Trigger::renderObject, (TGE::Trigger* thisptr, 
 
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderObject, (TGE::ShapeBase* thisptr, TGE::SceneState* state, TGE::SceneRenderImage* image), originalShapeBaseRender) {
-	TGE::GameBaseData* datablock = thisptr->getDataBlock();
+	TGE::GameBaseData* datablock = thisptr->mDataBlock;
 	if (!datablock)
 		return;
 	const char* shapeFile = datablock->getDataField(TGE::StringTable->insert("shapeFile", false), NULL);
@@ -139,14 +139,14 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderObject, (TGE::ShapeBase* thisp
 
 	F32 fadeVal;
 	if (currentPass != "fwd") {
-		fadeVal = thisptr->getFadeVal();
-		thisptr->setFadeVal(1);
+		fadeVal = thisptr->mFadeVal;
+		thisptr->mFadeVal = 1;
 	}
 	
 	originalShapeBaseRender(thisptr, state, image);
 
 	if (currentPass != "fwd") {
-		thisptr->setFadeVal(fadeVal);
+		thisptr->mFadeVal = fadeVal;
 	}
 }
 
@@ -154,11 +154,11 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderImage, (TGE::ShapeBase *thispt
 	// If we are cloaked just do an original render.
 	F32 cloakLevel;
 	if (currentPass != "fwd") {
-		cloakLevel = thisptr->getCloakLevel();
-		thisptr->setCloakLevel(0);
+		cloakLevel = thisptr->mCloakLevel;
+		thisptr->mCloakLevel = 0;
 	}
 
-	if (thisptr->getCloakLevel() > 0) {
+	if (thisptr->mCloakLevel > 0) {
 		originalRenderImage(thisptr, state, image);
 		return;
 	}
@@ -168,7 +168,7 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderImage, (TGE::ShapeBase *thispt
 	gCurrentRenderingShape = NULL;
 
 	if (currentPass != "fwd") {
-		thisptr->setCloakLevel(cloakLevel);
+		thisptr->mCloakLevel = cloakLevel;
 	}
 }
 

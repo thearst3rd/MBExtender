@@ -85,7 +85,7 @@ MBX_CONSOLE_FUNCTION(getFastCameraTransform, const char *, 1, 1, "") {
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::ParticleEmitter::emitParticles, (TGE::ParticleEmitter *thisptr, const Point3F& start, const Point3F& end, const Point3F& axis, const Point3F& velocity, U32 numMilliseconds), originalEmitParticles) {
 	//Always emit from particles that have noHide set (eg physmod)
-	bool noHide = StringMath::scan<bool>(thisptr->getDataBlock()->getDataField("noHide"_ts, NULL));
+	bool noHide = StringMath::scan<bool>(thisptr->mDataBlock->getDataField("noHide"_ts, NULL));
 	if (!noHide && (start - gCameraCache.getPosition()).lenSquared() > (gParticleMaxDistance * gParticleMaxDistance)) {
 		return;
 	}

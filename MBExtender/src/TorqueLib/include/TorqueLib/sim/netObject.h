@@ -37,7 +37,7 @@ namespace TGE
 	{
 		BRIDGE_CLASS(NetObject);
 	public:
-		enum NetFlags
+		enum NetFlags: U32
 		{
 			IsGhost = BIT(1),   ///< This is a ghost.
 			ScopeAlways = BIT(6),  ///< Object always ghosts to clients.
@@ -46,6 +46,16 @@ namespace TGE
 
 			MaxNetFlagBit = 15
 		};
+
+		U32 mDitryMaskBits; // 30
+		NetObject *mPrevDirtyList; // 34
+		NetObject *mNextDirtyList; // 38
+		SimObjectPtr<NetObject> mServerObject; // 3c
+		BitSet32 mNetFlags; // 40
+		U32 mNetIndex; // 44
+		struct GhostInfo *mFirstObjectRef; // 48
+
+		// Full size: 4c
 
 		UNDEFVIRT(getUpdatePriority);
 		UNDEFVIRT(packUpdate);
@@ -60,11 +70,7 @@ namespace TGE
 
 		MEMBERFN(void, clearScopeAlways, (), 0x408B2F_win, 0x196D80_mac);
 
-		GETTERFN(U32, getNetFlags, 0x40);
-		SETTERFN(U32, setNetFlags, 0x40);
-		FIELD(U32, mNetIndex, 0x44);
-
-		inline bool isServerObject() { return (getNetFlags() & 2) == 0; }
-		inline bool isClientObject() { return (getNetFlags() & 2) != 0; }
+		inline bool isServerObject() { return (mNetFlags & NetFlags::IsGhost) == 0; }
+		inline bool isClientObject() { return (mNetFlags & NetFlags::IsGhost) != 0; }
 	};
 }

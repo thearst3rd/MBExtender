@@ -56,8 +56,8 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::SceneObject::setRenderTransform, (TGE::SceneObj
 		TGE::Marble *mthis = TGE::TypeInfo::manual_dynamic_cast<TGE::Marble *>(thisptr, &TGE::TypeInfo::ShapeBase, &TGE::TypeInfo::Marble, 0);
 		if (mthis) {
 			//Basic scale calculation to determine how much larger we should be
-			F32 scale = mthis->getCollisionRadius();
-			F32 dbScale = static_cast<TGE::MarbleData *>(mthis->getDataBlock())->getCollisionRadius();
+			F32 scale = mthis->mRadius;
+			F32 dbScale = static_cast<TGE::MarbleData *>(mthis->mDataBlock)->getCollisionRadius();
 
 			scale /= dbScale;
 

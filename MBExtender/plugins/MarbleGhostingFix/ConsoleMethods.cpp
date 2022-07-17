@@ -51,10 +51,10 @@ MBX_CONSOLE_METHOD(MarbleData, setCollisionRadius, void, 3, 3, "MarbleData.setCo
 	object->setCollisionRadius(radius);
 }
 MBX_CONSOLE_METHOD(Marble, getCollisionRadius, F32, 2, 2, "Marble.getCollisionRadius() -> Get the marble's radius") {
-	return object->getCollisionRadius();
+	return object->mRadius;
 }
 MBX_CONSOLE_METHOD(Marble, getCollisionBox, const char *, 2, 2, "Marble.getCollisionBox() -> Get the marble's collision box") {
-	return StringMath::print(object->getCollisionBox());
+	return StringMath::print(object->mObjBox);
 }
 MBX_CONSOLE_METHOD(Marble, setGravityDir, void, 3, 4, "Marble.setGravityDir(OrthoF direction, [bool instant = false]) -> Set the marble's gravity direction") {
 	OrthoF direction = StringMath::scan<OrthoF>(argv[2]);
@@ -78,8 +78,8 @@ MBX_CONSOLE_METHOD(Marble, setGravityDir, void, 3, 4, "Marble.setGravityDir(Orth
 
 MBX_CONSOLE_METHOD(Marble, setCollisionRadius, void, 3, 3, "Marble.setCollisionRadius(F32 radius) -> Set the marble's radius") {
 	F32 radius = StringMath::scan<F32>(argv[2]);
-	object->setCollisionRadius(radius);
-	object->setCollisionBox(Box3F(radius * 2.0f));
+	object->mRadius = radius;
+	object->mObjBox = Box3F(radius * 2.0f);
 
 	//If we're a server object, make sure to send a ghosting update
 	if (object->isServerObject()) {
@@ -102,7 +102,7 @@ MBX_CONSOLE_METHOD(Marble, setCollisionRadius, void, 3, 3, "Marble.setCollisionR
  * @return The marble's camera pitch
  */
 MBX_CONSOLE_METHOD(Marble, getCameraPitch, F32, 2, 2, "Marble.getCameraPitch() -> Get the marble's camera pitch") {
-	return object->getCameraPitch();
+	return object->mCameraPitch;
 }
 
 /**
@@ -111,7 +111,7 @@ MBX_CONSOLE_METHOD(Marble, getCameraPitch, F32, 2, 2, "Marble.getCameraPitch() -
  */
 MBX_CONSOLE_METHOD(Marble, setCameraPitch, void, 3, 3, "Marble.setCameraPitch(F32 pitch) -> Set the marble's camera pitch") {
 	F32 pitch = StringMath::scan<F32>(argv[2]);
-	object->setCameraPitch(pitch);
+	object->mCameraPitch = pitch;
 
 	//If we're a server object, make sure to send a ghosting update
 	if (object->isServerObject()) {
@@ -125,7 +125,7 @@ MBX_CONSOLE_METHOD(Marble, setCameraPitch, void, 3, 3, "Marble.setCameraPitch(F3
 
 		//Store this transformation so we don't overwrite it
 		gMarbleUpdates[object->getId()].camera.x = pitch;
-		gMarbleUpdates[object->getId()].camera.y = object->getCameraYaw();
+		gMarbleUpdates[object->getId()].camera.y = object->mCameraYaw;
 	}
 }
 
@@ -134,7 +134,7 @@ MBX_CONSOLE_METHOD(Marble, setCameraPitch, void, 3, 3, "Marble.setCameraPitch(F3
  * @return The marble's camera yaw
  */
 MBX_CONSOLE_METHOD(Marble, getCameraYaw, F32, 2, 2, "Marble.getCameraYaw() -> Get the marble's camera yaw") {
-	return object->getCameraYaw();
+	return object->mCameraYaw;
 }
 
 /**
@@ -143,7 +143,7 @@ MBX_CONSOLE_METHOD(Marble, getCameraYaw, F32, 2, 2, "Marble.getCameraYaw() -> Ge
  */
 MBX_CONSOLE_METHOD(Marble, setCameraYaw, void, 3, 3, "Marble.setCameraYaw(F32 yaw) -> Set the marble's camera yaw") {
 	F32 yaw = StringMath::scan<F32>(argv[2]);
-	object->setCameraYaw(yaw);
+	object->mCameraYaw = yaw;
 
 	//If we're a server object, make sure to send a ghosting update
 	if (object->isServerObject()) {
@@ -156,7 +156,7 @@ MBX_CONSOLE_METHOD(Marble, setCameraYaw, void, 3, 3, "Marble.setCameraYaw(F32 ya
 		gMarbleUpdates[object->getId()].types |= CameraUpdateFlag;
 
 		//Store this transformation so we don't overwrite it
-		gMarbleUpdates[object->getId()].camera.x = object->getCameraPitch();
+		gMarbleUpdates[object->getId()].camera.x = object->mCameraPitch;
 		gMarbleUpdates[object->getId()].camera.y = yaw;
 	}
 }
@@ -166,7 +166,7 @@ MBX_CONSOLE_METHOD(Marble, setCameraYaw, void, 3, 3, "Marble.setCameraYaw(F32 ya
  * @return The marble's velocity
  */
 MBX_CONSOLE_METHOD(Marble, getVelocity, const char *, 2, 2, "Marble.getVelocity() -> Get the marble's linear velocity") {
-	return StringMath::print(object->getVelocity());
+	return StringMath::print(object->mVelocity);
 }
 
 /**
@@ -174,7 +174,7 @@ MBX_CONSOLE_METHOD(Marble, getVelocity, const char *, 2, 2, "Marble.getVelocity(
  * @param velocity The new velocity
  */
 MBX_CONSOLE_METHOD(Marble, setVelocity, void, 3, 3, "Marble.setVelocity(velocity) -> Set the marble's linear velocity") {
-	object->setVelocity(StringMath::scan<Point3D>(argv[2]));
+	object->mVelocity = StringMath::scan<Point3D>(argv[2]);
 
 	//If we're a server object, make sure to send a ghosting update
 	if (object->isServerObject()) {
@@ -187,8 +187,8 @@ MBX_CONSOLE_METHOD(Marble, setVelocity, void, 3, 3, "Marble.setVelocity(velocity
 		gMarbleUpdates[object->getId()].types |= VelocityUpdateFlag;
 
 		//Store this transformation so we don't overwrite it
-		gMarbleUpdates[object->getId()].velocity = object->getVelocity();
-		gMarbleUpdates[object->getId()].angularVelocity = object->getAngularVelocity();
+		gMarbleUpdates[object->getId()].velocity = object->mVelocity;
+		gMarbleUpdates[object->getId()].angularVelocity = object->mOmega;
 	}
 }
 /**
@@ -196,7 +196,7 @@ MBX_CONSOLE_METHOD(Marble, setVelocity, void, 3, 3, "Marble.setVelocity(velocity
  * @return The marble's angular velocity
  */
 MBX_CONSOLE_METHOD(Marble, getAngularVelocity, const char *, 2, 2, "Marble.getAngularVelocity() -> Get the marble's angular velocity") {
-	return StringMath::print(object->getAngularVelocity());
+	return StringMath::print(object->mOmega);
 }
 
 /**
@@ -204,7 +204,7 @@ MBX_CONSOLE_METHOD(Marble, getAngularVelocity, const char *, 2, 2, "Marble.getAn
  * @param velocity The new angular velocity
  */
 MBX_CONSOLE_METHOD(Marble, setAngularVelocity, void, 3, 3, "Marble.setAngularVelocity(velocity) -> Set the marble's angular velocity") {
-	object->setAngularVelocity(StringMath::scan<Point3D>(argv[2]));
+	object->mOmega = StringMath::scan<Point3D>(argv[2]);
 
 	//If we're a server object, make sure to send a ghosting update
 	if (object->isServerObject()) {
@@ -217,17 +217,17 @@ MBX_CONSOLE_METHOD(Marble, setAngularVelocity, void, 3, 3, "Marble.setAngularVel
 		gMarbleUpdates[object->getId()].types |= VelocityUpdateFlag;
 
 		//Store this transformation so we don't overwrite it
-		gMarbleUpdates[object->getId()].velocity = object->getVelocity();
-		gMarbleUpdates[object->getId()].angularVelocity = object->getAngularVelocity();
+		gMarbleUpdates[object->getId()].velocity = object->mVelocity;
+		gMarbleUpdates[object->getId()].angularVelocity = object->mOmega;
 	}
 }
 
 MBX_CONSOLE_METHOD(Marble, setControllable, void, 3, 3, "Marble.setControllable(controllable) -> Set if the marble is controllable.\n"
 			  "Note that marbles which are not controllable will have their physics updated even if they are not the control object.") {
-	object->setControllable(StringMath::scan<U32>(argv[2]) != 0);
+	object->mControllable = StringMath::scan<U32>(argv[2]) != 0;
 	object->setMaskBits(1); //Force a net update
 }
 
 MBX_CONSOLE_METHOD(Marble, getControllable, bool, 2, 2, "Marble.getControllable() -> Get if the marble is controllable") {
-	return object->getControllable();
+	return object->mControllable;
 }

@@ -35,6 +35,8 @@
 namespace TGE
 {
 	class BitStream;
+	class ParticleEmitter;
+	class MarbleData;
 	struct Move
 	{
 		// packed storage rep, set in clamp
@@ -55,64 +57,159 @@ namespace TGE
 	{
 		BRIDGE_CLASS(Marble);
 	public:
+
+		struct SinglePrecision
+		{
+			Point3F mPosition;
+			Point3F mVelocity;
+			Point3F mOmega;
+		};
+
 		struct Contact
 		{
-			SimObject *object; // 1944
+			SimObject *object;
 #ifdef _WIN32
-			void *_empty; // 1948
+			U32 data_4;
 #endif
-			Point3D position; // 1972
-			Point3D normal; // 1996
-			Point3F actualNormal; // 2008
+			Point3D position;
+			Point3D normal;
+			Point3F actualNormal;
 #ifdef _WIN32
-			void *_empty2; // 2012
+			U32 data_44;
 #endif
-			Point3D surfaceVelocity; // 2036
-			Point3D surfaceFrictionVelocity; // 2060
-			F64 staticFriction; // 2068
-			F64 kineticFriction; // 2076
-			Point3D vAtC; // 2100
-			F64 vAtCMag; // 2108
-			F64 normalForce; // 2116
-			F64 contactDistance; // 2124
-			F32 friction; // 2128
-			F32 restitution; // 2132
-			F32 force; // 2136
-			U32 material; // 2140
+			Point3D surfaceVelocity;
+			Point3D surfaceFrictionVelocity;
+			F64 staticFriction;
+			F64 kineticFriction;
+			Point3D vAtC;
+			F64 vAtCMag;
+			F64 normalForce;
+			F64 contactDistance;
+			F32 friction;
+			F32 restitution;
+			F32 force;
+			U32 material;
 		};
+
+		struct StateDelta
+		{
+			Point3D pos;
+			Point3D posVec;
+			F32 prevMouseX;
+			F32 prevMouseY;
+			Move move;
+		};
+
+		struct EndPadEffect
+		{
+			F32 effectTime;
+			Point3F lastCamFocus;
+		};
+
+		struct ActiveParams
+		{
+			float airAccel;
+			float gravityMod;
+			float bounce;
+			float repulseMax;
+			float repulseDist;
+			float massScale;
+			float sizeScale;
+		};
+
+		struct PowerUpState
+		{
+			bool active;
+			char pad[3];
+			F32 endTime;
+			ParticleEmitter *emitter;
+		};
+
+		// StaticShape material collisions
 		struct MaterialCollision
 		{
 			U32 ghostIndex;
 			U32 materialId;
-			U32 alsoGhostIndex; //unused?
+			U32 alsoGhostIndex; // MBU says this is NetObject*
+
+			bool operator==(const MaterialCollision &rhs) const {
+				return ghostIndex == rhs.ghostIndex &&
+				       materialId == rhs.materialId &&
+				       alsoGhostIndex == rhs.alsoGhostIndex;
+			}
+
+			bool operator!=(const MaterialCollision &rhs) const {
+				return !(rhs == *this);
+			}
 		};
 
-		FIELD(Vector<Contact>, mContacts, 0x78C);
-		FIELD(Contact, mBestContact, 0x798);
-		FIELD(Contact, mLastContact, 0x860_win, 0x858_mac);
-		FIELD(F32, mRadius, 0x9E0_win, 0x9D0_mac);
-		FIELD(ConcretePolyList, mPolyList, 0xAD4_win, 0xAC0_mac);
-		FIELD(Vector<MaterialCollision>, mMaterialCollisions, 0xA7C_win, 0xA68_mac);
+		Vector<Contact> mContacts; // 78c
+		Contact mBestContact; // 798
+		Contact mLastContact; // 860 / 858
+//		Point3F mMovePath[2];
+//		F32 mMovePathTime[2];
+//		U32 mMovePathSize;
+		Point3D data_928; // 928 / 918
+		StateDelta delta; // 940 / 930
+//		Point3F mLastRenderPos;
+//		Point3F mLastRenderVel;
+		MarbleData *mDataBlock; // 9b8 / 9a8
+		U32 mPositionKey; // 9bc / 9ac
+		bool data_9c0; // 9c0 / 9b0
+		U32 mBounceEmitDelay; // 9c4 / 9b4
+		U32 mPowerUpId; // 9c8 / 9b8
+		U32 mPowerUpTimer; // 9cc / 9b8
+		U32 data_9d0; // 9d0 / 9c0
+		U32 mMode; // 9d4 / 9c4
+//		U32 mModeTimer;
+		U32 data_9d8; // 9d8 / 9c8
+		U32 data_9dc; // 9dc / 9cc
+		F32 mRadius; // 9e0 / 9d0
+#ifdef _WIN32
+		U32 data_9e4; // 9e4 / NA
+#endif
+		Point3D mGravityUp; // 9e8 / 9d4
+//		QuatF mGravityFrame;
+//		QuatF mGravityRenderFrame;
 
-		GETTERFN(bool, getOOB, 0xA59_win, 0xA45_mac);
-		SETTERFN(bool, setOOB, 0xA59_win, 0xA45_mac);
+		Point3D mVelocity; // a00 / 9ec
+		Point3D mPosition; // a18 / a04
+		Point3D mOmega; // a30 / a1c
+		F32 mCameraYaw; // a48 / a34
+		F32 mCameraPitch; // a4c / a38
+		F32 mMouseZ; // a50 / a3c (unused?)
+		U32 mGroundTime; // a54 / a40
+		bool mControllable; // a58 / a44
+		bool mOOB; // a59 / a45
+		Point3F mOOBCamPos; // a5c / a48
+		U32 data_a68; // a68 / a54
+		SimObjectId mServerMarbleId; // a6c / a58
+		U32 data_a70; // a70 / a5c
+		SceneObject *mPadPtr; // a74 / a60
+		bool mOnPad; // a78 / a64
+		Vector<MaterialCollision> mMaterialCollisions; // a7c / a68
 
-		GETTERFN(Point3D, getVelocity, 0xA00_win, 0x9EC_mac);
-		SETTERFN(Point3D, setVelocity, 0xA00_win, 0x9EC_mac);
-		FIELD(Point3D, mPosition, 0xA18_win, 0xA04_mac);
-		GETTERFN(Point3D, getAngularVelocity, 0xA30_win, 0xA1C_mac);
-		SETTERFN(Point3D, setAngularVelocity, 0xA30_win, 0xA1C_mac);
+//		U32 mSuperSpeedDoneTime;
+//		F32 mLastYaw;
+//		Point3F mNetSmoothPos;
+//		bool mCenteringCamera;
+//		F32 mRadsLeftToCenter;
+//		F32 mRadsStartingToCenter;
+//		U32 mCheckPointNumber;
+//		EndPadEffect mEffect;
+//		Point3F mLastCamPos;
+//		F32 mCameraDist;
+//		bool mCameraInit;
 
-		GETTERFN(F32, getCameraYaw, 0xA48_win, 0xA34_mac);
-		SETTERFN(F32, setCameraYaw, 0xA48_win, 0xA34_mac);
-		GETTERFN(F32, getCameraPitch, 0xA4C_win, 0xA38_mac);
-		SETTERFN(F32, setCameraPitch, 0xA4C_win, 0xA38_mac);
+		PowerUpState mPowerUpState[6]; // a88 / a74
+		ParticleEmitter *mTrailEmitter; // ad0 / abc
+		ConcretePolyList mPolyList; // ad4 / ac0
+		U32 mPredictionTicks; // c74 / c60
+		Point3D mCameraOffset; // c78 / c64
+		Point3F mShadowPoints[33]; // c90 / c7c
+		bool mShadowGenerated; // e1c / e08
 
-		GETTERFN(F32, getCollisionRadius, 0x9E0_win, 0x9D0_mac);
-		SETTERFN(F32, setCollisionRadius, 0x9E0_win, 0x9D0_mac);
-
-		GETTERFN(bool, getControllable, 0xA58_win, 0xA44_mac);
-		SETTERFN(bool, setControllable, 0xA58_win, 0xA44_mac);
+		// Total size: e20 / e0c
 
 		MEMBERFN(U32, packUpdate, (NetConnection *connection, U32 mask, BitStream *stream), 0x40566E_win, 0x260570_mac);
 		MEMBERFN(void, unpackUpdate, (NetConnection *connection, BitStream *stream), 0x403382_win, 0x25F9F0_mac);

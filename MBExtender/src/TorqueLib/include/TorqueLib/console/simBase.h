@@ -93,17 +93,19 @@ namespace TGE
 			ModDynamicFields = BIT(7)     ///< The object allows you to read/modify dynamic fields
 		};
 
-		StringTableEntry mName;
-		SimObject *nextNameObject;
-		SimObject *nextManagerNameObject;
-		SimObject *nextIdObject;
-		SimGroup *mGroup;
-		BitSet32 mFlags;
-		Notify *mNotifyList;
-		SimObjectId mId;
-		Namespace *mNamespace;
-		U32 mTypeMask;
-		SimFieldDictionary *mFieldDictionary;
+		StringTableEntry mName; // 4
+		SimObject *nextNameObject; // 8
+		SimObject *nextManagerNameObject; // c
+		SimObject *nextIdObject; // 10
+		SimGroup *mGroup; // 14
+		BitSet32 mFlags; // 18
+		Notify *mNotifyList; // 1c
+		SimObjectId mId; // 20
+		Namespace *mNamespace; // 24
+		U32 mTypeMask; // 28
+		SimFieldDictionary *mFieldDictionary; // 2c
+
+		// Full size: 30
 
 		SimObjectId getId() {
 			return mId;
@@ -148,6 +150,12 @@ namespace TGE
 		UNDEFVIRT(preload);
 
 		MEMBERFN(void, packData, (BitStream *stream), 0x407E41_win, 0x27530_mac);
+	};
+
+	template<typename T>
+	class SimObjectPtr
+	{
+		T *mObj;
 	};
 
 	class SimFieldDictionary

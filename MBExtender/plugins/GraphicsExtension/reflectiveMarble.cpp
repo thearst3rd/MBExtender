@@ -207,7 +207,7 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::renderImage, (TGE::Marble *thisptr, TGE
 	}
 
 	// If we are cloaked just do an original render.
-	if (thisptr->getCloakLevel() > 0) {
+	if (thisptr->mCloakLevel > 0) {
 		originalRenderImage(thisptr, state, image);
 		return;
 	}

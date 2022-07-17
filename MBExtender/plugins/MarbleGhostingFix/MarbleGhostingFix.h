@@ -153,15 +153,15 @@ struct MarbleUpdateInfo {
 			TGE::Con::printf("Marble transform update: %s", StringMath::print(transform));
 		}
 		if ((types & VelocityUpdateFlag) == VelocityUpdateFlag) {
-			marble->setVelocity(velocity);
-			marble->setAngularVelocity(angularVelocity);
+			marble->mVelocity = velocity;
+			marble->mOmega = angularVelocity;
 
 			TGE::Con::printf("Marble velocity update: %s", StringMath::print(velocity));
 			TGE::Con::printf("Marble angular velocity update: %s", StringMath::print(angularVelocity));
 		}
 		if ((types & CameraUpdateFlag) == CameraUpdateFlag) {
-			marble->setCameraPitch(camera.x);
-			marble->setCameraYaw(camera.y);
+			marble->mCameraPitch = camera.x;
+			marble->mCameraYaw = camera.y;
 
 			TGE::Con::printf("Marble camera pitch update: %s", StringMath::print(camera.x));
 			TGE::Con::printf("Marble camera yaw update: %s", StringMath::print(camera.y));
@@ -176,8 +176,8 @@ struct MarbleUpdateInfo {
 			TGE::Con::printf("Marble gravity update: %s", StringMath::print(gravity));
 		}
 		if ((types & SizeUpdateFlag) == SizeUpdateFlag) {
-			marble->setCollisionRadius(size);
-			marble->setCollisionBox(Box3F(size * 2.0f));
+			marble->mRadius = size;
+			marble->mObjBox = Box3F(size * 2.0f);
 
 			TGE::Con::printf("Marble size update: %s", StringMath::print(size));
 		}

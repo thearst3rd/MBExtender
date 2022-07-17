@@ -37,7 +37,7 @@ MBX_MODULE(Fading);
  */
 MBX_CONSOLE_METHOD(ShapeBase, setFadeVal, void, 3, 3, "obj.setFadeVal(F32 value);") {
 	//Set the object's fade value to what we're given
-	object->setFadeVal(StringMath::scan<F32>(argv[2]));
+	object->mFadeVal = StringMath::scan<F32>(argv[2]);
 	//Set the CloakMask bits so it sends an update to clients
 	object->setMaskBits(0x80);
 }
@@ -47,7 +47,7 @@ MBX_CONSOLE_METHOD(ShapeBase, setFadeVal, void, 3, 3, "obj.setFadeVal(F32 value)
  * @return The fade value
  */
 MBX_CONSOLE_METHOD(ShapeBase, getFadeVal, F32, 2, 2, "obj.getFadeVal();") {
-	return object->getFadeVal();
+	return object->mFadeVal;
 }
 
 MBX_OVERRIDE_MEMBERFN(U32, TGE::ShapeBase::packUpdate, (TGE::ShapeBase *thisptr, TGE::NetConnection *connection, U32 mask, TGE::BitStream *stream), originalPackUpdate) {
@@ -55,7 +55,7 @@ MBX_OVERRIDE_MEMBERFN(U32, TGE::ShapeBase::packUpdate, (TGE::ShapeBase *thisptr,
 	// setfade nonsense that we have to deal with
 	U32 ret = originalPackUpdate(thisptr, connection, mask, stream);
 	//Send the fade state
-	MathIO::write(stream, thisptr->getFadeVal());
+	MathIO::write(stream, thisptr->mFadeVal);
 	return ret;
 }
 
@@ -65,5 +65,5 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::unpackUpdate, (TGE::ShapeBase *thisp
 	//Update the fade state
 	F32 fadeVal;
 	MathIO::read(stream, &fadeVal);
-	thisptr->setFadeVal(fadeVal);
+	thisptr->mFadeVal = fadeVal;
 }

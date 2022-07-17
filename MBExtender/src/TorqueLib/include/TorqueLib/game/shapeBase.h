@@ -25,6 +25,7 @@
 #include <MBExtender/InteropMacros.h>
 #include <TorqueLib/platform/platform.h>
 
+#include <TorqueLib/core/dnet.h>
 #include <TorqueLib/game/gameBase.h>
 #include <TorqueLib/sceneGraph/sceneState.h>
 #include <TorqueLib/ts/tsShapeInstance.h>
@@ -32,25 +33,174 @@
 namespace TGE
 {
 	class BitStream;
-
-	struct Thread {
-		enum State {
-			Play, Stop, Pause, FromMiddle
-		};
-		TSShapeInstance::TSThread* thread;
-		U32 state;
-
-
-		S32 sequence;
-		U32 sound;
-		bool atEnd;
-		bool forward;
-	};
+	class ShapeBaseData;
+	class AudioProfile;
+	class TSThread;
+	class ShapeBaseImageData;
+	class ShapeBaseImageDataStateData;
+	class TSShapeInstance;
+	class Convex;
+	class Shadow;
+	class DebrisData;
+	class ExplosionData;
 
 	class ShapeBase : public GameBase
 	{
 		BRIDGE_CLASS(ShapeBase);
 	public:
+		enum DamageState {
+			Enabled,
+			Disabled,
+			Destroyed,
+			NumDamageStates,
+			NumDamageStateBits = 2,
+		};
+
+		struct Sound {
+			bool play;
+			U32 timeout;
+			AudioProfile *profile;
+			void *sound;
+		};
+		struct Thread {
+			enum State {
+				Play, Stop, Pause, FromMiddle
+			};
+			TSThread *thread;
+			U32 state;
+			S32 sequence;
+			U32 sound;
+			bool atEnd;
+			bool forward;
+			char unused[10];
+		};
+		struct MountedImage {
+			ShapeBaseImageData *datablock; // 0
+			ShapeBaseImageDataStateData *state; // 4
+			ShapeBaseImageData *nextImage; // 8
+			StringHandle skinNameHandle; // c
+			StringHandle nextSkinNameHandle; // 10
+
+			bool loaded; // 14
+			bool nextLoaded; // 15
+			F32 delayTime; // 18
+			U32 fireCount; // 1c
+
+			bool triggerDown; // 20
+			bool ammo; // 21
+			bool target; // 22
+			bool wet; // 23
+
+			TSShapeInstance *shapeInstance; // 24
+			TSThread *ambientThread; // 28
+			TSThread *visThread; // 2c
+			TSThread *animThread; // 30
+			TSThread *flashThread; // 34
+			TSThread *spinThread; // 38
+
+			U32 lightStart; // 3c
+//			LightInfo mLight; // not included in mbg ?
+			bool animLoopingSound; // 40
+			void *animSound; // 44
+			void *unused[9]; // 48-6c extra space idk
+		};
+		struct MountInfo {
+			ShapeBase *list;
+			ShapeBase *object;
+			ShapeBase *link;
+			U32 node;
+		};
+		struct CollisionTimeout {
+			CollisionTimeout *next;
+			ShapeBase *object;
+			U32 objectNumber;
+			U32 expireTime;
+			VectorF vector;
+		};
+
+		ShapeBaseData *mDataBlock; // 26c
+		GameConnection *mControllingClient; // 270
+		ShapeBase *mControllingObject; // 274
+		bool mTrigger[6]; // 278
+
+		Sound mSoundThread[4]; // 280
+		Thread mScriptThread[4]; // 2c0
+
+		F32 mInvincibleCount; //  330
+		F32 mInvincibleTime; // 334
+		F32 mInvincibleSpeed; // 338
+		F32 mInvincibleDelta; // 33c
+		F32 mInvincibleEffect; // 340
+		F32 mInvincibleFade; // 344
+		bool mInvincibleOn; // 348
+
+		MountedImage mMountedImageList[8]; // 34c
+		TSShapeInstance* mShapeInstance; // 6ac
+		Convex *mConvexList; // 6b0
+		Shadow *mShadow; // 6b4
+		bool mGenerateShadow; // 6b8
+		StringHandle mSkinNameHandle; // 6bc
+		StringHandle mShapeNameHandle; // 6c0
+
+		F32 mEnergy; // 6c4
+		F32 mRechargeRate; // 6c8
+		bool mChargeEnergy; // 6cc
+
+		F32 mMass; // 6d0
+		F32 mOneOverMass; // 6d4
+
+		F32 mDrag; // 6d8
+		F32 mBuoyancy; // 6dc
+		U32 mLiquidType; // 6e0
+		F32 mLiquidHeight; // 6e4
+		F32 mWaterCoverage; // 6e8
+
+		Point3F mAppliedForce; // 6ec
+		F32 mGravityMod; // 6f8
+
+		F32 mDamageFlash; // 6fc
+		F32 mWhiteOut; // 700
+		void *data_704; // 704
+
+		bool mFlipFadeVal; // 708
+		U32 mLightTime; // 70c
+
+		Point3F mShieldNormal; // 710
+
+		MountInfo mMount; // 71c
+
+		CollisionTimeout *mTimeoutList; // 72c
+		F32 mDamage; // 730
+		F32 mRepairRate; // 734
+		F32 mRepairReserve; // 738
+		bool mRepairDamage; // 73c
+		DamageState mDamageState; // 740
+		TSThread *mDamageThread; // 744
+		TSThread *mHulkThread; // 748
+		VectorF damageDir; // 74c
+		bool blowApart; // 758
+
+		bool mCloaked; // 759
+		F32 mCloakLevel; // 75c
+		TextureHandle mCloakTexture; // 760
+		bool mHidden; // 764
+
+		bool mFadeOut; // 765
+		bool mFading; // 766
+		F32 mFadeVal; // 768
+		F32 mFadeElapsedTime; // 76c
+		F32 mFadeTime; // 770
+		F32 mFadeDelay; // 774
+
+		F32 mCameraFov; // 778
+		bool mIsControlled; // 77c
+
+		U32 mLastRenderFrame; // 780
+		F32 mLastRenderDistance; // 784
+		U32 mSkinHash; // 788
+
+		// Total size: 78c
+
 		MEMBERFN(bool, isHidden, (), 0x405371_win, 0x2BB60_mac);
 		UNDEFVIRT(setImage);
 		UNDEFVIRT(onImageRecoil);
@@ -111,12 +261,6 @@ namespace TGE
 		UNDEFVIRT(getBounceFriction);
 		UNDEFVIRT(setHidden);
 
-		GETTERFN(F32, getFadeVal, 0x768);
-		SETTERFN(F32, setFadeVal, 0x768);
-
-		GETTERFN(F32, getCloakLevel, 0x75C);
-		SETTERFN(F32, setCloakLevel, 0x75C);
-
 		MEMBERFN(void, queueCollision, (ShapeBase* object, const VectorF& vec, U32 materialId), 0x40389b_win, 0x97980_mac);
 
 		MEMBERFN(void, renderObject, (SceneState *state, SceneRenderImage *image), 0x4E5CD0_win, 0xA5F00_mac);
@@ -128,28 +272,16 @@ namespace TGE
 
 		MEMBERFN(void, setHidden, (bool hidden), 0x40104B_win, 0x95BD0_mac);
 
-		GETTERFN(bool, getHiddenGetter, 0x764_win, 0x764_mac);
-		SETTERFN(bool, setHiddenSetter, 0x764_win, 0x764_mac);
-
-		GETTERFN(Thread::State, getThread1State, 0x2C4_win, 0x2C4_mac);
-		SETTERFN(Thread::State, setThread1State, 0x2C4_win, 0x2C4_mac);
-
-		GETTERFN(bool, getThread1Forward, 0x2D1_win, 0x2D1_mac);
-		SETTERFN(bool, setThread1Forward, 0x2D1_win, 0x2D1_mac);
-
-		GETTERFN(bool, getThread1AtEnd, 0x2D0_win, 0x2D0_mac);
-		SETTERFN(bool, setThread1AtEnd, 0x2D0_win, 0x2D0_mac);
-
-
-		GETTERFN(TSShapeInstance::TSThread*, getThread1, 0x2C0_win, 0x2C0_mac);
-		SETTERFN(TSShapeInstance::TSThread*, setThread1, 0x2C0_win, 0x2C0_mac);
-
-		GETTERFN(TSShapeInstance*, getTSShapeInstance, 0x6AC_win, 0x6AC_mac);
-
 		MEMBERFN(void, updateThread, (Thread& st), 0x406A69_win, 0x9B2C0_mac);
 
 		MEMBERFN(bool, onAdd, (), 0x40234C_win, 0x0A2AF0_mac);
 		MEMBERFN(void, onRemove, (), 0x408607_win, 0x9FB70_mac);
+
+		/// Returns the client controling this object
+		GameConnection* getControllingClient() { return mControllingClient; }
+
+		/// Returns the object controling this object
+		ShapeBase* getControllingObject()   { return mControllingObject; }
 	};
 
 	class ShapeBaseData : public GameBaseData

@@ -247,9 +247,9 @@ int Node_getPrevNode(const char* objId, const char* nodeId, const char* groupId)
 
 		if (strcmp(obj->getClassRep()->getClassName(), "StaticShape") == 0) {
 			TGE::GameBase* gameObj = static_cast<TGE::GameBase*>(obj);
-			TGE::GameBaseData* datablock = gameObj->getDataBlock();
+			TGE::GameBaseData* datablock = gameObj->mDataBlock;
 			if (datablock)
-				if (strcmp(gameObj->getDataBlock()->mName, "PathNode") == 0) {
+				if (strcmp(gameObj->mDataBlock->mName, "PathNode") == 0) {
 					const char* nextNode = obj->getDataField("nextNode"_ts, NULL);
 					const char* _nextNodeId = obj->getDataField("_nextNodeId"_ts, NULL);
 
@@ -889,7 +889,7 @@ MBX_CONSOLE_METHOD(SceneObject, updateParenting, void, 3, 3, "SceneObject::updat
 	finalTransform *= off;
 
 	object->setTransformVirt(finalTransform);
-	object->setTransformMember(finalTransform);
+	object->mObjToWorld = finalTransform; // not sure why
 }
 
 //MBX_CONSOLE_FUNCTION(SceneObjectgetSurfaceVelocity, const char*, 5, 5, "SceneObjectgetSurfaceVelocity(this, marble, point, distance)")
@@ -902,7 +902,7 @@ MBX_CONSOLE_METHOD(SceneObject, updateParenting, void, 3, 3, "SceneObject::updat
 //
 //	if (strstr(thisobj->getClassRep()->getClassName(), "StaticShape")) {
 //		TGE::ShapeBase* thisShape = static_cast<TGE::ShapeBase*>(thisobj);
-//		if (strcasestr(thisShape->getDataBlock()->mName, "IceShard") != NULL) {
+//		if (strcasestr(thisShape->mDataBlock->mName, "IceShard") != NULL) {
 //			if (atoi(marble->getDataField("fireball"_ts, NULL))) {
 //				MBX_Free((void*)pointstr);
 //				MBX_Free((void*)diststr);

@@ -191,7 +191,7 @@ MBX_CONSOLE_FUNCTION(_innerRadarBuildSearch, void, 4, 4, "_innerRadarBuildSearch
 		if (obj->mTypeMask & TGE::TypeMasks::ItemObjectType) {
 			TGE::Item *item = static_cast<TGE::Item*>(obj);
 
-			ShapeBaseData *datablock = static_cast<ShapeBaseData*>(item->getDataBlock());
+			ShapeBaseData *datablock = static_cast<ShapeBaseData*>(item->mDataBlock);
 			const char *shapeFile = datablock->getShapeFile();
 
 			bool isGem = (strstr(datablock->mName, "GemItem") != NULL) || (strstr(datablock->mName, "CandyItem") != NULL);

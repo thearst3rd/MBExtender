@@ -35,4 +35,9 @@ namespace TGE
 		unsigned char z_fields[0x9C];
 		virtual void z_placeholder() = 0; // Force virtual inheritance
 	};
+
+	class StringHandle {
+	public:
+		U32 index;
+	};
 }

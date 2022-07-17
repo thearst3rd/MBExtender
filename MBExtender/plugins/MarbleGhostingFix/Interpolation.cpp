@@ -62,8 +62,8 @@ MBX_ON_CLIENT_PROCESS(interpolateMarbles, (uint32_t delta)) {
 		}
 
 		//Various velocities that we should apply
-		Point3D velocity = marble->getVelocity();
-		Point3D angularVelocity = marble->getAngularVelocity();
+		Point3D velocity = marble->mVelocity;
+		Point3D angularVelocity = marble->mOmega;
 
 		if (mIsNaN(velocity) || mIsNaN(angularVelocity)) {
 			//Don't go anywhere near NaN.
@@ -81,7 +81,7 @@ MBX_ON_CLIENT_PROCESS(interpolateMarbles, (uint32_t delta)) {
 		// collision detection at the edge of the marble.
 		Point3F radiusDir(velocity.toPoint3F());
 		radiusDir.normalize();
-		radiusDir *= marble->getCollisionRadius();
+		radiusDir *= marble->mRadius;
 
 		if (mIsNaN(radiusDir)) {
 			//Eek! Squares are bad!

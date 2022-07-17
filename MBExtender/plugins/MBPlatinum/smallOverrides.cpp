@@ -213,7 +213,7 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::TSShape::read, (TGE::TSShape *thisptr, TGE::Str
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::setHidden, (TGE::ShapeBase *thisptr, bool hidden), originalSetHidden) {
 	originalSetHidden(thisptr, hidden);
-	if (hidden && thisptr->getNetFlags() & TGE::NetObject::NetObject::ScopeAlways) {
+	if (hidden && thisptr->mNetFlags & TGE::NetObject::NetObject::ScopeAlways) {
 		thisptr->clearScopeAlways();
 	}
 }

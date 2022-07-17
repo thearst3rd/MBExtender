@@ -38,8 +38,23 @@ namespace TGE
 	{
 		BRIDGE_CLASS(GameBase);
 	public:
-		GETTERFN(GameConnection*, getControllingClient, 0x270);
-		GETTERFN(GameBaseData *, getDataBlock, 0x248);
+		struct Link {
+			GameBase *next;
+			GameBase *prev;
+		};
+
+		GameBaseData *mDataBlock; // 248
+		StringTableEntry *mNameTag; // 24c
+
+		U32 mProcessTag; // 250
+		Link mProcessLink; // 254
+		SimObjectPtr<GameBase> mAfterObject; // 25c
+		U32 data_260; // 260
+		bool mProcessTick; // 264
+		F32 mTickMS; // 268
+
+		// Full size: 26c
+
 		MEMBERFN(U32, packUpdate, (TGE::NetConnection *conn, U32 mask, TGE::BitStream *stream), 0x405191_win, 0xE83A0_mac);
 		MEMBERFN(void, unpackUpdate, (TGE::NetConnection *conn, TGE::BitStream *stream), 0x406FF5_win, 0xE8B20_mac);
 

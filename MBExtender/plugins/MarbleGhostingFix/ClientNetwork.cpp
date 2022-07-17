@@ -58,13 +58,13 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::MarbleUpdateEvent::pack, (TGE::MarbleUpdateEven
 		//Read physics values from the marble
 		mat = controlObject->getTransform();
 
-		velocity = controlObject->getVelocity();
-		angularVelocity = controlObject->getAngularVelocity();
+		velocity = controlObject->mVelocity;
+		angularVelocity = controlObject->mOmega;
 
-		camera.set(controlObject->getCameraPitch(), 0, controlObject->getCameraYaw());
+		camera.set(controlObject->mCameraPitch, 0, controlObject->mCameraYaw);
 
 		gravity = gMarbleData[controlObject->getId()].gravity.ortho;
-		size = controlObject->getCollisionRadius();
+		size = controlObject->mRadius;
 
 		//It's always nice when your game doesn't crash because you pickup up a gyrocopter.
 		if (stream->writeFlag(velocity.x != NAN)) {
@@ -123,8 +123,8 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::unpackUpdate, (TGE::Marble *thisptr, TG
 		//Only update if it's another marble
 		if (!us) {
 			//And apply them to the marble
-			thisptr->setVelocity(velocity);
-			thisptr->setAngularVelocity(angularVelocity);
+			thisptr->mVelocity = velocity;
+			thisptr->mOmega = angularVelocity;
 		}
 	}
 
@@ -151,8 +151,8 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::unpackUpdate, (TGE::Marble *thisptr, TG
 		//Only update if it's another marble
 		if (!us) {
 			//And apply them to the marble
-			thisptr->setCameraPitch(camera.x);
-			thisptr->setCameraYaw(camera.y);
+			thisptr->mCameraPitch = camera.x;
+			thisptr->mCameraYaw = camera.y;
 		}
 	}
 
@@ -176,12 +176,12 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::unpackUpdate, (TGE::Marble *thisptr, TG
 
 		if (!us) {
 			//And apply
-			thisptr->setCollisionRadius(size);
-			thisptr->setCollisionBox(Box3F(size * 2.0f));
+			thisptr->mRadius = size;
+			thisptr->mObjBox = Box3F(size * 2.0f);
 			gMarbleData[thisptr->getId()].size = size;
 		}
 	}
 
 	//Controllable is always send
-	thisptr->setControllable(stream->readFlag());
+	thisptr->mControllable = stream->readFlag();
 }

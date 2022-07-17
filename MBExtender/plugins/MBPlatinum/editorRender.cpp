@@ -52,7 +52,7 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::EditTSCtrl::EditTSCtrl_renderWorld, (TGE::EditT
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderObject, (TGE::ShapeBase* thisptr, TGE::SceneState* state, TGE::SceneRenderImage* image), originalRenderObject) {
 	//Check our datablock and see if it's editor-only
-	TGE::GameBaseData *datablock = thisptr->getDataBlock();
+	TGE::GameBaseData *datablock = thisptr->mDataBlock;
 	if (!datablock) {
 		// Apparently this can happen on Perseverance...
 		// originalRenderObject(thisptr, state, image);
@@ -68,7 +68,7 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::ShapeBase::renderObject, (TGE::ShapeBase* thisp
 	if (distance && *distance) {
 		F32 dataRenderDistance = StringMath::scan<F32>(distance);
 		//If too far, stop
-		if ((thisptr->getWorldBox().getCenter() - gCameraCache.getPosition()).lenSquared() > dataRenderDistance * dataRenderDistance) {
+		if ((thisptr->mWorldBox.getCenter() - gCameraCache.getPosition()).lenSquared() > dataRenderDistance * dataRenderDistance) {
 			shouldRender = false;
 		}
 	}

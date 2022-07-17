@@ -30,12 +30,14 @@
 #include <TorqueLib/math/mMatrix.h>
 #include <TorqueLib/sim/netObject.h>
 #include <TorqueLib/core/tVector.h>
+#include <TorqueLib/core/color.h>
 #include <TorqueLib/dgl/materialList.h>
 
 namespace TGE
 {
 	class SceneRenderImage;
 	class SceneState;
+	class SceneGraph;
 
 	struct RayInfo : public Collision
 	{
@@ -66,12 +68,93 @@ namespace TGE
 	public:
 		MEMBERFN(bool, castRay, (const Point3F &start, const Point3F &end, U32 mask, RayInfo *info), 0x403652_win, 0x192B80_mac);
 		MEMBERFN(void, findObjects, (const Box3F& box, U32 mask, FindCallback, void* key), 0x402DFB_win, 0x18F760_mac);
+		struct Link
+		{
+			Link* next;
+			Link* prev;
+		};
+	};
+
+	class SceneObjectRef
+	{
+	public:
+		class SceneObject *object;
+		SceneObjectRef *nextInBin;
+		SceneObjectRef *prevInBin;
+		SceneObjectRef *nextInObj;
+		U32 zone;
 	};
 
 	class SceneObject : public NetObject
 	{
 		BRIDGE_CLASS(SceneObject);
 	public:
+
+		enum SceneObjectMasks {
+			ScaleMask = 1 << 0,
+			NextFreeMask = ScaleMask << 1
+		};
+
+		struct LightingInfo
+		{
+			bool                       mUseInfo;
+			bool                       mDirty;
+			ColorF                     mDefaultColor;
+			ColorF                     mAlarmColor;
+
+			SimObjectPtr<SceneObject>  mInterior;
+
+			bool                       mHasLastColor;
+			ColorF                     mLastColor;
+			U32                        mLastTime;
+
+			enum {
+				Interior = 0,
+				Terrain,
+			};
+			U32                        mLightSource;
+		};
+		enum TraversalState {
+			Pending = 0,
+			Working = 1,
+			Done = 2
+		};
+
+		Container::Link link; // 4c
+		LightingInfo mLightingInfo; // 54
+		Container *mContainer; //98
+		MatrixF mObjToWorld; // 9c
+		MatrixF mWorldToObj; // dc
+		Point3F mObjScale; // 11c
+
+		Box3F mObjBox; // 128
+		Box3F mWorldBox; // 140
+		SphereF mWorldSphere; // 158
+
+		MatrixF mRenderObjToWorld; // 168
+		MatrixF mRenderWorldToObj; // 1a8
+		Box3F mRenderWorldBox; // 1e8
+		SphereF mRenderWorldSphere; // 200
+
+		SceneObjectRef *mZoneRefHead; // 210
+		SceneObjectRef *mBinRefHead; // 214
+
+		U32 mBinMinX; // 218
+		U32 mBinMaxX; // 21c
+		U32 mBinMinY; // 220
+		U32 mBinMaxY; // 224
+
+		U32 mContainerSeqKey; // 228
+		S32 mCollisionCount; // 22c
+		SceneGraph *mSceneManager; // 230
+		U32 mZoneRangeStart; // 234
+		U32 mNumCurrZones; // 238
+		TraversalState mTraversalState; // 23c
+		SceneState *mLastState; // 240
+		U32 mLastStateKey; // 244
+
+		// Full size: 248
+
 		virtual void disableCollision() = 0;
 		virtual void enableCollision() = 0;
 		UNDEFVIRT(isDisplacable);
@@ -112,20 +195,25 @@ namespace TGE
 
 		//		MEMBERFN(void, renderObject, (void *sceneState, void *sceneRenderImage), (sceneState, sceneRenderImage), 0x4E5CD0_win, 0xA5F00_mac);
 
-		GETTERFN(MatrixF, getTransform, 0x9C);
-		GETTERFN(Box3F, getWorldBox, 0x140);
-
-		GETTERFN(Box3F, getCollisionBox, 0x128);
-		SETTERFN(Box3F, setCollisionBox, 0x128);
-
-		SETTERFN(MatrixF, setTransformMember, 0x9C);
-		SETTERFN(Box3F, setWorldBox, 0x140);
-
-		GETTERFN(Point3F, getScale, 0x11C);
 		MEMBERFN(void, setScale, (const VectorF &scale), 0x4091CE_win, 0x18DD10_mac);
 
-		FIELD(Box3F, mObjBox, 0x128);
-		FIELD(Container*, mContainer, 0x98);
+
+		/// Returns the transform which can be used to convert object space
+		/// to world space
+		const MatrixF& getTransform() const      { return mObjToWorld; }
+
+		/// Returns the transform which can be used to convert world space
+		/// into object space
+		const MatrixF& getWorldTransform() const { return mWorldToObj; }
+
+		/// Returns the scale of the object
+		const VectorF& getScale() const          { return mObjScale;   }
+
+		/// Returns the bounding box for this object in local coordinates
+		const Box3F&   getObjBox() const        { return mObjBox;      }
+
+		/// Returns the bounding box for this object in world coordinates
+		const Box3F&   getWorldBox() const      { return mWorldBox;    }
 	};
 
 	FN(void, cSetTransform, (TGE::SimObject *obj, int argc, const char **argv), 0x402CB1_win, 0x18EE70_mac);
