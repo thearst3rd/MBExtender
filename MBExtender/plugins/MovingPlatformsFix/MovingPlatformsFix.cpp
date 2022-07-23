@@ -36,6 +36,8 @@
 #include <TorqueLib/collision/abstractPolyList.h>
 #include <TorqueLib/core/stringTable.h>
 
+#include <string>
+
 #ifdef __APPLE__
 #include <mach/vm_map.h>
 #include <mach/mach_init.h>
@@ -76,6 +78,8 @@ static bool gSimulatePathedInteriors = true;
 static TGE::Marble *gAdvancingMarble = NULL;
 static std::unordered_map<TGE::SceneObject *, Point3F> gVelocityCache;
 
+void updateMarbleMetrics(TGE::Marble* thisObj);
+
 void advancePathedInteriors(U32 delta) {
 	if (!gSimulatePathedInteriors)
 		return;
@@ -90,44 +94,6 @@ void advancePathedInteriors(U32 delta) {
 	gVelocityCache.clear();
 }
 
-MBX_CONSOLE_METHOD(Marble, testThing, void, 2, 2, "")
-{
-	TGE::Marble* marble = static_cast<TGE::Marble*>(TGE::Sim::findObject(argv[1]));
-	TGE::Con::printf("Best Contact");
-	TGE::Con::printf("Position %s", StringMath::print(marble->mBestContact.position));
-	TGE::Con::printf("Normal %s", StringMath::print(marble->mBestContact.normal));
-	TGE::Con::printf("ActualNormal %s", StringMath::print(marble->mBestContact.actualNormal));
-	TGE::Con::printf("SurfaceVel %s", StringMath::print(marble->mBestContact.surfaceVelocity));
-	TGE::Con::printf("SurfaceFrictionVel %s", StringMath::print(marble->mBestContact.surfaceFrictionVelocity));
-	TGE::Con::printf("StaticFriction %s", StringMath::print(marble->mBestContact.staticFriction));
-	TGE::Con::printf("KineticFriction %s", StringMath::print(marble->mBestContact.kineticFriction));
-	TGE::Con::printf("vAtC %s", StringMath::print(marble->mBestContact.vAtC));
-	TGE::Con::printf("vAtCMag %s", StringMath::print(marble->mBestContact.vAtCMag));
-	TGE::Con::printf("NormalForce %s", StringMath::print(marble->mBestContact.normalForce));
-	TGE::Con::printf("ContactDistance %s", StringMath::print(marble->mBestContact.contactDistance));
-	TGE::Con::printf("Friction %s", StringMath::print(marble->mBestContact.friction));
-	TGE::Con::printf("Restitution %s", StringMath::print(marble->mBestContact.restitution));
-	TGE::Con::printf("Force %s", StringMath::print(marble->mBestContact.force));
-	TGE::Con::printf("Material %s", StringMath::print(marble->mBestContact.material));
-
-	TGE::Con::printf("Last Contact");
-	TGE::Con::printf("Position %s", StringMath::print(marble->mLastContact.position));
-	TGE::Con::printf("Normal %s", StringMath::print(marble->mLastContact.normal));
-	TGE::Con::printf("ActualNormal %s", StringMath::print(marble->mLastContact.actualNormal));
-	TGE::Con::printf("SurfaceVel %s", StringMath::print(marble->mLastContact.surfaceVelocity));
-	TGE::Con::printf("SurfaceFrictionVel %s", StringMath::print(marble->mLastContact.surfaceFrictionVelocity));
-	TGE::Con::printf("StaticFriction %s", StringMath::print(marble->mLastContact.staticFriction));
-	TGE::Con::printf("KineticFriction %s", StringMath::print(marble->mLastContact.kineticFriction));
-	TGE::Con::printf("vAtC %s", StringMath::print(marble->mLastContact.vAtC));
-	TGE::Con::printf("vAtCMag %s", StringMath::print(marble->mLastContact.vAtCMag));
-	TGE::Con::printf("NormalForce %s", StringMath::print(marble->mLastContact.normalForce));
-	TGE::Con::printf("ContactDistance %s", StringMath::print(marble->mLastContact.contactDistance));
-	TGE::Con::printf("Friction %s", StringMath::print(marble->mLastContact.friction));
-	TGE::Con::printf("Restitution %s", StringMath::print(marble->mLastContact.restitution));
-	TGE::Con::printf("Force %s", StringMath::print(marble->mLastContact.force));
-	TGE::Con::printf("Material %s", StringMath::print(marble->mLastContact.material));
-}
-
 MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::computeFirstPlatformIntersect, (TGE::Marble* thisPtr, F64* moveTime), originalComputeFirstPlatformIntersect) {
 	originalComputeFirstPlatformIntersect(thisPtr, moveTime);
 }
@@ -135,6 +101,8 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::computeFirstPlatformIntersect, (TGE::Ma
 // Hook for Marble::advancePhysics that sets gLocalUpdate to true if a local update is occurring
 MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::advancePhysics, (TGE::Marble *thisObj, TGE::Move *move, U32 delta), originalAdvancePhysics)
 {
+
+
 	gAdvancingMarble = thisObj;
 	if (TGE::NetConnection::getConnectionToServer() == thisObj->getControllingClient()) {
 		//findContacts();
@@ -148,6 +116,107 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::Marble::advancePhysics, (TGE::Marble *thisObj, 
 
 	gAdvancingMarble = NULL;
 	gVelocityCache.clear();
+	updateMarbleMetrics(thisObj);
+}
+
+void updateMarbleMetrics(TGE::Marble* thisObj) {
+	TGE::Con::setVariable("$MarbleContacts", StringMath::print(thisObj->mContacts.size()));
+	for (U32 i = 0; i < thisObj->mContacts.size(); i ++) {
+//		TGE::Con::setVariable(std::string("$MarbleContactObject" + std::to_string(i)).c_str(), thisObj->mContacts[i].object ? thisObj->mContacts[i].object->getIdString() : "0");
+		TGE::Con::setVariable(std::string("$MarbleContactPosition" + std::to_string(i)).c_str(), StringMath::print(thisObj->mContacts[i].position));
+		TGE::Con::setVariable(std::string("$MarbleContactNormal" + std::to_string(i)).c_str(), StringMath::print(thisObj->mContacts[i].normal));
+		TGE::Con::setVariable(std::string("$MarbleContactActualNormal" + std::to_string(i)).c_str(), StringMath::print(thisObj->mContacts[i].actualNormal));
+		TGE::Con::setVariable(std::string("$MarbleContactSurfaceVelocity" + std::to_string(i)).c_str(), StringMath::print(thisObj->mContacts[i].surfaceVelocity));
+		TGE::Con::setVariable(std::string("$MarbleContactSurfaceFrictionVelocity" + std::to_string(i)).c_str(), StringMath::print(thisObj->mContacts[i].surfaceFrictionVelocity));
+		TGE::Con::setVariable(std::string("$MarbleContactStaticFriction" + std::to_string(i)).c_str(), StringMath::print(thisObj->mContacts[i].staticFriction));
+		TGE::Con::setVariable(std::string("$MarbleContactKineticFriction" + std::to_string(i)).c_str(), StringMath::print(thisObj->mContacts[i].kineticFriction));
+		TGE::Con::setVariable(std::string("$MarbleContactVAtC" + std::to_string(i)).c_str(), StringMath::print(thisObj->mContacts[i].vAtC));
+		TGE::Con::setVariable(std::string("$MarbleContactVAtCMag" + std::to_string(i)).c_str(), StringMath::print(thisObj->mContacts[i].vAtCMag));
+		TGE::Con::setVariable(std::string("$MarbleContactNormalForce" + std::to_string(i)).c_str(), StringMath::print(thisObj->mContacts[i].normalForce));
+		TGE::Con::setVariable(std::string("$MarbleContactContactDistance" + std::to_string(i)).c_str(), StringMath::print(thisObj->mContacts[i].contactDistance));
+		TGE::Con::setVariable(std::string("$MarbleContactFriction" + std::to_string(i)).c_str(), StringMath::print(thisObj->mContacts[i].friction));
+		TGE::Con::setVariable(std::string("$MarbleContactRestitution" + std::to_string(i)).c_str(), StringMath::print(thisObj->mContacts[i].restitution));
+		TGE::Con::setVariable(std::string("$MarbleContactForce" + std::to_string(i)).c_str(), StringMath::print(thisObj->mContacts[i].force));
+		TGE::Con::setVariable(std::string("$MarbleContactMaterial" + std::to_string(i)).c_str(), StringMath::print(thisObj->mContacts[i].material));
+	}
+//	TGE::Con::setVariable("$MarbleBestContactObject", thisObj->mBestContact.object ? thisObj->mBestContact.object->getIdString() : "0");
+	TGE::Con::setVariable("$MarbleBestContactPosition", StringMath::print(thisObj->mBestContact.position));
+	TGE::Con::setVariable("$MarbleBestContactNormal", StringMath::print(thisObj->mBestContact.normal));
+	TGE::Con::setVariable("$MarbleBestContactActualNormal", StringMath::print(thisObj->mBestContact.actualNormal));
+	TGE::Con::setVariable("$MarbleBestContactSurfaceVelocity", StringMath::print(thisObj->mBestContact.surfaceVelocity));
+	TGE::Con::setVariable("$MarbleBestContactSurfaceFrictionVelocity", StringMath::print(thisObj->mBestContact.surfaceFrictionVelocity));
+	TGE::Con::setVariable("$MarbleBestContactStaticFriction", StringMath::print(thisObj->mBestContact.staticFriction));
+	TGE::Con::setVariable("$MarbleBestContactKineticFriction", StringMath::print(thisObj->mBestContact.kineticFriction));
+	TGE::Con::setVariable("$MarbleBestContactVAtC", StringMath::print(thisObj->mBestContact.vAtC));
+	TGE::Con::setVariable("$MarbleBestContactVAtCMag", StringMath::print(thisObj->mBestContact.vAtCMag));
+	TGE::Con::setVariable("$MarbleBestContactNormalForce", StringMath::print(thisObj->mBestContact.normalForce));
+	TGE::Con::setVariable("$MarbleBestContactContactDistance", StringMath::print(thisObj->mBestContact.contactDistance));
+	TGE::Con::setVariable("$MarbleBestContactFriction", StringMath::print(thisObj->mBestContact.friction));
+	TGE::Con::setVariable("$MarbleBestContactRestitution", StringMath::print(thisObj->mBestContact.restitution));
+	TGE::Con::setVariable("$MarbleBestContactForce", StringMath::print(thisObj->mBestContact.force));
+	TGE::Con::setVariable("$MarbleBestContactMaterial", StringMath::print(thisObj->mBestContact.material));
+//	TGE::Con::setVariable("$MarbleLastContactObject", thisObj->mLastContact.object ? thisObj->mLastContact.object->getIdString() : "0");
+	TGE::Con::setVariable("$MarbleLastContactPosition", StringMath::print(thisObj->mLastContact.position));
+	TGE::Con::setVariable("$MarbleLastContactNormal", StringMath::print(thisObj->mLastContact.normal));
+	TGE::Con::setVariable("$MarbleLastContactActualNormal", StringMath::print(thisObj->mLastContact.actualNormal));
+	TGE::Con::setVariable("$MarbleLastContactSurfaceVelocity", StringMath::print(thisObj->mLastContact.surfaceVelocity));
+	TGE::Con::setVariable("$MarbleLastContactSurfaceFrictionVelocity", StringMath::print(thisObj->mLastContact.surfaceFrictionVelocity));
+	TGE::Con::setVariable("$MarbleLastContactStaticFriction", StringMath::print(thisObj->mLastContact.staticFriction));
+	TGE::Con::setVariable("$MarbleLastContactKineticFriction", StringMath::print(thisObj->mLastContact.kineticFriction));
+	TGE::Con::setVariable("$MarbleLastContactVAtC", StringMath::print(thisObj->mLastContact.vAtC));
+	TGE::Con::setVariable("$MarbleLastContactVAtCMag", StringMath::print(thisObj->mLastContact.vAtCMag));
+	TGE::Con::setVariable("$MarbleLastContactNormalForce", StringMath::print(thisObj->mLastContact.normalForce));
+	TGE::Con::setVariable("$MarbleLastContactContactDistance", StringMath::print(thisObj->mLastContact.contactDistance));
+	TGE::Con::setVariable("$MarbleLastContactFriction", StringMath::print(thisObj->mLastContact.friction));
+	TGE::Con::setVariable("$MarbleLastContactRestitution", StringMath::print(thisObj->mLastContact.restitution));
+	TGE::Con::setVariable("$MarbleLastContactForce", StringMath::print(thisObj->mLastContact.force));
+	TGE::Con::setVariable("$MarbleLastContactMaterial", StringMath::print(thisObj->mLastContact.material));
+	TGE::Con::setVariable("$MarbleData_928", StringMath::print(thisObj->data_928));
+	TGE::Con::setVariable("$MarbleDeltaPos", StringMath::print(thisObj->delta.pos));
+	TGE::Con::setVariable("$MarbleDeltaPosVec", StringMath::print(thisObj->delta.posVec));
+	TGE::Con::setVariable("$MarbleDeltaPrevMouseX", StringMath::print(thisObj->delta.prevMouseX));
+	TGE::Con::setVariable("$MarbleDeltaPrevMouseY", StringMath::print(thisObj->delta.prevMouseY));
+//	TGE::Con::setVariable("$MarbleDataBlock", thisObj->mDataBlock ? thisObj->mDataBlock->getIdString() : "0");
+	TGE::Con::setVariable("$MarblePositionKey", StringMath::print(thisObj->mPositionKey));
+	TGE::Con::setVariable("$MarbleData_9c0", StringMath::print(thisObj->data_9c0));
+	TGE::Con::setVariable("$MarbleBounceEmitDelay", StringMath::print(thisObj->mBounceEmitDelay));
+	TGE::Con::setVariable("$MarblePowerUpId", StringMath::print(thisObj->mPowerUpId));
+	TGE::Con::setVariable("$MarblePowerUpTimer", StringMath::print(thisObj->mPowerUpTimer));
+	TGE::Con::setVariable("$MarbleData_9d0", StringMath::print(thisObj->data_9d0));
+	TGE::Con::setVariable("$MarbleMode", StringMath::print(thisObj->mMode));
+	TGE::Con::setVariable("$MarbleDataRollingHardSound", StringMath::print(thisObj->mRollingHardSound));
+	TGE::Con::setVariable("$MarbleDataRollingSoftSound", StringMath::print(thisObj->mRollingSoftSound));
+	TGE::Con::setVariable("$MarbleRadius", StringMath::print(thisObj->mRadius));
+	TGE::Con::setVariable("$MarbleGravityUp", StringMath::print(thisObj->mGravityUp));
+	TGE::Con::setVariable("$MarbleVelocity", StringMath::print(thisObj->mVelocity));
+	TGE::Con::setVariable("$MarblePosition", StringMath::print(thisObj->mPosition));
+	TGE::Con::setVariable("$MarbleOmega", StringMath::print(thisObj->mOmega));
+	TGE::Con::setVariable("$MarbleCameraYaw", StringMath::print(thisObj->mCameraYaw));
+	TGE::Con::setVariable("$MarbleCameraPitch", StringMath::print(thisObj->mCameraPitch));
+	TGE::Con::setVariable("$MarbleMouseZ", StringMath::print(thisObj->mMouseZ));
+	TGE::Con::setVariable("$MarbleGroundTime", StringMath::print(thisObj->mGroundTime));
+	TGE::Con::setVariable("$MarbleControllable", StringMath::print(thisObj->mControllable));
+	TGE::Con::setVariable("$MarbleOOB", StringMath::print(thisObj->mOOB));
+	TGE::Con::setVariable("$MarbleOOBCamPos", StringMath::print(thisObj->mOOBCamPos));
+	TGE::Con::setVariable("$MarbleData_a68", StringMath::print(thisObj->data_a68));
+	TGE::Con::setVariable("$MarbleServerMarbleId", StringMath::print(thisObj->mServerMarbleId));
+	TGE::Con::setVariable("$MarbleData_a70", StringMath::print(thisObj->data_a70));
+//	TGE::Con::setVariable("$MarblePadPtr", thisObj->mPadPtr ? thisObj->mPadPtr->getIdString() : "0");
+	TGE::Con::setVariable("$MarbleOnPad", StringMath::print(thisObj->mOnPad));
+	TGE::Con::setVariable("$MarbleMaterialCollisions", StringMath::print(thisObj->mMaterialCollisions.size()));
+	for (U32 i = 0; i < thisObj->mMaterialCollisions.size(); i++) {
+		TGE::Con::setVariable(std::string("$MarbleMaterialCollisionGhostIndex" + std::to_string(i)).c_str(), StringMath::print(thisObj->mMaterialCollisions[i].ghostIndex));
+		TGE::Con::setVariable(std::string("$MarbleMaterialCollisionMaterialId" + std::to_string(i)).c_str(), StringMath::print(thisObj->mMaterialCollisions[i].materialId));
+		TGE::Con::setVariable(std::string("$MarbleMaterialCollisionAlsoGhostIndex" + std::to_string(i)).c_str(), StringMath::print(thisObj->mMaterialCollisions[i].alsoGhostIndex));
+	}
+	for (U32 i = 0; i < 6; i ++) {
+		TGE::Con::setVariable(std::string("$MarblePowerUpStateActive" + std::to_string(i)).c_str(), StringMath::print(thisObj->mPowerUpState[i].active));
+		TGE::Con::setVariable(std::string("$MarblePowerUpStateEndTime" + std::to_string(i)).c_str(), StringMath::print(thisObj->mPowerUpState[i].endTime));
+//		TGE::Con::setVariable(std::string("$MarblePowerUpStateEmitter" + std::to_string(i)).c_str(), thisObj->mPowerUpState[i].emitter ? thisObj->mPowerUpState[i].emitter->getIdString() : "0");
+	}
+//	TGE::Con::setVariable("$MarbleTrailEmitter", thisObj->mTrailEmitter ? thisObj->mTrailEmitter->getIdString() : "0");
+	TGE::Con::setVariable("$MarblePredictionTicks", StringMath::print(thisObj->mPredictionTicks));
+	TGE::Con::setVariable("$MarbleCameraOffset", StringMath::print(thisObj->mCameraOffset));
 }
 
 // Hook for Camera::advancePhysics that moves MP if you're not a marble
