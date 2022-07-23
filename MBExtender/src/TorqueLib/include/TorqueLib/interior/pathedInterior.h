@@ -30,11 +30,50 @@
 namespace TGE
 {
 	struct Move;
+	class InteriorResource;
+	class PathedInteriorData;
 
 	class PathedInterior : public GameBase
 	{
 		BRIDGE_CLASS(PathedInterior);
 	public:
+
+		struct ShadowVolume {
+			U32 start;
+			U32 count;
+		};
+
+		PathedInteriorData *mDataBlock; // 26c
+
+		StringTableEntry mName; // 270
+		S32 mPathIndex; // 274
+		Vector<StringTableEntry> mTriggers; // 278
+		Point3F mOffset; // 284
+		Box3F mExtrudedBox; // 290
+		bool mStopped; // 2a8
+		Vector<void*> data_2ac; // 2ac
+		Vector<void*> data_2b8; // 2b8
+		Vector<U32> mShadowVolumeIndices; // 2c4
+		Vector<ShadowVolume> mShadowVolumes; // 2d0
+		Vector<Point3F> mShadowVolumePoints; // 2dc
+		bool mHasComputedNormals; // 2e8
+		Point3F mShadowVolume; // 2ec
+		U32 data_2f8; // 2f8
+		StringTableEntry mInteriorResName; // 2fc
+		S32 mInteriorResIndex; // 300
+		Resource<InteriorResource> mInteriorRes; // 304
+		Interior* mInterior; // 308
+		Vector<ColorI> mVertexColorsNormal; // 30c
+		Vector<ColorI> mVertexColorsAlarm; // 318
+		U32 mLMHandle; // 324
+		MatrixF mBaseTransform; // 328
+		Point3F mBaseScale; // 368
+		U32 mPathKey; // 374
+		F64 mCurrentPosition; // 378
+		S32 mTargetPosition; // 380
+		Point3F mCurrentVelocity; // 384
+		PathedInterior *mNextClientPI; // 390
+
 		MEMBERFN(void, advance, (double delta), 0x4075FE_win, 0x24B8B0_mac);
 		MEMBERFN(void, computeNextPathStep, (U32 delta), 0x40879C_win, 0x24C6C0_mac);
 

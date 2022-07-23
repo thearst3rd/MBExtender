@@ -288,6 +288,90 @@ namespace TGE
 	{
 		BRIDGE_CLASS(ShapeBaseData);
 	public:
+		StringTableEntry shapeName; // 48
+		StringTableEntry cloakTexName; // 4c
+
+		DebrisData *debris; // 50
+		S32 debrisID; // 54
+		StringTableEntry debrisShapeName; // 58
+		Resource<TSShape> debrisShape; // 5c
+
+		ExplosionData* explosion; // 60
+		S32 explosionID; // 64
+
+		ExplosionData* underwaterExplosion; // 68
+		S32 underwaterExplosionID; // 6c
+
+		F32 mass; // 70
+		F32 drag; // 74
+		F32 density; // 78
+		F32 maxEnergy; // 7c
+		F32 maxDamage; // 80
+		F32 repairRate; // 84
+
+		F32 disabledLevel; // 88
+		F32 destroyedLevel; // 8c
+
+		S32 shieldEffectLifetimeMS; // 90
+
+		F32 cameraMaxDist; // 94
+		F32 cameraMinDist; // 98
+
+		F32 cameraDefaultFov; // 9c
+		F32 cameraMinFov; // a0
+		F32 cameraMaxFov; // a4
+
+		Resource<TSShape> shape; // a8
+		U32 mCRC; // ac
+		bool computeCRC; // b0
+
+		S32 eyeNode; // b4
+		S32 cameraNode; // b8
+		S32 shadowNode; // bc
+		S32 mountPointNode[32]; // c0
+		S32 debrisDetail; // 140
+		S32 damageSequence; // 144
+		S32 hulkSequence; // 148
+
+		U32 data_14c; // 14c
+		U32 data_150; // 150
+		U32 data_154; // 154
+
+		bool canControl; // 158
+		bool canObserve; // 159
+		bool observeThroughObject; // 15a
+
+		StringTableEntry hudImageNameFriendly[8]; // 15c
+		StringTableEntry hudImageNameEnemy[8]; // 17c
+		TextureHandle hudImageFriendly[8]; // 19c
+		TextureHandle hudImageEnemy[8]; // 1bc
+
+		bool hudRenderCenter[8]; // 1dc
+		bool hudRenderModulated[8]; // 1e4
+		bool hudRenderAlways[8]; // 1ec
+		bool hudRenderDistance[8]; // 1f4
+		bool hudRenderName[8]; // 1fc
+
+		S32 collisionDetails[8]; // 204
+		Box3F collisionBounds[8]; // 224
+		S32 LOSDetails[8]; // 2e4
+
+		F32 genericShadowLevel; // 304
+		F32 noShadowLevel; // 308
+
+		char data_30c; // 30c
+		bool emap; // 30d
+		bool firstPersonOnly; // 30e
+		bool useEyePoint; // 30f
+		bool aiAvoidThis; // 310
+
+		bool isInvincible; // 311
+		bool renderWhenDestroyed; // 312
+
+		bool inheritEnergyFromMount; // 313
+
+		// Full size: 314
+
 		GETTERFN(const char*, getShapeFile, 0x48);
 		MEMBERFN(void, packData, (BitStream *stream), 0xA3620_mac, 0x407F81_win);
 		MEMBERFN(void, unpackData, (BitStream *stream), 0xA3C70_mac, 0x405C7C_win);

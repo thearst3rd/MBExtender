@@ -36,21 +36,9 @@ namespace TGE
 {
 	class BitStream;
 	class ParticleEmitter;
+	class ParticleEmitterData;
 	class MarbleData;
-	struct Move
-	{
-		// packed storage rep, set in clamp
-		S32 px, py, pz;
-		U32 pyaw, ppitch, proll;
-		F32 x, y, z;          // float -1 to 1
-		F32 yaw, pitch, roll; // 0-2PI
-		U32 id;               // sync'd between server & client - debugging tool.
-		U32 sendCount;
 
-		bool freeLook;
-		bool trigger[4];
-
-	};
 	class NetConnection;
 
 	class Marble : public ShapeBase
@@ -162,8 +150,8 @@ namespace TGE
 		U32 data_9d0; // 9d0 / 9c0
 		U32 mMode; // 9d4 / 9c4
 //		U32 mModeTimer;
-		U32 data_9d8; // 9d8 / 9c8
-		U32 data_9dc; // 9dc / 9cc
+		U32 mRollingHardSound; // 9d8 / 9c8
+		U32 mRollingSoftSound; // 9dc / 9cc
 		F32 mRadius; // 9e0 / 9d0
 #ifdef _WIN32
 		U32 data_9e4; // 9e4 / NA
@@ -233,6 +221,38 @@ namespace TGE
 	{
 		BRIDGE_CLASS(MarbleData);
 	public:
+		AudioProfile *rollHardSound; // 314
+		AudioProfile *slipSound; // 318
+		AudioProfile *bounce1; // 31c
+		AudioProfile *bounce2; // 320
+		AudioProfile *bounce3; // 324
+		AudioProfile *bounce4; // 328
+		AudioProfile *jumpSound; // 32c
+		F32 maxRollVelocity; // 330
+		F32 minVelocityBounceSoft; // 334
+		F32 minVelocityBounceHard; // 338
+		F32 angularAcceleration; // 33c
+		F32 brakingAcceleration; // 340
+		F32 staticFriction; // 344
+		F32 kineticFriction; // 348
+		F32 bounceKineticFriction; // 34c
+		F32 gravity; // 350
+		F32 maxDotSlide; // 354
+		F32 bounceRestitution; // 358
+		F32 airAcceleration; // 35c
+		F32 energyRechargeRate; // 360
+		F32 jumpImpulse; // 364
+		F32 cameraDistance; // 368
+		U32 maxJumpTicks; // 36c
+		F32 maxForceRadius; // 370
+		F32 minBounceVel; // 374
+		F32 minBounceSpeed; // 378
+		F32 minTrailSpeed; // 37c
+		ParticleEmitterData *bounceEmitter; // 380
+		ParticleEmitterData *trailEmitter; // 384
+		ParticleEmitterData *powerUpEmitter[6]; // 388
+		U32 powerUpTime[6]; // 3a0
+
 		MEMBERFN(void, packData, (BitStream *stream), 0x405D08_win, 0x25ED70_mac);
 		GETTERFN(F32, getCollisionRadius, 0x94);
 		SETTERFN(F32, setCollisionRadius, 0x94);

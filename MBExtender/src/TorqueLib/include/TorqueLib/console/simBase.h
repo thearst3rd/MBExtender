@@ -144,6 +144,10 @@ namespace TGE
 	{
 		BRIDGE_CLASS(SimDataBlock);
 	public:
+		S32 modifiedKey; // 30
+
+		// Full size: 34
+
 		UNDEFVIRT(onStaticModified);
 		UNDEFVIRT(packData);
 		UNDEFVIRT(unpackData);
@@ -230,6 +234,8 @@ namespace TGE
 		FN(SimObject*, findObject, (const char *name), 0x405308_win, 0x257D0_mac);
 		FN(SimObject*, findObject_int, (SimObjectId id), 0x408FCB_win, 0x025480_mac);
 		GLOBALVAR(U32, gCurrentTime, 0x69DF80_win, 0x2FD870_mac);
+
+		FN(U32, getCurrentTime, (), 0x4c17c0_win, 0_mac);
 
 		FN(void, cancelEvent, (U32 eventSequence), 0x4018F2_win, 0x025360_mac);
 	}

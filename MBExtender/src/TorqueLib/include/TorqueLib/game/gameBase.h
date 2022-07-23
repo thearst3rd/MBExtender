@@ -34,6 +34,24 @@ namespace TGE
 	class GameConnection;
 	class NetConnection;
 
+	struct Move
+	{
+		// packed storage rep, set in clamp
+		S32 px, py, pz;
+		U32 pyaw, ppitch, proll;
+		F32 x, y, z;          // float -1 to 1
+		F32 yaw, pitch, roll; // 0-2PI
+		U32 id;               // sync'd between server & client - debugging tool.
+		U32 sendCount;
+
+		bool freeLook;
+		bool trigger[4];
+
+	};
+
+	GLOBALVAR(Move, gFirstMove, 0x6ac0b0_win, 0x305e80_mac);
+	GLOBALVAR(Move, gNextMove, 0x6ac190_win, 0x305e40_mac);
+
 	class GameBase : public SceneObject
 	{
 		BRIDGE_CLASS(GameBase);
@@ -61,8 +79,8 @@ namespace TGE
 		UNDEFVIRT(onNewDataBlock);
 		UNDEFVIRT(processTick);
 		UNDEFVIRT(interpolateTick);
-		UNDEFVIRT(advanceTime);
-		UNDEFVIRT(advancePhysics);
+		virtual void advanceTime(U32 delta);
+		virtual void advancePhysicsVirt(TGE::Move *move, U32 delta);
 		UNDEFVIRT(getVelocity);
 		UNDEFVIRT(getForce);
 		UNDEFVIRT(writePacketData);
@@ -73,7 +91,26 @@ namespace TGE
 	class GameBaseData : public SimDataBlock
 	{
 		BRIDGE_CLASS(GameBaseData);
+	public:
+		bool packed; // 34
+		StringTableEntry category; // 38
+		StringTableEntry className; // 3c
+		U32 data_40; // 40
+		U32 data_44; // 44
+
+		// Full size: 48
 	};
+
+	class ProcessList
+	{
+		BRIDGE_CLASS(ProcessList);
+	public:
+		GETTERFN(GameBase, head, 0);
+
+		MEMBERFN(bool, advanceClientTime, (U32 timeDelta), 0x402cac_win, 0_mac);
+	};
+
+	GLOBALVAR(TGE::ProcessList, gClientProcessList, 0x6ab428_win, 0x306400_mac);
 
 #ifdef __APPLE__
 	GLOBALVAR(bool, gShowBoundingBox, 0x306A18_mac);
