@@ -351,9 +351,18 @@ void genBuffers(const std::string &interiorFile, TGE::Interior *thisptr, TGE::Ma
 		if (tex && tex->getActualTexture()) {
 			//For some reason the actual texture isn't what is stored... what
 			TGE::TextureObject *obj = tex->getActualTexture();
+			if (!obj) {
+				TGE::Con::errorf("Obj is null? tex: %p obj: %p i: %d ml: %p", tex, obj, i, thisptr->mMaterialList);
+				continue;
+			}
 
 			//Get the name for the MaterialInfo
 			const char *path = obj->mTextureKey;
+			if (!path) {
+				TGE::Con::errorf("Path is null? tex: %p obj: %p i: %d ml: %p", tex, obj, i, thisptr->mMaterialList);
+				continue;
+			}
+
 			//Resolve the path, as it consists of the interior's path and the texture
 			// name (so you get platinum/data/interiors/beginner/texture.jpg)
 			std::string name = IO::findClosestTextureName(path);

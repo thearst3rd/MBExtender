@@ -369,6 +369,9 @@ ArrayObject *ArrayObject::resolve(SimObjectId objectId) {
 }
 
 MBX_OVERRIDE_MEMBERFN(void, TGE::SimObject::deleteObject, (TGE::SimObject *thisptr), originalDeleteObject) {
+	// Why the fuck
+	if (!thisptr)
+		return;
 	std::unordered_map<S32, ArrayObject *>::iterator it = gArrayObjects.find(thisptr->getId());
 	if (it != gArrayObjects.end()) {
 		delete it->second;

@@ -40,6 +40,7 @@ namespace
 	constexpr int32_t PQConsoleLogStreamType = 0x5051434c;  // 'PQCL'
 
 	std::string Username;
+	bool crashedYet = false;
 
 	std::string dumpConsole()
 	{
@@ -167,6 +168,11 @@ namespace
 
 		if (SUCCEEDED(exception->ExceptionRecord->ExceptionCode))
 			return EXCEPTION_CONTINUE_SEARCH;
+
+		if (crashedYet)
+			return EXCEPTION_CONTINUE_SEARCH;
+
+		crashedYet = true;
 
 		writeCrashDump(exception);
 		pruneOldCrashes();

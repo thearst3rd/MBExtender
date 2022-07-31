@@ -182,11 +182,11 @@ bool toJson(const char *input, Json::Value &output) {
 
 				S32 size = array->getSize();
 				for (S32 i = 0; i < size; i ++) {
-					const char *value = array->getEntry(i).c_str();
+					std::string value = array->getEntry(i);
 
 					//Insert into the the array
 					Json::Value val;
-					if (!toJson(value, val))
+					if (!toJson(value.c_str(), val))
 						return false;
 					output[i] = val;
 				}
