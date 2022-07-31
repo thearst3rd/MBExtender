@@ -53,6 +53,7 @@
 #if defined(_WIN32)
 #include <TorqueLib/platformWin32/platformWin32.h>
 #endif
+#include <TorqueLib/math/mathUtils.h>
 
 //This file is henceforth known as "pissyGGfixes" by Matan
 
@@ -536,6 +537,27 @@ MBX_CONSOLE_METHOD_NAMED(MaterialProperty, getClassName, const char *, 2, 2, "")
 	return "MaterialProperty"_ts;
 }
 
+void collisionFanFromSurface(TGE::Interior* interior, const TGE::Interior::Surface& rSurface, U32* fanIndices, U32* numIndices)
+{
+	U32 tempIndices[32];
+
+	tempIndices[0] = 0;
+	U32 idx = 1;
+	U32 i;
+	for (i = 1; i < rSurface.windingCount; i += 2)
+		tempIndices[idx++] = i;
+	for (i = ((rSurface.windingCount - 1) & (~0x1)); i > 0; i -= 2)
+		tempIndices[idx++] = i;
+
+	idx = 0;
+	for (i = 0; i < rSurface.windingCount; i++) {
+		if (rSurface.fanMask & (1 << i)) {
+			fanIndices[idx++] = interior->mWindings[rSurface.windingStart + tempIndices[i]];
+		}
+	}
+	*numIndices = idx;
+}
+
 // Why is it so hard to bounds-check array accesses?
 MBX_OVERRIDE_MEMBERFN(bool, TGE::Interior::castRay_r, (TGE::Interior *thisPtr, U16 node, U16 planeIndex, const Point3F &s, const Point3F &e, TGE::RayInfo *info), originalCastRayR)
 {
@@ -543,6 +565,187 @@ MBX_OVERRIDE_MEMBERFN(bool, TGE::Interior::castRay_r, (TGE::Interior *thisPtr, U
 		return false;
 	if (thisPtr->isBSPSolidLeaf(node) && thisPtr->getBSPSolidLeafIndex(node) >= thisPtr->mBSPSolidLeaves.size())
 		return false;
+
+	if (thisPtr->isBSPLeafIndex(node) == false) {
+		const TGE::Interior::IBSPNode& rNode = thisPtr->mBSPNodes[node];
+		const PlaneF& rPlane = thisPtr->getPlane(rNode.planeIndex);
+
+		PlaneF::Side sSide = rPlane.whichSide(s);
+		PlaneF::Side eSide = rPlane.whichSide(e);
+
+		switch (PlaneSwitchCode(sSide, eSide)) {
+		case PlaneSwitchCode(PlaneF::Front, PlaneF::Front):
+		case PlaneSwitchCode(PlaneF::Front, PlaneF::On):
+		case PlaneSwitchCode(PlaneF::On, PlaneF::Front):
+			return thisPtr->castRay_r(rNode.frontIndex, planeIndex, s, e, info);
+			break;
+
+		case PlaneSwitchCode(PlaneF::On, PlaneF::Back):
+		case PlaneSwitchCode(PlaneF::Back, PlaneF::On):
+		case PlaneSwitchCode(PlaneF::Back, PlaneF::Back):
+			return thisPtr->castRay_r(rNode.backIndex, planeIndex, s, e, info);
+			break;
+
+		case PlaneSwitchCode(PlaneF::On, PlaneF::On):
+			// Line lies on the plane
+			if (thisPtr->isBSPLeafIndex(rNode.backIndex) == false) {
+				if (thisPtr->castRay_r(rNode.backIndex, planeIndex, s, e, info))
+					return true;
+			}
+			if (thisPtr->isBSPLeafIndex(rNode.frontIndex) == false) {
+				if (thisPtr->castRay_r(rNode.frontIndex, planeIndex, s, e, info))
+					return true;
+			}
+			return false;
+			break;
+
+		case PlaneSwitchCode(PlaneF::Front, PlaneF::Back): {
+			Point3F ip;
+			F32     intersectT = rPlane.intersect(s, e);
+			AssertFatal(intersectT != PARALLEL_PLANE, "Error, this should never happen in this case!");
+			ip.interpolate(s, e, intersectT);
+			if (thisPtr->castRay_r(rNode.frontIndex, planeIndex, s, ip, info))
+				return true;
+			return thisPtr->castRay_r(rNode.backIndex, rNode.planeIndex, ip, e, info);
+		}
+														 break;
+
+		case PlaneSwitchCode(PlaneF::Back, PlaneF::Front): {
+			Point3F ip;
+			F32     intersectT = rPlane.intersect(s, e);
+			AssertFatal(intersectT != PARALLEL_PLANE, "Error, this should never happen in this case!");
+			ip.interpolate(s, e, intersectT);
+			if (thisPtr->castRay_r(rNode.backIndex, planeIndex, s, ip, info))
+				return true;
+			return thisPtr->castRay_r(rNode.frontIndex, rNode.planeIndex, ip, e, info);
+		}
+														 break;
+
+		default:
+			AssertFatal(false, "Misunderstood switchCode in Interior::castRay_r");
+			return false;
+		}
+	}
+
+	if (thisPtr->isBSPSolidLeaf(node)) {
+		// DMM: Set material info here.. material info? hahaha
+
+		info->point = s;
+
+		if (planeIndex != U16(-1)) {
+			const PlaneF& rPlane = thisPtr->getPlane(planeIndex);
+			info->normal = rPlane;
+			if (thisPtr->planeIsFlipped(planeIndex)) {
+				info->normal.neg();
+				if (rPlane.whichSide(e) == PlaneF::Back)
+					info->normal.neg();
+			}
+			else {
+				if (rPlane.whichSide(e) == PlaneF::Front)
+					info->normal.neg();
+			}
+		}
+		else {
+			// Point started in solid;
+			if (s == e) {
+				info->normal.set(0, 0, 1);
+			}
+			else {
+				info->normal = s - e;
+				info->normal.normalize();
+			}
+		}
+
+		// ok.. let's get it on! get the face that was hit
+		info->face = U32(-1);
+
+		bool obj2difd = false;
+
+		const TGE::Interior::IBSPLeafSolid& rLeaf = thisPtr->mBSPSolidLeaves[thisPtr->getBSPSolidLeafIndex(node)];
+		for (U32 i = 0; i < rLeaf.surfaceCount; i++)
+		{
+			U32 surfaceIndex = thisPtr->mSolidLeafSurfaces[rLeaf.surfaceIndex + i];
+			if (thisPtr->isNullSurfaceIndex(surfaceIndex))
+				continue;
+
+			const TGE::Interior::Surface& rSurface = thisPtr->mSurfaces[surfaceIndex];
+
+			PlaneF plane = thisPtr->getPlane(rSurface.planeIndex);
+			if (thisPtr->planeIsFlipped(rSurface.planeIndex))
+				plane.neg();
+
+			obj2difd = false;
+
+			if (thisPtr->areEqualPlanes(rSurface.planeIndex, planeIndex))
+			{
+				// unfan this surface
+				U32 winding[32];
+				U32 windingCount;
+				collisionFanFromSurface(thisPtr, rSurface, winding, &windingCount);
+
+				// inside this surface?
+				bool inside = true;
+				for (U32 j = 0; inside && (j < windingCount); j++)
+				{
+					U32 k = (j + 1) % windingCount;
+
+					Point3F vec1 = thisPtr->mPoints[winding[k]].point - thisPtr->mPoints[winding[j]].point;
+					Point3F vec2 = info->point - thisPtr->mPoints[winding[j]].point;
+
+					Point3F cross;
+					mCross(vec2, vec1, &cross);
+
+					if (mDot(plane, cross) < 0.f)
+						inside = false;
+				}
+
+				if (inside)
+				{
+					info->face = surfaceIndex;
+					break;
+				}
+				
+			}
+			else 
+			{
+				obj2difd = true;
+				// obj2dif-ed interior
+				
+
+				Point3F hit;
+				if (!plane.intersect(s, e - s, &hit))
+				{
+					break;
+				}
+
+				for (int i = 0; i < rSurface.windingCount - 2; i++)
+				{
+					Point3F& p0 = thisPtr->mPoints[thisPtr->mWindings[i + rSurface.windingStart]].point;
+					Point3F& p1 = thisPtr->mPoints[thisPtr->mWindings[i + rSurface.windingStart + 1]].point;
+					Point3F& p2 = thisPtr->mPoints[thisPtr->mWindings[i + rSurface.windingStart + 2]].point;
+
+					Point3F outHit;
+					float outT;
+					if (MathUtils::mLineTriangleCollide(s, e, p0, p1, p2, &outHit, &outT))
+					{
+						info->face = surfaceIndex;
+						// info->point = hit;
+						info->normal = plane;
+						return true;
+					}
+				}
+
+				
+			}
+		}
+
+		if (obj2difd)
+			return false;
+
+		return true;
+	}
+	return false;
+
 	return originalCastRayR(thisPtr, node, planeIndex, s, e, info);
 }
 
@@ -957,6 +1160,11 @@ MBX_OVERRIDE_FASTCALLFN(bool, TGE::cullSource, (int* index, float volume), origC
 		return false;
 
 	return origCullSource(index, volume);
+}
+
+MBX_OVERRIDE_MEMBERFN(void, TGE::NetConnection::eventReadPacket, (TGE::NetConnection* thisptr, TGE::BitStream* bstream), origReadPacket)
+{
+	origReadPacket(thisptr, bstream);
 }
 
 // Block the game from changing the screen gamma because this is [current year]

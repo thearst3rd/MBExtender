@@ -48,6 +48,9 @@ namespace TGE
 		MEMBERFN(bool, postNetEvent, (NetEvent *event), 0x402F59_win, 0x19A5B0_mac);
 		MEMBERFN(S32, getGhostIndex, (NetObject *obj), 0x403607_win, 0x197AA0_mac);
 		MEMBERFN(NetObject *, resolveGhost, (S32 id), 0x402D60_win, 0x197A20_mac);
+		MEMBERFN(void, readPacket, (BitStream* bstream), 0x405943_win, 0x19B550_mac);
+		MEMBERFN(void, eventReadPacket, (BitStream* bstream), 0x403166_win, 0x19AB10_mac);
+		MEMBERFN(void, ghostReadPacket, (BitStream* bstream), 0x406050_win, 0x199080_mac);
 	};
 
 	class NetEvent : public ConsoleObject

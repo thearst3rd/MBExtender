@@ -120,6 +120,11 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::PathedInterior::renderObject, (TGE::PathedInter
 	gCurrentPathedInterior = NULL;
 }
 
+MBX_CONSOLE_FUNCTION(setInteriorRenderMode, void, 2, 2, "setInteriorRenderMode(int)")
+{
+	TGE::InteriorRenderMode = atoi(argv[1]);
+}
+
 MBX_OVERRIDE_MEMBERFN(void, TGE::Interior::renderSmooth, (TGE::Interior *thisptr, TGE::MaterialList *mat, TGE::ItrFastDetail *itr, bool a, int b, unsigned int c), originalRenderSmooth) {
 
 	// If the glinterior is null, we have to fallback to fixed function
@@ -129,6 +134,12 @@ MBX_OVERRIDE_MEMBERFN(void, TGE::Interior::renderSmooth, (TGE::Interior *thisptr
 	// TODO: $pref::useInteriorShaders = true; must be set in order to use shaders
 	if (currentPass != "fwd")
 		return;
+
+	if (TGE::InteriorRenderMode != 0) {
+		thisptr->debugRender(mat, thisptr->mLMHandle);
+		return;
+	}
+
 	if (!gEnableState.interiorRenderBuffers || !gEnableState.shaders || !gEnableState.global) {
 		originalRenderSmooth(thisptr, mat, itr, a, b, c);
 		return;

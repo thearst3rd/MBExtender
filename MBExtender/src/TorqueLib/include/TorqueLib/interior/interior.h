@@ -201,7 +201,7 @@ namespace TGE
 			U32   binCount;
 		};
 		U32                     mFileVersion; // Probably
-		void *                  mLMHandle; // -1
+		U32                     mLMHandle; // -1
 		U32                     mDetailLevel;
 		U32                     mMinPixels;
 		F32                     mAveTexGenLength;     // Set in Interior::read after loading the texgen planes.
@@ -307,7 +307,34 @@ namespace TGE
 			return index & ~0xC000;
 		}
 
+		PlaneF& Interior::getPlane(U16 index) 
+		{
+		   return this->mPlanes[index & ~0x8000];
+		}
+
+		U16 Interior::getPlaneIndex(U16 index)
+		{
+		   return U16(index & ~0x8000);
+		}
+
+		bool Interior::planeIsFlipped(U16 index)
+		{
+		   return (index >> 15)!=0;
+		//   return (index & 0x8000) != 0;
+		}
+
+		bool Interior::isNullSurfaceIndex(const U32 index) const
+		{
+		   return (index & 0x80000000) != 0;
+		}
+
+		bool Interior::areEqualPlanes(U16 o, U16 t) const
+		{
+		   return (o & ~0x8000) == (t & ~0x8000);
+		}
+
 		MEMBERFN(void, renderSmooth, (MaterialList *list, ItrFastDetail *itr, bool a, int b, unsigned int c), 0x55EE70_win, 0x1450A0_mac);
+		MEMBERFN(void, debugRender, (MaterialList* pMaterials, U32 instanceHandle), 0x54F9C2_win, 0x15A080_mac);
 		//MEMBERFN(void, renderLights, (void *info, MatrixF const &mat, Point3F const &pt, unsigned int *a, unsigned int b), 0x1457E0_mac);
 		MEMBERFN(bool, castRay_r, (U16 node, U16 planeIndex, const Point3F &s, const Point3F &e, RayInfo *info), 0x406B31_win, 0x15D490_mac);
 
@@ -316,4 +343,6 @@ namespace TGE
 		MEMBERFN(void, truncateZoneNode, (), 0x1470c0_mac, 0x40693D_win);
 		MEMBERFN(bool, read, (TGE::Stream &stream), 0x148190_mac, 0x40824C_win);
 	};
+
+	GLOBALVAR(U32, InteriorRenderMode, 0x2DB614_mac, 0x6B24E0_win);
 }
