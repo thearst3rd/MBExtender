@@ -307,28 +307,28 @@ namespace TGE
 			return index & ~0xC000;
 		}
 
-		PlaneF& Interior::getPlane(U16 index) 
+		PlaneF& getPlane(U16 index) 
 		{
 		   return this->mPlanes[index & ~0x8000];
 		}
 
-		U16 Interior::getPlaneIndex(U16 index)
+		U16 getPlaneIndex(U16 index)
 		{
 		   return U16(index & ~0x8000);
 		}
 
-		bool Interior::planeIsFlipped(U16 index)
+		bool planeIsFlipped(U16 index)
 		{
 		   return (index >> 15)!=0;
 		//   return (index & 0x8000) != 0;
 		}
 
-		bool Interior::isNullSurfaceIndex(const U32 index) const
+		bool isNullSurfaceIndex(const U32 index) const
 		{
 		   return (index & 0x80000000) != 0;
 		}
 
-		bool Interior::areEqualPlanes(U16 o, U16 t) const
+		bool areEqualPlanes(U16 o, U16 t) const
 		{
 		   return (o & ~0x8000) == (t & ~0x8000);
 		}
