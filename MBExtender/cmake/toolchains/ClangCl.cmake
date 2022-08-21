@@ -5,6 +5,10 @@ cmake_minimum_required(VERSION 3.14.0 FATAL_ERROR)
 include(${CMAKE_CURRENT_LIST_DIR}/include/MakeSymlink.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/include/RequireEnv.cmake)
 
+if (NOT "$ENV{UCRTVersion}")
+  include(${CMAKE_CURRENT_LIST_DIR}/include/DefaultLocations.cmake)
+endif()
+
 # Compiler headers/libraries
 # e.g. "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.14.26428"
 require_env(VCToolsInstallDir)
@@ -20,6 +24,17 @@ require_env(UCRTVersion)
 # DirectX SDK
 # e.g. "C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)"
 require_env(DXSDK_DIR)
+
+# Clang installation
+# e.g. /home/build/clang
+require_env(ClangDir)
+
+find_program(HOST_CLANG_PATH "clang" HINTS ${ClangDir} REQUIRED)
+find_program(HOST_CLANG_CL_PATH "clang-cl" HINTS ${ClangDir} REQUIRED)
+find_program(HOST_LLD_LINK_PATH "lld-link" HINTS ${ClangDir} REQUIRED)
+find_program(HOST_LLVM_AR_PATH "llvm-ar" HINTS ${ClangDir} REQUIRED)
+find_program(HOST_LLVM_RANLIB_PATH "llvm-ranlib" HINTS ${ClangDir} REQUIRED)
+find_program(HOST_LLVM_RC_PATH "llvm-rc" HINTS ${ClangDir} REQUIRED)
 
 set(DX_INCLUDE_DIR "${DXSDK_DIR}/Include")
 set(SHARED_INCLUDE_DIR "${UniversalCRTSdkDir}/Include/${UCRTVersion}/shared")
@@ -37,7 +52,7 @@ if($ENV{CLANG_RESOURCE_DIR})
 endif()
 if(NOT CLANG_RESOURCE_DIR)
   execute_process(
-    COMMAND clang -print-resource-dir
+    COMMAND "${HOST_CLANG_PATH}" -print-resource-dir
     RESULT_VARIABLE CLANG_RESULT
     OUTPUT_VARIABLE CLANG_RESOURCE_DIR)
   if(NOT CLANG_RESULT EQUAL 0)
@@ -56,12 +71,12 @@ set(CMAKE_CXX_COMPILER_TARGET "${CMAKE_C_COMPILER_TARGET}" CACHE INTERNAL "")
 # Debug builds are broken
 set(CMAKE_BUILD_TYPE "Release" CACHE INTERNAL "")
 
-set(CMAKE_C_COMPILER "clang-cl" CACHE INTERNAL "")
-set(CMAKE_CXX_COMPILER "clang-cl" CACHE INTERNAL "")
-set(CMAKE_LINKER "lld-link" CACHE INTERNAL "")
-set(CMAKE_AR "llvm-ar" CACHE INTERNAL "")
-set(CMAKE_RANLIB "llvm-ranlib" CACHE INTERNAL "")
-set(CMAKE_RC_COMPILER "llvm-rc" CACHE INTERNAL "")
+set(CMAKE_C_COMPILER "${HOST_CLANG_CL_PATH}" CACHE INTERNAL "")
+set(CMAKE_CXX_COMPILER "${HOST_CLANG_CL_PATH}" CACHE INTERNAL "")
+set(CMAKE_LINKER "${HOST_LLD_LINK_PATH}" CACHE INTERNAL "")
+set(CMAKE_AR "${HOST_LLVM_AR_PATH}" CACHE INTERNAL "")
+set(CMAKE_RANLIB "${HOST_LLVM_RANLIB_PATH}" CACHE INTERNAL "")
+set(CMAKE_RC_COMPILER "${HOST_LLVM_RC_PATH}" CACHE INTERNAL "")
 
 set(CMAKE_RC_COMPILE_OBJECT
     "<CMAKE_RC_COMPILER> /fo <OBJECT> <SOURCE>" CACHE INTERNAL "")

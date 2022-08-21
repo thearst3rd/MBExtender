@@ -76,14 +76,25 @@ option(BUILD_DOCUMENTATION "Use Doxygen to create the HTML based API documentati
 option(USE_INTERMEDIATE_OBJECTS_TARGET "Use a common intermediate objects target for the static and shared library targets" ON)
 
 # These are IA-32 options. TODO: Add ARM A-32, Aarch64 and Power8 options.
-option(DISABLE_ASM "Disable ASM" ON)
-option(DISABLE_SSSE3 "Disable SSSE3" ON)
-option(DISABLE_SSE4 "Disable SSE4" ON)
-option(DISABLE_AESNI "Disable AES-NI" ON)
-option(DISABLE_SHA "Disable SHA" ON)
-option(DISABLE_AVX "Disable AVX" ON)
-option(DISABLE_AVX2 "Disable AVX2" ON)
+option(DISABLE_ASM "Disable ASM" OFF)
+option(DISABLE_SSSE3 "Disable SSSE3" OFF)
+option(DISABLE_SSE4 "Disable SSE4" OFF)
+option(DISABLE_AESNI "Disable AES-NI" OFF)
+option(DISABLE_SHA "Disable SHA" OFF)
+option(DISABLE_AVX "Disable AVX" OFF)
+option(DISABLE_AVX2 "Disable AVX2" OFF)
 set(CRYPTOPP_DATA_DIR "" CACHE PATH "Crypto++ test data directory")
+
+message(STATUS "Clang status? ${MSVC} ${CMAKE_C_COMPILER_ID}")
+if(MSVC AND CMAKE_C_COMPILER_ID MATCHES "Clang")
+  set(DISABLE_ASM ON CACHE BOOL "" FORCE)
+  set(DISABLE_SSSE3 ON CACHE BOOL "" FORCE)
+  set(DISABLE_SSE4 ON CACHE BOOL "" FORCE)
+  set(DISABLE_AESNI ON CACHE BOOL "" FORCE)
+  set(DISABLE_SHA ON CACHE BOOL "" FORCE)
+  set(DISABLE_AVX ON CACHE BOOL "" FORCE)
+  set(DISABLE_AVX2 ON CACHE BOOL "" FORCE)
+endif()
 
 #============================================================================
 # Compiler options
