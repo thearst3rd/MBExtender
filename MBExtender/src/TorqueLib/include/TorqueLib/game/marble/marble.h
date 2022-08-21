@@ -209,6 +209,7 @@ namespace TGE
 
 		MEMBERFN(void, getCameraTransform, (F32 *pos, MatrixF *mat), 0x4982D0_win, 0x25B0A0_mac);
 		MEMBERFN(void, advancePhysics, (Move *move, U32 delta), 0x40252C_win, 0x25B990_mac);
+		MEMBERFN(void, advanceCamera, (Move *move, U32 delta), 0x402ff4_win, 0x256d40_mac);
 
 		MEMBERFN(void, renderImage, (SceneState *state, SceneRenderImage *image), 0x408305_win, 0x253600_mac);
 
