@@ -23,8 +23,12 @@ MBPakFile::MBPakFile(std::string path, KeyStore* keys)
 	this->failed = false;
 	std::ifstream f;
 	f.open(path, std::ifstream::binary);
-	this->ReadHeader(f);
-	f.close();
+	if (f.is_open()) {
+		this->ReadHeader(f);
+		f.close();
+	} else {
+		this->failed = true;
+	}
 }
 
 MBPakFile::~MBPakFile()
