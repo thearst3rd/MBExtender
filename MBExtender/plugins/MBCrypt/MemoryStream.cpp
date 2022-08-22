@@ -4,10 +4,11 @@
 #include <cstring>
 #include <exception>
 #include <stdexcept>
+#include <MBExtender/Allocator.h>
 
 MemoryStream::MemoryStream()
 {
-	this->buffer = new uint8_t[256];
+	this->buffer = (uint8_t*) MBX_Malloc(256);//  new uint8_t[256];
 	this->bufferSize = 256;
 	this->properSize = 0;
 	this->position = 0;
@@ -16,13 +17,14 @@ MemoryStream::MemoryStream()
 MemoryStream::~MemoryStream()
 {
 	if (this->buffer != NULL)
-		delete[] this->buffer;
+		MBX_Free(this->buffer);
+		// delete[] this->buffer;
 }
 
 void MemoryStream::createFromBuffer(uint8_t* buffer, size_t count)
 {
-	delete[] this->buffer;
-	this->buffer = new uint8_t[count];
+	MBX_Free(this->buffer);
+	this->buffer = (uint8_t*)MBX_Malloc(count);
 	this->bufferSize = count;
 	this->properSize = count;
 	this->position = 0;
@@ -31,7 +33,7 @@ void MemoryStream::createFromBuffer(uint8_t* buffer, size_t count)
 
 void MemoryStream::useBuffer(uint8_t* buffer, size_t count)
 {
-	delete[] this->buffer;
+	MBX_Free(this->buffer);
 	this->buffer = buffer;
 	this->bufferSize = count;
 	this->properSize = count;
@@ -154,10 +156,11 @@ void MemoryStream::reallocate()
 	if (this->position >= this->bufferSize)
 	{
 		this->bufferSize += this->REALLOCATE_SIZE;
-		uint8_t* newBuffer = new uint8_t[this->bufferSize]();
-		memcpy(newBuffer, this->buffer, this->bufferSize - this->REALLOCATE_SIZE);
-		delete[] this->buffer;
-		this->buffer = newBuffer;
+		MBX_Realloc(this->buffer, this->bufferSize);
+		//uint8_t* newBuffer = new uint8_t[this->bufferSize]();
+		//memcpy(newBuffer, this->buffer, this->bufferSize - this->REALLOCATE_SIZE);
+		//delete[] this->buffer;
+		//this->buffer = newBuffer;
 	}
 }
 
