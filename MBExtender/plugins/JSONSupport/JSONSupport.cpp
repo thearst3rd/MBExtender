@@ -154,7 +154,7 @@ MBX_CONSOLE_FUNCTION(jsonParse, const char *, 2, 2, "jsonParse(string json);") {
 	}
 }
 
-bool toJson(const char *input, Json::Value &output) {
+bool toJson(const char *input, bool expandObject, Json::Value &output) {
 	S32 length = strlen(input);
 	if (length == 0) {
 		//Null
@@ -163,7 +163,7 @@ bool toJson(const char *input, Json::Value &output) {
 	}
 
 	TGE::SimObject *obj = TGE::Sim::findObject(input);
-	if (obj) {
+	if (expandObject && obj) {
 		//Object of some sort
 		const char *className = obj->getClassRep()->getClassName();
 		//Make sure we only do this to ScriptObjects and Arrays. Could probably
@@ -184,9 +184,11 @@ bool toJson(const char *input, Json::Value &output) {
 				for (S32 i = 0; i < size; i ++) {
 					std::string value = array->getEntry(i);
 
-					//Insert into the the array
+					bool expand = StringMath::scan<bool>(obj->getDataField("__obj"_ts, TGE::StringTable->insert(StringMath::print(i), false)));
+
+					//Insert into the array
 					Json::Value val;
-					if (!toJson(value.c_str(), val))
+					if (!toJson(value.c_str(), expand, val))
 						return false;
 					output[i] = val;
 				}
@@ -217,9 +219,14 @@ bool toJson(const char *input, Json::Value &output) {
 							const char *key = walk->slotName;
 							const char *value = walk->value;
 
-							//Insert into the the array
+							if (strlen(key) > 2 && key[0] == '_' && key[1] == '_')
+								continue;
+
+							bool expand = StringMath::scan<bool>(obj->getDataField("__obj"_ts, TGE::StringTable->insert(key, false)));
+
+							//Insert into the array
 							Json::Value val;
-							if (!toJson(value, val))
+							if (!toJson(value, expand, val))
 								return false;
 							output[key] = val;
 						}
@@ -229,8 +236,7 @@ bool toJson(const char *input, Json::Value &output) {
 				return true;
 			}
 		}
-		output = Json::Value(Json::nullValue);
-		return true;
+		// Fallback to regular string/number
 	}
 
 	//Not an object, try some special things
@@ -287,7 +293,7 @@ MBX_CONSOLE_FUNCTION(jsonPrint, const char *, 2, 2, "jsonPrint(value);") {
 
 	//Try to parse the input into a JSON object
 	Json::Value val;
-	if (!toJson(input, val)) {
+	if (!toJson(input, true, val)) {
 		TGE::Con::errorf("Error printing json: could not parse!");
 		return "";
 	}
