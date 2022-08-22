@@ -369,22 +369,24 @@ MBX_OVERRIDE_MEMBERFN(TGE::File::FileStatus, TGE::File::open, (TGE::File* thispt
 		{
 			MBPakFileEntry* entry = &pak->entries[pak->entryMap[fnSTE]];
 
-			if (openMode == TGE::File::AccessMode::Read)
-			{
-				int64_t bufSize;
-				char* buf = pak->ReadFile(entry, keyStore.aesKey, &bufSize);
-				MemoryStream* str = new MemoryStream();
-				str->useBuffer((uint8_t*)buf, bufSize);
-				openPakFiles.insert(std::make_pair(thisptr, str));
-				thisptr->currentStatus = TGE::File::FileStatus::Ok;
-				thisptr->capability = TGE::File::Capability::FileRead;
-				return TGE::File::FileStatus::Ok;
-			}
-			else
-			{
-				thisptr->currentStatus = TGE::File::FileStatus::IOError;
-				thisptr->capability = 0;
-				return TGE::File::FileStatus::IOError;
+			if (entry->loaded) {
+				if (openMode == TGE::File::AccessMode::Read)
+				{
+					int64_t bufSize;
+					char* buf = pak->ReadFile(entry, keyStore.aesKey, &bufSize);
+					MemoryStream* str = new MemoryStream();
+					str->useBuffer((uint8_t*)buf, bufSize);
+					openPakFiles.insert(std::make_pair(thisptr, str));
+					thisptr->currentStatus = TGE::File::FileStatus::Ok;
+					thisptr->capability = TGE::File::Capability::FileRead;
+					return TGE::File::FileStatus::Ok;
+				}
+				else
+				{
+					thisptr->currentStatus = TGE::File::FileStatus::IOError;
+					thisptr->capability = 0;
+					return TGE::File::FileStatus::IOError;
+				}
 			}
 		}
 	}
@@ -504,9 +506,11 @@ MBX_OVERRIDE_FN(bool, TGE::Platform::isSubDirectory, (const char* parent, const 
 	{
 		for (auto& file : pak->entries)
 		{
-			if (file.filepath.find(dirStr) == 0)
-			{
-				return true;
+			if (file.loaded) {
+				if (file.filepath.find(dirStr) == 0)
+				{
+					return true;
+				}
 			}
 		}
 	}
@@ -541,19 +545,21 @@ MBX_OVERRIDE_FN(bool, TGE::Platform::dumpPath, (const char* path, TGE::Vector<TG
 	{
 		for (auto& file : pak->entries)
 		{
-			if (file.filepath.find(relativeDir) == 0)
-			{
-				TGE::FileInfo f;
-				f.fileSize = file.uncompressedSize;
+			if (file.loaded) {
+				if (file.filepath.find(relativeDir) == 0)
+				{
+					TGE::FileInfo f;
+					f.fileSize = file.uncompressedSize;
 
-				std::string dpath = file.filepath.substr(0, file.filepath.rfind('/'));
-				dpath = dpath.substr(relativeDir.length());
-				dpath = combine(std::string(path), dpath);
+					std::string dpath = file.filepath.substr(0, file.filepath.rfind('/'));
+					dpath = dpath.substr(relativeDir.length());
+					dpath = combine(std::string(path), dpath);
 
-				f.pFullPath = TGE::StringTable->insert(dpath.c_str(), true);
-				std::string fname = getFileName(file.filepath);
-				f.pFileName = TGE::StringTable->insert(fname.c_str(), false);
-				fileVector.push_back(f);
+					f.pFullPath = TGE::StringTable->insert(dpath.c_str(), true);
+					std::string fname = getFileName(file.filepath);
+					f.pFileName = TGE::StringTable->insert(fname.c_str(), false);
+					fileVector.push_back(f);
+				}
 			}
 		}
 	}
@@ -572,27 +578,29 @@ MBX_OVERRIDE_FN(bool, TGE::Platform::getFileTimes, (const char* path, TGE::FileT
 	{
 		for (auto& file : pak->entries)
 		{
-			if (file.filepath == relativeDir)
-			{
-				if (createTime)
+			if (file.loaded) {
+				if (file.filepath == relativeDir)
 				{
+					if (createTime)
+					{
 #ifdef _WIN32
-					createTime->low = 0;
-					createTime->high = 0;
+						createTime->low = 0;
+						createTime->high = 0;
 #else
-					*createTime = 0;
+						* createTime = 0;
 #endif
-				}
-				if (modifyTime)
-				{
+					}
+					if (modifyTime)
+					{
 #ifdef _WIN32
-					modifyTime->low = 0;
-					modifyTime->high = 0;
+						modifyTime->low = 0;
+						modifyTime->high = 0;
 #else
-					*modifyTime = 0;
+						* modifyTime = 0;
 #endif
+					}
+					return true;
 				}
-				return true;
 			}
 		}
 	}
