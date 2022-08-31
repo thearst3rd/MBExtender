@@ -70,5 +70,7 @@ namespace TGE
 		GETTERFN(U32, getBufferSize, 0x34);
 		GETTERFN(U32, getCurPos, 0x38);
 		SETTERFN(U32, setCurPos, 0x38);
+
+		MEMBERFN(bool, readMemory, (const char* path), 0x448500_win, 0x51DF0_mac);
 	};
 }

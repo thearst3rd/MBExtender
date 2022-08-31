@@ -92,6 +92,7 @@ namespace TGE
 		MEMBERFN(void, closeStream, (Stream *stream), 0x40388C_win, 0x4B910_mac);
 		MEMBERFN(ResourceObject*, find, (const char *path), 0x404A61_win, 0x4C890_mac);
 		MEMBERFN(ResourceObject*, load, (const char *path, bool computeCRC), 0x4057FE_win, 0x4E2D0_mac);
+		MEMBERFN(ResourceInstance*, loadInstance, (const char* path, bool computeCRC), 0x406B9F_win, 0x4E280_mac);
 		MEMBERFN(U32, getSize, (const char *path), 0x405452_win, 0x4CDD0_mac);
 		MEMBERFN(bool, getCrc, (const char *path, U32 &crc, U32 initialValue), 0x4074FA_win, 0x4E3A0_mac);
 		MEMBERFN(void, searchPath, (const char *path), 0x40551A_win, 0x4D8F0_mac);
