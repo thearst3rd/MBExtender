@@ -13,6 +13,8 @@ add_plugin(MBPlatinum
   sync.h
   triggers.cpp
   interpolation.cpp
+  rrec.cpp
+  rrec.h
 
   WIN_SOURCES
     crashReporter-win32.cpp
@@ -30,7 +32,8 @@ add_plugin(MBPlatinum
 target_link_libraries(MBPlatinum
   PRIVATE
     MathLib
-    EventLib)
+    EventLib
+)
 
 if(WIN32)
   target_link_libraries(MBPlatinum

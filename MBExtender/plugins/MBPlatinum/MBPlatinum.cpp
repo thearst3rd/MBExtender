@@ -41,6 +41,7 @@ bool initPlugin(MBX::Plugin &plugin)
 	MBX_INSTALL(plugin, Sync);
 	MBX_INSTALL(plugin, Triggers);
 	MBX_INSTALL(plugin, Interpolation);
+	MBX_INSTALL(plugin, RRECExtension);
 
 #ifdef _WIN32
 	MBX_INSTALL(plugin, ShutdownLogging);
