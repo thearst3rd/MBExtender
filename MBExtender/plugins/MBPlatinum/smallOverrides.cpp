@@ -1156,7 +1156,7 @@ MBX_OVERRIDE_FASTCALLFN(bool, TGE::cullSource, (int* index, float volume), origC
 		return(false);
 
 	U32 type = mAudioType[best];
-	if (type == 2)
+	if (type == 2 || type == 1)
 		return false;
 
 	return origCullSource(index, volume);
