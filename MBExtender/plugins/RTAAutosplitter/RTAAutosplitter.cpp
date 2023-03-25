@@ -44,7 +44,10 @@ static U8* isDone = buffer + 0x11;
 static U8* shouldStartRun = buffer + 0x12;
 // 19-23 are reserved boolean flags for somethin idk and yes I'm using full bytes for each of them because I don't care
 static S64* time = (S64*)(buffer + 0x18); // in milliseconds
-static char** currentMission = (char**)(buffer + 0x20);
+static S64* lastSplitTime = (S64*)(buffer + 0x20);
+static S64* missionTypeBeganTime = (S64*)(buffer + 0x28);
+static S64* currentGameBeganTime = (S64*)(buffer + 0x30);
+static char** currentMission = (char**)(buffer + 0x38);
 
 bool initPlugin(MBX::Plugin& plugin)
 {
@@ -84,6 +87,24 @@ MBX_CONSOLE_FUNCTION(RTAAS_setTime, void, 2, 2, "RTAAS_setTime(timeInMs)")
 {
 	*time = atoll(argv[1]);
 	TGE::Con::printf("[RTAAutosplitter] time set to %lli", *time);
+};
+
+MBX_CONSOLE_FUNCTION(RTAAS_setLastSplitTime, void, 2, 2, "RTAAS_setLastSplitTime(timeInMs)")
+{
+	*lastSplitTime = atoll(argv[1]);
+	TGE::Con::printf("[RTAAutosplitter] lastSplitTime set to %lli", *lastSplitTime);
+};
+
+MBX_CONSOLE_FUNCTION(RTAAS_setMissionTypeBeganTime, void, 2, 2, "RTAAS_setMissionTypeBeginTime(timeInMs)")
+{
+	*missionTypeBeganTime = atoll(argv[1]);
+	TGE::Con::printf("[RTAAutosplitter] missionTypeBeganTime set to %lli", *missionTypeBeganTime);
+};
+
+MBX_CONSOLE_FUNCTION(RTAAS_setCurrentGameBeganTime, void, 2, 2, "RTAAS_setCurrentGameBeganTime(timeInMs)")
+{
+	*currentGameBeganTime = atoll(argv[1]);
+	TGE::Con::printf("[RTAAutosplitter] currentGameBeganTime set to %lli", *currentGameBeganTime);
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setCurrentMission, void, 2, 2, "RTAAS_setCurrentMission(currentMission)")
