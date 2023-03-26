@@ -42,7 +42,8 @@ static char* header = (char*)buffer;
 static U8* isEnabled = buffer + 0x10;
 static U8* isDone = buffer + 0x11;
 static U8* shouldStartRun = buffer + 0x12;
-// 0x13-17 are reserved boolean flags for somethin idk and yes I'm using full bytes for each of them for now I don't care
+static U8* isPauseScreenOpen = buffer + 0x13;
+// 0x14-17 are reserved boolean flags for somethin idk and yes I'm using full bytes for each of them for now I don't care
 static S64* time = (S64*)(buffer + 0x18); // in milliseconds
 static S64* lastSplitTime = (S64*)(buffer + 0x20);
 static S64* missionTypeBeganTime = (S64*)(buffer + 0x28);
@@ -81,6 +82,12 @@ MBX_CONSOLE_FUNCTION(RTAAS_setShouldStartRun, void, 2, 2, "RTAAS_setShouldStartR
 {
 	*shouldStartRun = (U8)(strcmp(argv[1], "true") == 0 || atoi(argv[1]) == 1);
 	TGE::Con::printf("[RTAAutosplitter] shouldStartRun set to %s", *shouldStartRun ? "true" : "false");
+};
+
+MBX_CONSOLE_FUNCTION(RTAAS_setIsPauseScreenOpen, void, 2, 2, "RTAAS_setIsPauseScreenOpen(isPauseScreenOpen)")
+{
+	*isPauseScreenOpen = (U8)(strcmp(argv[1], "true") == 0 || atoi(argv[1]) == 1);
+	TGE::Con::printf("[RTAAutosplitter] isPauseScreenOpen set to %s", *isPauseScreenOpen ? "true" : "false");
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setTime, void, 2, 2, "RTAAS_setTime(timeInMs)")
