@@ -27,6 +27,7 @@
 
 #include <MBExtender/MBExtender.h>
 #include <TorqueLib/console/console.h>
+#include <MathLib/MathLib.h>
 
 using namespace std;
 
@@ -70,49 +71,49 @@ bool initPlugin(MBX::Plugin& plugin)
 
 MBX_CONSOLE_FUNCTION(RTAAS_setIsEnabled, void, 2, 2, "RTAAS_setIsEnabled(isEnabled)")
 {
-	rtaData.isEnabled = (strcmp(argv[1], "true") == 0 || atoi(argv[1]) == 1);
+	rtaData.isEnabled = StringMath::scan<bool>(argv[1]);
 	TGE::Con::printf("[RTAAutosplitter] isEnabled set to %s", rtaData.isEnabled ? "true" : "false");
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setIsDone, void, 2, 2, "RTAAS_setIsDone(isDone)")
 {
-	rtaData.isDone = (strcmp(argv[1], "true") == 0 || atoi(argv[1]) == 1);
+	rtaData.isDone = StringMath::scan<bool>(argv[1]);
 	TGE::Con::printf("[RTAAutosplitter] isDone set to %s", rtaData.isDone ? "true" : "false");
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setShouldStartRun, void, 2, 2, "RTAAS_setShouldStartRun(shouldStartRun)")
 {
-	rtaData.shouldStartRun = (strcmp(argv[1], "true") == 0 || atoi(argv[1]) == 1);
+	rtaData.shouldStartRun = StringMath::scan<bool>(argv[1]);
 	TGE::Con::printf("[RTAAutosplitter] shouldStartRun set to %s", rtaData.shouldStartRun ? "true" : "false");
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setIsPauseScreenOpen, void, 2, 2, "RTAAS_setIsPauseScreenOpen(isPauseScreenOpen)")
 {
-	rtaData.isPauseScreenOpen = (strcmp(argv[1], "true") == 0 || atoi(argv[1]) == 1);
+	rtaData.isPauseScreenOpen = StringMath::scan<bool>(argv[1]);
 	TGE::Con::printf("[RTAAutosplitter] isPauseScreenOpen set to %s", rtaData.isPauseScreenOpen ? "true" : "false");
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setTime, void, 2, 2, "RTAAS_setTime(timeInMs)")
 {
-	rtaData.time = atoll(argv[1]);
+	rtaData.time = StringMath::scan<S64>(argv[1]);
 	//TGE::Con::printf("[RTAAutosplitter] time set to %lli", rtaData.time);
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setLastSplitTime, void, 2, 2, "RTAAS_setLastSplitTime(timeInMs)")
 {
-	rtaData.lastSplitTime = atoll(argv[1]);
+	rtaData.lastSplitTime = StringMath::scan<S64>(argv[1]);
 	TGE::Con::printf("[RTAAutosplitter] lastSplitTime set to %lli", rtaData.lastSplitTime);
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setMissionTypeBeganTime, void, 2, 2, "RTAAS_setMissionTypeBeginTime(timeInMs)")
 {
-	rtaData.missionTypeBeganTime = atoll(argv[1]);
+	rtaData.missionTypeBeganTime = StringMath::scan<S64>(argv[1]);
 	TGE::Con::printf("[RTAAutosplitter] missionTypeBeganTime set to %lli", rtaData.missionTypeBeganTime);
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setCurrentGameBeganTime, void, 2, 2, "RTAAS_setCurrentGameBeganTime(timeInMs)")
 {
-	rtaData.currentGameBeganTime = atoll(argv[1]);
+	rtaData.currentGameBeganTime = StringMath::scan<S64>(argv[1]);
 	TGE::Con::printf("[RTAAutosplitter] currentGameBeganTime set to %lli", rtaData.currentGameBeganTime);
 };
 
