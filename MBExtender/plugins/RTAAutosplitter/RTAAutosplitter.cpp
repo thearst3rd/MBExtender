@@ -35,89 +35,91 @@ using namespace std;
 
 MBX_MODULE(RTAAutosplitter);
 
-static U8 buffer[80] = { 0 };
-
-// I explictly layout the entire contents of the buffer so I know exactly where to look in the autosplitter
-static char* header = (char*)buffer;
-static U8* isEnabled = buffer + 0x10;
-static U8* isDone = buffer + 0x11;
-static U8* shouldStartRun = buffer + 0x12;
-static U8* isPauseScreenOpen = buffer + 0x13;
-// 0x14-17 are reserved boolean flags for somethin idk and yes I'm using full bytes for each of them for now I don't care
-static S64* time = (S64*)(buffer + 0x18); // in milliseconds
-static S64* lastSplitTime = (S64*)(buffer + 0x20);
-static S64* missionTypeBeganTime = (S64*)(buffer + 0x28);
-static S64* currentGameBeganTime = (S64*)(buffer + 0x30);
-static char** currentMission = (char**)(buffer + 0x38);
+struct RTAAutosplitterData {
+	char header[16];
+	bool isEnabled;
+	bool isDone;
+	bool shouldStartRun;
+	bool isPauseScreenOpen;
+	// 0x14-17 are reserved boolean flags for somethin idk, and yes I'm using full bytes for each of them for now
+	bool reservedBools[4];
+	S64 time; // in milliseconds
+	S64 lastSplitTime;
+	S64 missionTypeBeganTime;
+	S64 currentGameBeganTime;
+	char* currentMission;
+} rtaData;
 
 bool initPlugin(MBX::Plugin& plugin)
 {
 	MBX_INSTALL(plugin, RTAAutosplitter);
 
+	memset(&rtaData, 0, sizeof(rtaData));
+
 	// Load header with a searchable value. I DON'T declare the entire value as a string, but instead dynamcially
 	// generate some of it, so that a sigscan won't find the static string part of it. Is this dumb? Probably lol
-	memcpy(header, "pqrtaas_", 9);
+	memcpy(rtaData.header, "pqrtaas_", 9);
 	for (int i = 8; i < 15; i++) {
-		header[i] = 'a' + (i - 8);
+		rtaData.header[i] = 'a' + (i - 8);
 	}
 
-	*currentMission = strdup("");
+	rtaData.currentMission = strdup("");
 
 	return true;
 }
 
 MBX_CONSOLE_FUNCTION(RTAAS_setIsEnabled, void, 2, 2, "RTAAS_setIsEnabled(isEnabled)")
 {
-	*isEnabled = (U8)(strcmp(argv[1], "true") == 0 || atoi(argv[1]) == 1);
-	TGE::Con::printf("[RTAAutosplitter] isEnabled set to %s", *isEnabled ? "true" : "false");
+	rtaData.isEnabled = (strcmp(argv[1], "true") == 0 || atoi(argv[1]) == 1);
+	TGE::Con::printf("[RTAAutosplitter] isEnabled set to %s", rtaData.isEnabled ? "true" : "false");
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setIsDone, void, 2, 2, "RTAAS_setIsDone(isDone)")
 {
-	*isDone = (U8)(strcmp(argv[1], "true") == 0 || atoi(argv[1]) == 1);
-	TGE::Con::printf("[RTAAutosplitter] isDone set to %s", *isDone ? "true" : "false");
+	rtaData.isDone = (strcmp(argv[1], "true") == 0 || atoi(argv[1]) == 1);
+	TGE::Con::printf("[RTAAutosplitter] isDone set to %s", rtaData.isDone ? "true" : "false");
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setShouldStartRun, void, 2, 2, "RTAAS_setShouldStartRun(shouldStartRun)")
 {
-	*shouldStartRun = (U8)(strcmp(argv[1], "true") == 0 || atoi(argv[1]) == 1);
-	TGE::Con::printf("[RTAAutosplitter] shouldStartRun set to %s", *shouldStartRun ? "true" : "false");
+	rtaData.shouldStartRun = (strcmp(argv[1], "true") == 0 || atoi(argv[1]) == 1);
+	TGE::Con::printf("[RTAAutosplitter] shouldStartRun set to %s", rtaData.shouldStartRun ? "true" : "false");
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setIsPauseScreenOpen, void, 2, 2, "RTAAS_setIsPauseScreenOpen(isPauseScreenOpen)")
 {
-	*isPauseScreenOpen = (U8)(strcmp(argv[1], "true") == 0 || atoi(argv[1]) == 1);
-	TGE::Con::printf("[RTAAutosplitter] isPauseScreenOpen set to %s", *isPauseScreenOpen ? "true" : "false");
+	rtaData.isPauseScreenOpen = (strcmp(argv[1], "true") == 0 || atoi(argv[1]) == 1);
+	TGE::Con::printf("[RTAAutosplitter] isPauseScreenOpen set to %s", rtaData.isPauseScreenOpen ? "true" : "false");
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setTime, void, 2, 2, "RTAAS_setTime(timeInMs)")
 {
-	*time = atoll(argv[1]);
-	//TGE::Con::printf("[RTAAutosplitter] time set to %lli", *time);
+	rtaData.time = atoll(argv[1]);
+	//TGE::Con::printf("[RTAAutosplitter] time set to %lli", rtaData.time);
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setLastSplitTime, void, 2, 2, "RTAAS_setLastSplitTime(timeInMs)")
 {
-	*lastSplitTime = atoll(argv[1]);
-	TGE::Con::printf("[RTAAutosplitter] lastSplitTime set to %lli", *lastSplitTime);
+	rtaData.lastSplitTime = atoll(argv[1]);
+	TGE::Con::printf("[RTAAutosplitter] lastSplitTime set to %lli", rtaData.lastSplitTime);
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setMissionTypeBeganTime, void, 2, 2, "RTAAS_setMissionTypeBeginTime(timeInMs)")
 {
-	*missionTypeBeganTime = atoll(argv[1]);
-	TGE::Con::printf("[RTAAutosplitter] missionTypeBeganTime set to %lli", *missionTypeBeganTime);
+	rtaData.missionTypeBeganTime = atoll(argv[1]);
+	TGE::Con::printf("[RTAAutosplitter] missionTypeBeganTime set to %lli", rtaData.missionTypeBeganTime);
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setCurrentGameBeganTime, void, 2, 2, "RTAAS_setCurrentGameBeganTime(timeInMs)")
 {
-	*currentGameBeganTime = atoll(argv[1]);
-	TGE::Con::printf("[RTAAutosplitter] currentGameBeganTime set to %lli", *currentGameBeganTime);
+	rtaData.currentGameBeganTime = atoll(argv[1]);
+	TGE::Con::printf("[RTAAutosplitter] currentGameBeganTime set to %lli", rtaData.currentGameBeganTime);
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setCurrentMission, void, 2, 2, "RTAAS_setCurrentMission(currentMission)")
 {
-	if (*currentMission)
-		free(*currentMission);
-	*currentMission = strdup(argv[1]);
-	TGE::Con::printf("[RTAAutosplitter] currentMission set to %s", *currentMission);
+	if (rtaData.currentMission)
+		free(rtaData.currentMission);
+	rtaData.currentMission = strdup(argv[1]);
+	TGE::Con::printf("[RTAAutosplitter] currentMission set to %s", rtaData.currentMission);
 };
