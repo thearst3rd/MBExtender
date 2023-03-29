@@ -36,14 +36,16 @@ using namespace std;
 
 MBX_MODULE(RTAAutosplitter);
 
+enum {
+	FLAG_IS_ENABLED,
+	FLAG_IS_DONE,
+	FLAG_SHOULD_START_RUN,
+	FLAG_IS_PAUSE_SCREEN_OPEN,
+};
+
 struct RTAAutosplitterData {
 	char header[16];
-	bool isEnabled;
-	bool isDone;
-	bool shouldStartRun;
-	bool isPauseScreenOpen;
-	// 0x14-17 are reserved boolean flags for somethin idk, and yes I'm using full bytes for each of them for now
-	bool reservedBools[4];
+	U64 booleanFlags; // 64 flags is probably overkill but I might as well to keep the times 8 byte aligned
 	S64 time; // in milliseconds
 	S64 lastSplitTime;
 	S64 missionTypeBeganTime;
@@ -71,26 +73,38 @@ bool initPlugin(MBX::Plugin& plugin)
 
 MBX_CONSOLE_FUNCTION(RTAAS_setIsEnabled, void, 2, 2, "RTAAS_setIsEnabled(isEnabled)")
 {
-	rtaData.isEnabled = StringMath::scan<bool>(argv[1]);
-	TGE::Con::printf("[RTAAutosplitter] isEnabled set to %s", rtaData.isEnabled ? "true" : "false");
+	if (StringMath::scan<bool>(argv[1]))
+		rtaData.booleanFlags |= (1ll << FLAG_IS_ENABLED);
+	else
+		rtaData.booleanFlags &= ~(1ll << FLAG_IS_ENABLED);
+	TGE::Con::printf("[RTAAutosplitter] isEnabled set to %s", !!(rtaData.booleanFlags && (1ll << FLAG_IS_ENABLED)) ? "true" : "false");
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setIsDone, void, 2, 2, "RTAAS_setIsDone(isDone)")
 {
-	rtaData.isDone = StringMath::scan<bool>(argv[1]);
-	TGE::Con::printf("[RTAAutosplitter] isDone set to %s", rtaData.isDone ? "true" : "false");
+	if (StringMath::scan<bool>(argv[1]))
+		rtaData.booleanFlags |= (1ll << FLAG_IS_DONE);
+	else
+		rtaData.booleanFlags &= ~(1ll << FLAG_IS_DONE);
+	TGE::Con::printf("[RTAAutosplitter] isDone set to %s", !!(rtaData.booleanFlags && (1ll << FLAG_IS_DONE)) ? "true" : "false");
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setShouldStartRun, void, 2, 2, "RTAAS_setShouldStartRun(shouldStartRun)")
 {
-	rtaData.shouldStartRun = StringMath::scan<bool>(argv[1]);
-	TGE::Con::printf("[RTAAutosplitter] shouldStartRun set to %s", rtaData.shouldStartRun ? "true" : "false");
+	if (StringMath::scan<bool>(argv[1]))
+		rtaData.booleanFlags |= (1ll << FLAG_SHOULD_START_RUN);
+	else
+		rtaData.booleanFlags &= ~(1ll << FLAG_SHOULD_START_RUN);
+	TGE::Con::printf("[RTAAutosplitter] shouldStartRun set to %s", !!(rtaData.booleanFlags && (1ll << FLAG_SHOULD_START_RUN)) ? "true" : "false");
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setIsPauseScreenOpen, void, 2, 2, "RTAAS_setIsPauseScreenOpen(isPauseScreenOpen)")
 {
-	rtaData.isPauseScreenOpen = StringMath::scan<bool>(argv[1]);
-	TGE::Con::printf("[RTAAutosplitter] isPauseScreenOpen set to %s", rtaData.isPauseScreenOpen ? "true" : "false");
+	if (StringMath::scan<bool>(argv[1]))
+		rtaData.booleanFlags |= (1ll << FLAG_IS_PAUSE_SCREEN_OPEN);
+	else
+		rtaData.booleanFlags &= ~(1ll << FLAG_IS_PAUSE_SCREEN_OPEN);
+	TGE::Con::printf("[RTAAutosplitter] isPauseScreenOpen set to %s", !!(rtaData.booleanFlags && (1ll << FLAG_IS_PAUSE_SCREEN_OPEN)) ? "true" : "false");
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setTime, void, 2, 2, "RTAAS_setTime(timeInMs)")
