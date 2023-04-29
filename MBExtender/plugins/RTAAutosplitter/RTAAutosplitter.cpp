@@ -37,10 +37,12 @@ using namespace std;
 MBX_MODULE(RTAAutosplitter);
 
 enum {
+	FLAG_IS_VALID,
 	FLAG_IS_ENABLED,
 	FLAG_IS_DONE,
 	FLAG_SHOULD_START_RUN,
 	FLAG_IS_PAUSE_SCREEN_OPEN,
+	FLAG_IS_CRASH_RECOVERY_MODE,
 };
 
 struct RTAAutosplitterData {
@@ -70,6 +72,15 @@ bool initPlugin(MBX::Plugin& plugin)
 
 	return true;
 }
+
+MBX_CONSOLE_FUNCTION(RTAAS_setIsValid, void, 2, 2, "RTAAS_setIsValid(isValid)")
+{
+	if (StringMath::scan<bool>(argv[1]))
+		rtaData.booleanFlags |= (1ll << FLAG_IS_VALID);
+	else
+		rtaData.booleanFlags &= ~(1ll << FLAG_IS_VALID);
+	TGE::Con::printf("[RTAAutosplitter] isValid set to %s", !!(rtaData.booleanFlags && (1ll << FLAG_IS_VALID)) ? "true" : "false");
+};
 
 MBX_CONSOLE_FUNCTION(RTAAS_setIsEnabled, void, 2, 2, "RTAAS_setIsEnabled(isEnabled)")
 {
@@ -105,6 +116,15 @@ MBX_CONSOLE_FUNCTION(RTAAS_setIsPauseScreenOpen, void, 2, 2, "RTAAS_setIsPauseSc
 	else
 		rtaData.booleanFlags &= ~(1ll << FLAG_IS_PAUSE_SCREEN_OPEN);
 	TGE::Con::printf("[RTAAutosplitter] isPauseScreenOpen set to %s", !!(rtaData.booleanFlags && (1ll << FLAG_IS_PAUSE_SCREEN_OPEN)) ? "true" : "false");
+};
+
+MBX_CONSOLE_FUNCTION(RTAAS_setIsCrashRecoveryMode, void, 2, 2, "RTAAS_setIsCrashRecoveryMode(isCrashRecoveryMode)")
+{
+	if (StringMath::scan<bool>(argv[1]))
+		rtaData.booleanFlags |= (1ll << FLAG_IS_CRASH_RECOVERY_MODE);
+	else
+		rtaData.booleanFlags &= ~(1ll << FLAG_IS_CRASH_RECOVERY_MODE);
+	TGE::Con::printf("[RTAAutosplitter] isCrashRecoveryMode set to %s", !!(rtaData.booleanFlags && (1ll << FLAG_IS_CRASH_RECOVERY_MODE)) ? "true" : "false");
 };
 
 MBX_CONSOLE_FUNCTION(RTAAS_setTime, void, 2, 2, "RTAAS_setTime(timeInMs)")
